@@ -1,5 +1,5 @@
 {
-  "name": "analytika-js",
+  "name": "@analytika/sdk",
   "version": "1.0.0",
   "description": "Ultra-lightweight, privacy-friendly analytics client SDK and drop-in tracking script",
   "main": "./dist/index.cjs",

@@ -3,6 +3,8 @@ import { extractContext } from "./context";
 import { EventQueue, type QueuedEvent } from "./queue";
 import { initSpaRouter, initHtmlAutoCapture } from "./auto-capture";
 
+export const DEFAULT_ENDPOINT = "http://172.105.92.7:3000";
+
 export interface AnalytikaConfig {
   apiKey: string;
   endpoint?: string;
@@ -12,6 +14,8 @@ export interface AnalytikaConfig {
   flushIntervalMs?: number;
   debug?: boolean;
 }
+
+export type InitOptions = string | AnalytikaConfig;
 
 export class AnalytikaSDK {
   private config: AnalytikaConfig | null = null;
@@ -26,14 +30,18 @@ export class AnalytikaSDK {
     this.session = new SessionManager();
   }
 
-  public init(config: AnalytikaConfig): AnalytikaSDK {
+  public init(options: InitOptions): AnalytikaSDK {
     if (this.isInitialized) {
-      if (config.debug) console.warn("[Analytika] Already initialized");
       return this;
     }
 
+    const config: AnalytikaConfig =
+      typeof options === "string"
+        ? { apiKey: options }
+        : options;
+
     this.config = {
-      endpoint: "http://localhost:3000",
+      endpoint: DEFAULT_ENDPOINT,
       autoPageview: true,
       autoCaptureGoals: true,
       batchSize: 10,
@@ -44,7 +52,7 @@ export class AnalytikaSDK {
 
     this.queue = new EventQueue({
       apiKey: this.config.apiKey,
-      endpoint: this.config.endpoint!,
+      endpoint: this.config.endpoint || DEFAULT_ENDPOINT,
       batchSize: this.config.batchSize,
       flushIntervalMs: this.config.flushIntervalMs,
       debug: this.config.debug,
@@ -53,20 +61,20 @@ export class AnalytikaSDK {
     this.isInitialized = true;
 
     if (this.config.debug) {
-      console.log(`[Analytika] Initialized for API key: ${this.config.apiKey} -> Endpoint: ${this.config.endpoint}`);
+      console.log(`[Analytika] Initialized with API key: ${this.config.apiKey}`);
     }
 
     // Auto Pageview on initialization
     if (this.config.autoPageview && typeof window !== "undefined") {
       this.page();
 
-      // Hook SPA Navigation
+      // Hook SPA Navigation (React, Next.js, Vue route changes)
       this.cleanupSpa = initSpaRouter(() => {
         this.page();
       });
     }
 
-    // Auto Goal Capture for [data-goal]
+    // Auto Goal Capture for elements with [data-goal]
     if (this.config.autoCaptureGoals && typeof document !== "undefined") {
       this.cleanupGoals = initHtmlAutoCapture((goalName, props) => {
         this.track(goalName, props);
@@ -163,7 +171,7 @@ export class AnalytikaSDK {
   private canSend(): boolean {
     if (this.optedOut) return false;
     if (!this.isInitialized || !this.queue) {
-      console.warn("[Analytika] SDK called before init(). Call analytika.init({ apiKey: '...' }) first.");
+      console.warn("[Analytika] SDK called before init(). Call init('YOUR_API_KEY') first.");
       return false;
     }
     return true;
@@ -173,8 +181,8 @@ export class AnalytikaSDK {
 // Singleton Instance
 export const analytika = new AnalytikaSDK();
 
-// Standalone Helper functions
-export const init = (config: AnalytikaConfig) => analytika.init(config);
+// Helper exports
+export const init = (options: InitOptions) => analytika.init(options);
 export const track = (name: string, properties?: Record<string, any>) => analytika.track(name, properties);
 export const page = (path?: string, properties?: Record<string, any>) => analytika.page(path, properties);
 export const identify = (userId: string, traits?: Record<string, any>) => analytika.identify(userId, traits);

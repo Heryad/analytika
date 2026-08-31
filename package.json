@@ -12,7 +12,7 @@
     "db:generate": "bun run --cwd apps/api db:generate",
     "db:push": "bun run --cwd apps/api db:push",
     "db:migrate": "bun run --cwd apps/api db:migrate",
-    "test": "bun test"
+    "db:studio": "bun run --cwd apps/api db:studio"
   },
   "devDependencies": {
     "@types/bun": "^1.4.0",
