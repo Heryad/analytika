@@ -5,8 +5,7 @@ import React, { useEffect, useState, useRef } from "react";
 interface CountryData {
   name: string;
   code: string;
-  flag: string;
-  count: number;
+  views: number;
   percentage: number;
 }
 
@@ -88,20 +87,20 @@ export function InteractiveMap({ data }: InteractiveMapProps) {
           setHoveredCountry(null);
         });
       } else {
-        path.style.fill = "#262626"; // Match card background instead of being transparent
-        path.style.stroke = "rgba(255,255,255,0.08)";
-        path.style.strokeWidth = "0.5";
+        path.style.fill = "#4A4A4A"; // Significantly lighter grey for visibility
+        path.style.stroke = "rgba(255,255,255,0.2)";
+        path.style.strokeWidth = "0.75";
       }
     });
 
   }, [svgContent, data]);
 
   return (
-    <div className="relative w-full h-full min-h-[300px] flex items-center justify-center">
+    <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
       {svgContent ? (
         <div
           ref={containerRef}
-          className="w-full h-full max-h-[320px] flex items-center justify-center"
+          className="w-full h-full flex items-center justify-center scale-125 origin-center transition-transform"
           dangerouslySetInnerHTML={{ __html: svgContent }}
         />
       ) : (
@@ -117,10 +116,10 @@ export function InteractiveMap({ data }: InteractiveMapProps) {
             top: `${mousePos.y - 15}px`,
           }}
         >
-          <span className="text-2xl leading-none">{hoveredCountry.flag}</span>
+          <img src={`https://flagcdn.com/w40/${hoveredCountry.code.toLowerCase()}.png`} alt={hoveredCountry.code} className="w-6 h-4 object-cover rounded-sm shadow-sm" />
           <div>
             <div className="text-zinc-200 font-medium text-xs truncate max-w-[150px]">{hoveredCountry.name}</div>
-            <div className="text-white font-mono font-bold text-sm">{hoveredCountry.count.toLocaleString()} <span className="text-zinc-500 text-[10px] ml-1 font-sans font-normal">visitors</span></div>
+            <div className="text-white font-mono font-bold text-sm">{hoveredCountry.views.toLocaleString()} <span className="text-zinc-500 text-[10px] ml-1 font-sans font-normal">visitors</span></div>
           </div>
         </div>
       )}

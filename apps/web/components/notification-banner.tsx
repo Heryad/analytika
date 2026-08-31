@@ -26,7 +26,7 @@ export function NotificationBanner({
   return (
     <aside
       aria-label="Notification"
-      className={`w-full border-b py-2 px-4 text-center text-xs transition-colors ${typeStyles[type]}`}
+      className={`w-full border-b py-4 px-4 text-center text-xs transition-colors ${typeStyles[type]}`}
     >
       <div className="mx-auto max-w-7xl flex items-center justify-center gap-1.5 flex-wrap">
         <span>{message}</span>

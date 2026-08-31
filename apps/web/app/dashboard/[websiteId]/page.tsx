@@ -27,12 +27,23 @@ import {
   Clock,
   Activity,
   MapPin,
-  Map
+  Map,
+  Share2
 } from "lucide-react";
 import { AnalyticsChart } from "@/components/analytics/analytics-chart";
 import { InteractiveMap } from "@/components/analytics/interactive-map";
-import { HorizontalBarChart } from "@/components/analytics/horizontal-bar-chart";
-import { generateRealisticMetrics, mockAcquisition, mockLocation, mockTech } from "@/lib/mock-data";
+import { ChannelPieChart } from "@/components/analytics/channel-pie-chart";
+import { CustomBarList } from "@/components/analytics/custom-bar-list";
+import { FunnelVisualizer } from "@/components/analytics/funnel-visualizer";
+import { ShareWidgetModal } from "@/components/analytics/share-widget-modal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { generateRealisticMetrics, mockAcquisition, mockLocation, mockTech, mockFunnels, mockGoals, mockEvents } from "@/lib/mock-data";
 
 type MetricType = "visitors" | "revenue" | "conversionRate" | "bounceRate" | "sessionTime";
 type TimeRangeType = "Today" | "Last 24h" | "7 Days" | "30 Days" | "YTD" | "Custom...";
@@ -49,12 +60,21 @@ export default function WebsiteAnalyticsPage() {
   const [timeRange, setTimeRange] = useState<TimeRangeType>("30 Days");
   const [activeMetric, setActiveMetric] = useState<MetricType>("visitors");
   const [isDateOpen, setIsDateOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [onlineCount] = useState(14); // Mock live counter
 
-  // Sub-tabs for the 3 groups
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => setIsRefreshing(false), 600);
+  };
+
+  // Sub-tabs for the card groups
   const [acqTab, setAcqTab] = useState<"channels" | "referrers" | "campaigns">("channels");
   const [geoTab, setGeoTab] = useState<"map" | "countries" | "regions" | "cities">("countries");
   const [techTab, setTechTab] = useState<"browsers" | "os" | "devices">("browsers");
+  const [eventTab, setEventTab] = useState<"all" | "actions" | "conversions">("all");
+  const [funnelTab, setFunnelTab] = useState<"funnels" | "goals">("funnels");
 
   // Timeseries & Aggregates
   const timeseries = useMemo(() => generateRealisticMetrics(timeRange, Number(websiteId) || 3), [timeRange, websiteId]);
@@ -69,21 +89,20 @@ export default function WebsiteAnalyticsPage() {
     return { visitors, revenue, avgBounce, avgSession, avgConv };
   }, [timeseries]);
 
-  // Helper for generic shaded bar rows is no longer needed since we use Recharts HorizontalBarChart
-
   return (
     <div className="space-y-6 pb-20">
 
       {/* 1. Header Toolbar */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
 
         {/* Left: Identity */}
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard"
-            className="text-zinc-400 hover:text-white transition-colors p-1.5 -ml-1.5 rounded-xl hover:bg-[#262626] cursor-pointer"
+            className="text-zinc-400 hover:text-white transition-colors p-2 -ml-1 rounded-xl bg-[#262626]/50 hover:bg-[#262626] border border-white/[0.04] hover:border-white/[0.08] cursor-pointer"
+            title="Back to websites"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" />
           </Link>
           <img
             src={`https://www.google.com/s2/favicons?domain=${siteDomain}&sz=64`}
@@ -94,50 +113,78 @@ export default function WebsiteAnalyticsPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-bold tracking-tight text-white leading-none">{siteDomain}</h1>
-              <a href={`https://${siteDomain}`} target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-zinc-300">
+              <a
+                href={`https://${siteDomain}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                title={`Open https://${siteDomain}`}
+              >
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             </div>
           </div>
-          <button className="ml-2 text-zinc-500 hover:text-white p-1.5 rounded-lg hover:bg-[#262626] transition-colors cursor-pointer">
-            <Settings className="h-4 w-4" />
-          </button>
         </div>
 
         {/* Right: Controls */}
         <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="relative">
-            <button
-              onClick={() => setIsDateOpen(!isDateOpen)}
-              className="flex items-center gap-2 bg-[#262626] border border-white/[0.08] hover:border-white/[0.15] text-zinc-300 px-3.5 py-2 rounded-xl text-xs font-mono transition-colors cursor-pointer"
+          {/* Date Range Picker using Shadcn Select */}
+          <div className="w-[140px]">
+            <Select
+              value={timeRange}
+              onValueChange={(val) => {
+                if (val !== "Custom...") setTimeRange(val as TimeRangeType);
+              }}
             >
-              <Calendar className="h-4 w-4 text-zinc-400" />
-              <span>{timeRange}</span>
-              <ChevronDown className="h-3.5 w-3.5 text-zinc-500 ml-1" />
-            </button>
-            {isDateOpen && (
-              <div className="absolute top-full mt-2 right-0 w-48 bg-[#1F1F1F] border border-white/[0.08] rounded-xl shadow-2xl z-50 p-1">
+              <SelectTrigger className="bg-[#262626] border-white/[0.08] hover:border-white/[0.15] text-zinc-300 font-mono text-xs h-9 rounded-xl">
+                <div className="flex items-center gap-2 truncate">
+                  <Calendar className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                  <SelectValue />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
                 {(["Today", "Last 24h", "7 Days", "30 Days", "YTD", "Custom..."] as TimeRangeType[]).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => { if (r !== "Custom...") setTimeRange(r); setIsDateOpen(false); }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono cursor-pointer ${timeRange === r ? 'bg-[#800E13] text-white' : 'text-zinc-400 hover:bg-[#262626] hover:text-white'}`}
-                  >
+                  <SelectItem key={r} value={r}>
                     {r}
-                  </button>
+                  </SelectItem>
                 ))}
-              </div>
-            )}
+              </SelectContent>
+            </Select>
           </div>
 
-          <button className="flex items-center gap-2 bg-[#262626] border border-white/[0.08] hover:border-white/[0.15] text-zinc-300 px-3 py-2 rounded-xl text-xs font-mono transition-colors cursor-pointer">
+          {/* Filter Button */}
+          <button className="flex items-center gap-2 bg-[#262626] border border-white/[0.08] hover:border-white/[0.15] text-zinc-300 px-3.5 py-2 rounded-xl text-xs font-mono transition-colors cursor-pointer">
             <Filter className="h-4 w-4 text-zinc-400" />
             <span>Filter</span>
           </button>
 
-          <button className="flex items-center justify-center bg-[#262626] border border-white/[0.08] hover:border-white/[0.15] text-zinc-300 p-2 rounded-xl transition-colors cursor-pointer">
-            <RefreshCcw className="h-4 w-4" />
+          {/* Share & Embed Widget Button */}
+          <button
+            onClick={() => setIsShareOpen(true)}
+            title="Share & Embed Analytics Widget"
+            className="flex items-center gap-1.5 bg-[#262626] border border-white/[0.08] hover:border-white/[0.15] text-zinc-300 hover:text-white px-3 py-2 rounded-xl text-xs font-mono transition-all cursor-pointer active:scale-95 shadow-xs"
+          >
+            <Share2 className="h-4 w-4 text-rose-400" />
+            <span className="hidden sm:inline">Share</span>
           </button>
+
+          {/* Refresh Button */}
+          <button
+            onClick={handleRefresh}
+            title="Refresh Analytics"
+            className="flex items-center justify-center bg-[#262626] border border-white/[0.08] hover:border-white/[0.15] text-zinc-300 p-2 rounded-xl transition-all cursor-pointer hover:text-white active:scale-95"
+          >
+            <RefreshCcw className={`h-4 w-4 transition-transform duration-500 ${isRefreshing ? "animate-spin text-rose-400" : ""}`} />
+          </button>
+
+          {/* Settings Button */}
+          <Link
+            href={`/dashboard/${websiteId}/settings`}
+            title="Website Settings"
+            className="flex items-center justify-center bg-[#262626] border border-white/[0.08] hover:border-white/[0.15] text-zinc-400 hover:text-white p-2 rounded-xl transition-all cursor-pointer active:scale-95"
+          >
+            <Settings className="h-4 w-4" />
+          </Link>
         </div>
       </div>
 
@@ -194,76 +241,143 @@ export default function WebsiteAnalyticsPage() {
       {/* 3. Grid of Charts (Breakdowns) */}
       <div className="flex flex-col gap-5">
 
-        {/* Top 2 Columns (Acquisition & Technology) */}
+        {/* Row 2: 2 Columns (Acquisition & Location) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-          {/* Group 1: Acquisition */}
+          {/* Card 1: Acquisition */}
           <div className="bg-[#262626] border border-white/[0.08] rounded-2xl p-5 flex flex-col h-[400px]">
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-2">
-              <div className="flex gap-4">
-                {(["channels", "referrers", "campaigns"] as const).map(tab => (
+              <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner">
+                {["channels", "referrers", "campaigns"].map((tab) => (
                   <button
                     key={tab}
-                    onClick={() => setAcqTab(tab)}
-                    className={`text-xs font-mono font-medium capitalize pb-1 cursor-pointer transition-colors ${acqTab === tab ? "text-white border-b-2 border-[#800E13]" : "text-zinc-500 hover:text-zinc-300"}`}
+                    onClick={() => setAcqTab(tab as any)}
+                    className={`text-[13px] font-medium capitalize transition-all px-3 py-1.5 rounded-md ${acqTab === tab ? "bg-[#262626] text-white shadow-sm border border-white/[0.08]" : "text-zinc-500 hover:text-zinc-300 border border-transparent"
+                      }`}
                   >
                     {tab}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="flex-1 overflow-hidden pr-2">
-              {acqTab === "channels" && <HorizontalBarChart data={mockAcquisition.channels} />}
-              {acqTab === "referrers" && <HorizontalBarChart data={mockAcquisition.referrers} />}
-              {acqTab === "campaigns" && <HorizontalBarChart data={mockAcquisition.campaigns} />}
+            <div className="flex-1 flex flex-col overflow-hidden min-h-0 pr-2">
+              {acqTab === "channels" && <ChannelPieChart data={mockAcquisition.channels as any} />}
+              {acqTab === "referrers" && <CustomBarList data={mockAcquisition.referrers} type="referrer" />}
+              {acqTab === "campaigns" && <CustomBarList data={mockAcquisition.campaigns} type="campaign" />}
             </div>
           </div>
 
-          {/* Group 3: Technology */}
+          {/* Card 2: Location */}
           <div className="bg-[#262626] border border-white/[0.08] rounded-2xl p-5 flex flex-col h-[400px]">
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-2">
-              <div className="flex gap-4">
-                {(["browsers", "os", "devices"] as const).map(tab => (
+              <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner">
+                {(["map", "countries", "regions", "cities"] as const).map(tab => (
                   <button
                     key={tab}
-                    onClick={() => setTechTab(tab)}
-                    className={`text-xs font-mono font-medium capitalize pb-1 cursor-pointer transition-colors ${techTab === tab ? "text-white border-b-2 border-[#800E13]" : "text-zinc-500 hover:text-zinc-300"}`}
+                    onClick={() => setGeoTab(tab)}
+                    className={`text-[13px] font-medium capitalize transition-all px-3 py-1.5 rounded-md ${geoTab === tab ? "bg-[#262626] text-white shadow-sm border border-white/[0.08]" : "text-zinc-500 hover:text-zinc-300 border border-transparent"
+                      }`}
                   >
                     {tab}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="flex-1 overflow-hidden pr-2">
-              {techTab === "browsers" && <HorizontalBarChart data={mockTech.browsers} />}
-              {techTab === "os" && <HorizontalBarChart data={mockTech.os} />}
-              {techTab === "devices" && <HorizontalBarChart data={mockTech.devices} />}
+            <div className="flex-1 flex flex-col overflow-hidden min-h-0 pr-2">
+              {geoTab === "map" && <InteractiveMap data={mockLocation.countries as any} />}
+              {geoTab === "countries" && <CustomBarList data={mockLocation.countries} type="location" />}
+              {geoTab === "regions" && <CustomBarList data={mockLocation.regions} type="location" />}
+              {geoTab === "cities" && <CustomBarList data={mockLocation.cities} type="location" />}
             </div>
           </div>
         </div>
 
-        {/* Full Width Row (Location) */}
-        <div className="w-full bg-[#262626] border border-white/[0.08] rounded-2xl p-5 flex flex-col h-[400px]">
+        {/* Row 3: 2 Columns (Technology & Events) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+          {/* Card 3: Technology */}
+          <div className="bg-[#262626] border border-white/[0.08] rounded-2xl p-5 flex flex-col h-[400px]">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-2">
+              <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner">
+                {(["browsers", "os", "devices"] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setTechTab(tab)}
+                    className={`text-[13px] font-medium capitalize transition-all px-3 py-1.5 rounded-md ${techTab === tab ? "bg-[#262626] text-white shadow-sm border border-white/[0.08]" : "text-zinc-500 hover:text-zinc-300 border border-transparent"
+                      }`}
+                  >
+                    {tab === "os" ? "OS" : tab}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex-1 flex flex-col overflow-hidden min-h-0 pr-2">
+              {techTab === "browsers" && <CustomBarList data={mockTech.browsers} type="tech" />}
+              {techTab === "os" && <CustomBarList data={mockTech.os} type="tech" />}
+              {techTab === "devices" && <CustomBarList data={mockTech.devices as any} type="tech" />}
+            </div>
+          </div>
+
+          {/* Card 4: Events */}
+          <div className="bg-[#262626] border border-white/[0.08] rounded-2xl p-5 flex flex-col h-[400px]">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-2">
+              <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner">
+                {(["all", "actions", "conversions"] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setEventTab(tab)}
+                    className={`text-[13px] font-medium capitalize transition-all px-3 py-1.5 rounded-md ${eventTab === tab ? "bg-[#262626] text-white shadow-sm border border-white/[0.08]" : "text-zinc-500 hover:text-zinc-300 border border-transparent"
+                      }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs font-mono text-zinc-500 pr-1">
+                {mockEvents[eventTab].reduce((acc, curr) => acc + curr.views, 0).toLocaleString()} events
+              </span>
+            </div>
+            <div className="flex-1 flex flex-col overflow-hidden min-h-0 pr-2">
+              <CustomBarList data={mockEvents[eventTab]} type="event" />
+            </div>
+          </div>
+        </div>
+
+        {/* Row 4: Full Width (Funnels & Goals) */}
+        <div className="w-full bg-[#262626] border border-white/[0.08] rounded-2xl p-5 flex flex-col min-h-[500px] h-[500px]">
           <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-2">
-            <div className="flex gap-4">
-              {(["countries", "regions", "cities"] as const).map(tab => (
+            <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner">
+              {(["funnels", "goals"] as const).map(tab => (
                 <button
                   key={tab}
-                  onClick={() => setGeoTab(tab)}
-                  className={`text-xs font-mono font-medium capitalize pb-1 cursor-pointer transition-colors ${geoTab === tab ? "text-white border-b-2 border-[#800E13]" : "text-zinc-500 hover:text-zinc-300"}`}
+                  onClick={() => setFunnelTab(tab)}
+                  className={`text-[13px] font-medium capitalize transition-all px-3 py-1.5 rounded-md ${funnelTab === tab ? "bg-[#262626] text-white shadow-sm border border-white/[0.08]" : "text-zinc-500 hover:text-zinc-300 border border-transparent"
+                    }`}
                 >
                   {tab}
                 </button>
               ))}
             </div>
           </div>
-          <div className="flex-1 overflow-hidden pr-2">
-            {geoTab === "countries" && <InteractiveMap data={mockLocation.countries as any} />}
-            {geoTab === "regions" && <HorizontalBarChart data={mockLocation.regions} />}
-            {geoTab === "cities" && <HorizontalBarChart data={mockLocation.cities} />}
+          <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+            {funnelTab === "funnels" && <FunnelVisualizer funnels={mockFunnels} />}
+            {funnelTab === "goals" && (
+              <div className="flex items-center justify-center h-full text-zinc-500 text-sm font-mono">
+                Goals visualizer under construction
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Share & Embed Widget Modal */}
+      <ShareWidgetModal
+        isOpen={isShareOpen}
+        onOpenChange={setIsShareOpen}
+        siteDomain={siteDomain}
+        websiteId={websiteId}
+        onlineCount={onlineCount}
+      />
     </div>
   );
 }

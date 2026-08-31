@@ -4,12 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { 
-  ChevronDown, 
-  Settings, 
-  Bot, 
-  CreditCard, 
-  LogOut 
+import {
+  ChevronDown,
+  Settings,
+  Bot,
+  CreditCard,
+  LogOut
 } from "lucide-react";
 import { NotificationBanner } from "@/components/notification-banner";
 
@@ -64,7 +64,7 @@ export function DashboardHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full flex flex-col bg-[#1F1F1F]">
-      
+
       {/* Reusable Centered Warning / Notification Banner */}
       <NotificationBanner
         message="14 days left in your Pro trial. Upgrade to keep unlimited analytics and revenue tracking."
@@ -75,7 +75,7 @@ export function DashboardHeader() {
 
       {/* Main Navigation Bar */}
       <div className="mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        
+
         {/* Left: Brand Logo */}
         <Link href="/dashboard" className="flex items-center gap-3 transition-opacity hover:opacity-90">
           <Image
@@ -121,7 +121,7 @@ export function DashboardHeader() {
           {/* User Profile Dropdown Menu */}
           {isOpen && (
             <div className="absolute right-0 mt-2 w-60 rounded-xl bg-[#262626] border border-white/[0.1] shadow-2xl p-1.5 space-y-1 text-xs text-zinc-300 animate-in fade-in zoom-in-95 duration-150 z-50">
-              
+
               {/* Profile Header */}
               <div className="px-3 py-2.5 bg-[#1F1F1F] rounded-lg border border-white/[0.04] space-y-0.5">
                 <span className="font-semibold text-white block truncate text-sm">
