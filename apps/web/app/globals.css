@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 12.2%; /* #1F1F1F */
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 14.5%; /* #252525 */
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 14.5%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Primary Accent: #800E13 */
+    --primary: 357 80% 28%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 357 75% 35%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 22%;
+    --input: 0 0% 22%;
+    --ring: 357 80% 40%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-[#1F1F1F] text-zinc-100 antialiased selection:bg-[#800E13]/40 selection:text-rose-200;
+  }
+}
+
+/* Sleek Minimal Dark Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1F1F1F;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2d2d2d;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3d3d3d;
+}
+
+/* Soft card styling */
+.soft-card {
+  background: #262626;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Staggered Floating Wave Animation */
+@keyframes waveFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-wave {
+  animation: waveFloat 3.6s ease-in-out infinite;
+}
+
+/* Smooth Infinite Horizontal World Map Drift */
+@keyframes drift {
+  0% {
+    transform: translateX(0px);
+  }
+  100% {
+    transform: translateX(-2000px);
+  }
+}
+
+/* Sharp Terminal Cursor Blinking Animation */
+@keyframes cursorBlink {
+  0%, 45% {
+    opacity: 1;
+  }
+  50%, 95% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-cursor-blink {
+  animation: cursorBlink 0.7s infinite;
+}
+
+/* Smooth Accordion Drawer Transitions */
+@keyframes accordion-down {
+  from {
+    height: 0;
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    height: 0;
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
