@@ -1,0 +1,32 @@
+{
+  "name": "@analytika/api",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:migrate": "bun src/db/migrate.ts",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "elysia": "^1.2.22",
+    "@elysiajs/cors": "^1.2.0",
+    "@elysiajs/jwt": "^1.2.0",
+    "@elysiajs/bearer": "^1.2.0",
+    "@elysiajs/swagger": "^1.2.1",
+    "drizzle-orm": "^0.39.3",
+    "postgres": "^3.4.5",
+    "@clickhouse/client": "^1.9.0",
+    "@polar-sh/sdk": "^0.28.0",
+    "resend": "^4.1.2",
+    "nanoid": "^5.0.9"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.30.4",
+    "bun-types": "latest",
+    "@types/node": "^22.13.5"
+  }
+}

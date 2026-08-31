@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytika SDK Playground & Client Demo</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- 1-Line Drop-in Analytika Script -->
+  <script 
+    defer 
+    data-api-key="ana_live_demo_test_key_123" 
+    data-api-endpoint="http://localhost:3000"
+    data-debug="true"
+    src="http://localhost:3000/script.js">
+  </script>
+
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(17, 24, 39, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.15) 0px, transparent 50%);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--accent-cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+      color: white;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .brand-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .status-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-desc {
+      color: var(--text-muted);
+      font-size: 13.5px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button, .btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    button:hover, .btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    button.primary, .btn.primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+      border: none;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    button.primary:hover, .btn.primary:hover {
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+
+    button.emerald {
+      background: linear-gradient(135deg, #059669, #10b981);
+      border: none;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    button.cyan {
+      background: linear-gradient(135deg, #0891b2, #06b6d4);
+      border: none;
+    }
+
+    /* Live Event Terminal Log */
+    .terminal-card {
+      background: #0d111a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 20px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .terminal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .dot.red { background: #ef4444; }
+    .dot.yellow { background: #f59e0b; }
+    .dot.green { background: #10b981; }
+
+    .terminal-body {
+      height: 220px;
+      overflow-y: auto;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: #d1d5db;
+    }
+
+    .log-entry {
+      margin-bottom: 6px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .log-time {
+      color: #6b7280;
+    }
+
+    .log-tag {
+      color: #818cf8;
+      font-weight: 600;
+    }
+
+    .log-val {
+      color: #34d399;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="brand">
+      <div class="logo-badge">A</div>
+      <div>
+        <h1 class="brand-title">Analytika SDK Playground</h1>
+        <p style="color: var(--text-muted); font-size: 13px;">Live Client Demonstration & Testbed</p>
+      </div>
+    </div>
+    <div class="status-badge">
+      <div class="status-pulse"></div>
+      SDK Embedded & Active
+    </div>
+  </header>
+
+  <!-- Interactive Controls Grid -->
+  <div class="grid">
+    
+    <!-- 1. SPA Navigation Simulator -->
+    <div class="card">
+      <div class="card-title">🌐 1. SPA Route Navigation</div>
+      <div class="card-desc">Simulate client-side routing. The SDK automatically detects pushState changes and records pageviews.</div>
+      <div class="btn-group">
+        <button onclick="navigateRoute('/')">Home (/)</button>
+        <button onclick="navigateRoute('/pricing')">Pricing (/pricing)</button>
+        <button onclick="navigateRoute('/features')">Features</button>
+        <button onclick="navigateRoute('/checkout')">Checkout</button>
+        <button onclick="navigateRoute('/docs')">Docs</button>
+      </div>
+      <p id="current-route-display" style="margin-top: 14px; font-size: 13px; color: #818cf8; font-family: 'JetBrains Mono', monospace;">
+        Current Path: /
+      </p>
+    </div>
+
+    <!-- 2. Declarative HTML Data-Goals -->
+    <div class="card">
+      <div class="card-title">🎯 2. HTML Auto-Capture Goals</div>
+      <div class="card-desc">Zero JavaScript needed! Buttons with <code>data-goal</code> and <code>data-goal-value</code> are tracked automatically on click.</div>
+      <div class="btn-group">
+        <button class="primary" data-goal="free_trial_signup" onclick="logAction('HTML Goal: free_trial_signup')">
+          🚀 Start Free Trial
+        </button>
+        <button class="emerald" data-goal="pro_plan_chosen" data-goal-value="49" onclick="logAction('HTML Goal: pro_plan_chosen ($49)')">
+          💎 Buy Pro ($49)
+        </button>
+        <button class="cyan" data-goal="business_plan_chosen" data-goal-value="149" onclick="logAction('HTML Goal: business_plan_chosen ($149)')">
+          🏢 Buy Business ($149)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. JavaScript SDK API -->
+    <div class="card">
+      <div class="card-title">⚡ 3. Programmatic JS SDK</div>
+      <div class="card-desc">Direct <code>analytika.track()</code> and <code>analytika.identify()</code> calls with custom metadata and revenue.</div>
+      <div class="btn-group">
+        <button onclick="triggerJsTrack()">track('export_report')</button>
+        <button onclick="triggerIdentify()">identify('user_alice_42')</button>
+        <button onclick="triggerReset()">reset()</button>
+        <button onclick="triggerFlush()">flush() (Force send)</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Real-time Live Log Terminal -->
+  <div class="terminal-card">
+    <div class="terminal-header">
+      <div class="terminal-dots">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+      </div>
+      <span>Analytika Client Event Stream</span>
+      <button style="padding: 2px 8px; font-size: 11px;" onclick="clearLogs()">Clear</button>
+    </div>
+    <div class="terminal-body" id="terminal-logs">
+      <div class="log-entry">
+        <span class="log-time">[${new Date().toLocaleTimeString()}]</span>
+        <span class="log-tag">READY</span>
+        <span>Playground loaded. Script initialized with API key: ana_live_demo_test_key_123</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function logAction(text) {
+    const term = document.getElementById("terminal-logs");
+    const entry = document.createElement("div");
+    entry.className = "log-entry";
+    entry.innerHTML = `
+      <span class="log-time">[${new Date().toLocaleTimeString()}]</span>
+      <span class="log-tag">EVENT</span>
+      <span class="log-val">${text}</span>
+    `;
+    term.appendChild(entry);
+    term.scrollTop = term.scrollHeight;
+  }
+
+  function clearLogs() {
+    document.getElementById("terminal-logs").innerHTML = "";
+  }
+
+  function navigateRoute(path) {
+    window.history.pushState({}, "", path);
+    document.getElementById("current-route-display").innerText = "Current Path: " + path;
+    logAction("Navigated SPA route to: " + path);
+  }
+
+  function triggerJsTrack() {
+    if (window.analytika) {
+      window.analytika.track("export_report", { format: "csv", records: 4500 });
+      logAction("Fired JS track('export_report', { format: 'csv', records: 4500 })");
+    }
+  }
+
+  function triggerIdentify() {
+    if (window.analytika) {
+      window.analytika.identify("user_alice_42", { plan: "pro", company: "Acme Inc." });
+      logAction("Fired JS identify('user_alice_42', { plan: 'pro' })");
+    }
+  }
+
+  function triggerReset() {
+    if (window.analytika) {
+      window.analytika.reset();
+      logAction("Fired JS reset() -> Generated new anonymous & session IDs");
+    }
+  }
+
+  function triggerFlush() {
+    if (window.analytika) {
+      window.analytika.flush();
+      logAction("Fired JS flush() -> Sent batched queue immediately");
+    }
+  }
+</script>
+
+</body>
+</html>
