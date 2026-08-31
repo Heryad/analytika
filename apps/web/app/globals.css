@@ -99,6 +99,29 @@
   }
 }
 
+/* Country Highlight Animation with Crimson Glow */
+@keyframes countryPulse {
+  0% {
+    fill: rgba(255, 255, 255, 0.03);
+    stroke: rgba(255, 255, 255, 0.1);
+    filter: drop-shadow(0 0 0px transparent);
+  }
+  20% {
+    fill: rgba(128, 14, 19, 0.65);
+    stroke: rgba(225, 29, 72, 0.95);
+    filter: drop-shadow(0 0 10px rgba(225, 29, 72, 0.8));
+  }
+  100% {
+    fill: rgba(255, 255, 255, 0.03);
+    stroke: rgba(255, 255, 255, 0.1);
+    filter: drop-shadow(0 0 0px transparent);
+  }
+}
+
+.country-pulse {
+  animation: countryPulse 2.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 /* Sharp Terminal Cursor Blinking Animation */
 @keyframes cursorBlink {
   0%, 45% {
