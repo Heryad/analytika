@@ -170,13 +170,17 @@ track("purchase", { value: 49, currency: "USD" });`;
         {/* Step Indicator Header directly on top of card */}
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard"
-              className="text-zinc-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/[0.04] cursor-pointer"
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 bg-[#1F1F1F] border-white/[0.08] hover:bg-[#262626] hover:border-white/[0.15] text-zinc-400 hover:text-white rounded-xl cursor-pointer shrink-0"
               title="Back to websites"
             >
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
+              <Link href="/dashboard">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
             <h1 className="text-lg font-bold text-white tracking-tight">
               Add Website
             </h1>

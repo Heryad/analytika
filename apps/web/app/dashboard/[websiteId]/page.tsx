@@ -43,6 +43,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { generateRealisticMetrics, mockAcquisition, mockLocation, mockTech, mockFunnels, mockGoals, mockEvents } from "@/lib/mock-data";
 
 type MetricType = "visitors" | "revenue" | "conversionRate" | "bounceRate" | "sessionTime";
@@ -59,7 +68,7 @@ export default function WebsiteAnalyticsPage() {
   // State
   const [timeRange, setTimeRange] = useState<TimeRangeType>("30 Days");
   const [activeMetric, setActiveMetric] = useState<MetricType>("visitors");
-  const [isDateOpen, setIsDateOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("All Traffic");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [onlineCount] = useState(14); // Mock live counter
@@ -97,13 +106,17 @@ export default function WebsiteAnalyticsPage() {
 
         {/* Left: Identity */}
         <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard"
-            className="text-zinc-400 hover:text-white transition-colors p-2 -ml-1 rounded-xl bg-[#262626]/50 hover:bg-[#262626] border border-white/[0.04] hover:border-white/[0.08] cursor-pointer"
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="h-9 w-9 p-0 bg-[#1F1F1F] border-white/[0.08] hover:bg-[#262626] hover:border-white/[0.15] text-zinc-400 hover:text-white rounded-xl cursor-pointer shrink-0"
             title="Back to websites"
           >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
+            <Link href="/dashboard">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
           <img
             src={`https://www.google.com/s2/favicons?domain=${siteDomain}&sz=64`}
             alt={siteDomain}
@@ -129,22 +142,22 @@ export default function WebsiteAnalyticsPage() {
         {/* Right: Controls */}
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* Date Range Picker using Shadcn Select */}
-          <div className="w-[140px]">
+          <div className="w-[145px]">
             <Select
               value={timeRange}
               onValueChange={(val) => {
                 if (val !== "Custom...") setTimeRange(val as TimeRangeType);
               }}
             >
-              <SelectTrigger className="bg-[#262626] border-white/[0.08] hover:border-white/[0.15] text-zinc-300 font-mono text-xs h-9 rounded-xl">
+              <SelectTrigger className="bg-[#1F1F1F] border-white/[0.08] hover:border-white/[0.15] text-zinc-300 font-mono text-xs h-9 rounded-xl">
                 <div className="flex items-center gap-2 truncate">
                   <Calendar className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                  <SelectValue />
+                  <span className="truncate">{timeRange}</span>
                 </div>
               </SelectTrigger>
-              <SelectContent>
-                {(["Today", "Last 24h", "7 Days", "30 Days", "YTD", "Custom..."] as TimeRangeType[]).map((r) => (
-                  <SelectItem key={r} value={r}>
+              <SelectContent className="bg-[#1F1F1F] border-white/[0.08] text-zinc-200">
+                {(["Today", "Last 24h", "7 Days", "30 Days", "YTD"] as TimeRangeType[]).map((r) => (
+                  <SelectItem key={r} value={r} className="text-xs cursor-pointer">
                     {r}
                   </SelectItem>
                 ))}
@@ -152,39 +165,72 @@ export default function WebsiteAnalyticsPage() {
             </Select>
           </div>
 
-          {/* Filter Button */}
-          <button className="flex items-center gap-2 bg-[#262626] border border-white/[0.08] hover:border-white/[0.15] text-zinc-300 px-3.5 py-2 rounded-xl text-xs font-mono transition-colors cursor-pointer">
-            <Filter className="h-4 w-4 text-zinc-400" />
-            <span>Filter</span>
-          </button>
+          {/* Filter Dropdown */}
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`bg-[#1F1F1F] border-white/[0.08] hover:border-white/[0.15] hover:bg-[#262626] text-xs font-mono h-9 px-3 rounded-xl cursor-pointer ${
+                  activeFilter !== "All Traffic" ? "text-rose-400 border-rose-500/30" : "text-zinc-300"
+                }`}
+              >
+                <Filter className="h-3.5 w-3.5 mr-1.5 text-zinc-400" />
+                <span>{activeFilter}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44 bg-[#1F1F1F] border-white/[0.08] text-zinc-300 text-xs">
+              <DropdownMenuLabel className="text-[10px] uppercase font-mono tracking-wider text-zinc-500 px-2 py-1">
+                Filter Traffic
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-white/[0.06]" />
+              {["All Traffic", "Direct Traffic", "Organic Search", "Paid Campaigns", "Desktop Only", "Mobile Only"].map((f) => (
+                <DropdownMenuItem
+                  key={f}
+                  onClick={() => setActiveFilter(f)}
+                  className={`text-xs cursor-pointer hover:bg-white/[0.04] hover:text-white ${activeFilter === f ? "text-white font-semibold bg-white/[0.06]" : ""}`}
+                >
+                  {f}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Share & Embed Widget Button */}
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setIsShareOpen(true)}
             title="Share & Embed Analytics Widget"
-            className="flex items-center gap-1.5 bg-[#262626] border border-white/[0.08] hover:border-white/[0.15] text-zinc-300 hover:text-white px-3 py-2 rounded-xl text-xs font-mono transition-all cursor-pointer active:scale-95 shadow-xs"
+            className="bg-[#1F1F1F] border-white/[0.08] hover:border-white/[0.15] hover:bg-[#262626] text-zinc-300 hover:text-white h-9 px-3 rounded-xl text-xs font-mono transition-all cursor-pointer shadow-xs"
           >
-            <Share2 className="h-4 w-4 text-rose-400" />
+            <Share2 className="h-3.5 w-3.5 mr-1.5 text-rose-400" />
             <span className="hidden sm:inline">Share</span>
-          </button>
+          </Button>
 
           {/* Refresh Button */}
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleRefresh}
             title="Refresh Analytics"
-            className="flex items-center justify-center bg-[#262626] border border-white/[0.08] hover:border-white/[0.15] text-zinc-300 p-2 rounded-xl transition-all cursor-pointer hover:text-white active:scale-95"
+            className="h-9 w-9 p-0 bg-[#1F1F1F] border-white/[0.08] hover:border-white/[0.15] hover:bg-[#262626] text-zinc-300 hover:text-white rounded-xl cursor-pointer"
           >
-            <RefreshCcw className={`h-4 w-4 transition-transform duration-500 ${isRefreshing ? "animate-spin text-rose-400" : ""}`} />
-          </button>
+            <RefreshCcw className={`h-3.5 w-3.5 transition-transform duration-500 ${isRefreshing ? "animate-spin text-rose-400" : ""}`} />
+          </Button>
 
           {/* Settings Button */}
-          <Link
-            href={`/dashboard/${websiteId}/settings`}
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
             title="Website Settings"
-            className="flex items-center justify-center bg-[#262626] border border-white/[0.08] hover:border-white/[0.15] text-zinc-400 hover:text-white p-2 rounded-xl transition-all cursor-pointer active:scale-95"
+            className="h-9 w-9 p-0 bg-[#1F1F1F] border-white/[0.08] hover:border-white/[0.15] hover:bg-[#262626] text-zinc-400 hover:text-white rounded-xl cursor-pointer"
           >
-            <Settings className="h-4 w-4" />
-          </Link>
+            <Link href={`/dashboard/${websiteId}/settings`}>
+              <Settings className="h-3.5 w-3.5" />
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -344,7 +390,7 @@ export default function WebsiteAnalyticsPage() {
         </div>
 
         {/* Row 4: Full Width (Funnels & Goals) */}
-        <div className="w-full bg-[#262626] border border-white/[0.08] rounded-2xl p-5 flex flex-col min-h-[500px] h-[500px]">
+        <div className="w-full bg-[#262626] border border-white/[0.08] rounded-2xl p-4 sm:p-5 flex flex-col min-h-[480px] md:h-[500px]">
           <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-2">
             <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner">
               {(["funnels", "goals"] as const).map(tab => (

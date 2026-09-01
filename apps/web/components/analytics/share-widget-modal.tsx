@@ -7,29 +7,21 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import {
   Share2,
-  Code2,
-  Globe,
   Copy,
   Check,
   Sparkles,
-  ExternalLink,
-  ShieldCheck,
-  TrendingUp,
-  Activity,
-  BarChart2
+  BarChart2,
+  Radio
 } from "lucide-react";
 
 interface ShareWidgetModalProps {
@@ -40,9 +32,20 @@ interface ShareWidgetModalProps {
   onlineCount?: number;
 }
 
-type WidgetType = "sparkline" | "live-pill" | "kpi-card" | "github-badge";
+type WidgetType = "sparkline" | "live-pill";
 type WidgetTheme = "dark" | "light" | "transparent";
 type EmbedFormat = "iframe" | "react" | "markdown";
+
+const CHART_COLORS = [
+  { id: "crimson", name: "Crimson", hex: "#800E13" },
+  { id: "rose", name: "Rose", hex: "#F43F5E" },
+  { id: "violet", name: "Violet", hex: "#8B5CF6" },
+  { id: "blue", name: "Electric Blue", hex: "#0EA5E9" },
+  { id: "emerald", name: "Emerald", hex: "#10B981" },
+  { id: "amber", name: "Amber", hex: "#F59E0B" },
+  { id: "cyan", name: "Cyan", hex: "#06B6D4" },
+  { id: "fuchsia", name: "Fuchsia", hex: "#D946EF" },
+];
 
 export function ShareWidgetModal({
   isOpen,
@@ -51,47 +54,67 @@ export function ShareWidgetModal({
   websiteId,
   onlineCount = 14,
 }: ShareWidgetModalProps) {
-  // Modal Tab
-  const [modalTab, setModalTab] = useState<"widget" | "public-link">("widget");
-
-  // Widget Customizer State
+  // Widget Customizer State (Snapshot Card & Live Visitor Pill)
   const [widgetType, setWidgetType] = useState<WidgetType>("sparkline");
   const [theme, setTheme] = useState<WidgetTheme>("dark");
+  const [chartColor, setChartColor] = useState<string>("#800E13");
   const [metric, setMetric] = useState<"visitors" | "pageviews" | "revenue">("visitors");
   const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d">("30d");
   const [embedFormat, setEmbedFormat] = useState<EmbedFormat>("iframe");
   const [copiedCode, setCopiedCode] = useState(false);
 
-  // Public Link State
-  const [copiedLink, setCopiedLink] = useState(false);
-  const publicShareUrl = `https://analytika.dev/share/${siteDomain}`;
+  const publicShareUrl = `https://analytika.app/share/${websiteId || siteDomain}`;
 
   // Dimensions based on widget type
   const widgetDimensions = useMemo(() => {
     switch (widgetType) {
       case "sparkline":
-        return { width: 340, height: 145 };
+        return { width: 330, height: 165 };
       case "live-pill":
-        return { width: 260, height: 44 };
-      case "kpi-card":
-        return { width: 340, height: 165 };
-      case "github-badge":
-        return { width: 230, height: 28 };
+        return { width: 280, height: 48 };
     }
   }, [widgetType]);
 
+  // Dynamic values and sparkline based on selected metric
+  const metricConfig = useMemo(() => {
+    const map = {
+      visitors: {
+        label: "Unique Visitors",
+        counts: { "24h": "1,840", "7d": "12,950", "30d": "48,920" },
+        pathD: "M 0 28 Q 25 32 50 18 T 100 12 T 150 16 T 200 4",
+      },
+      pageviews: {
+        label: "Page Views",
+        counts: { "24h": "5,420", "7d": "38,200", "30d": "142,800" },
+        pathD: "M 0 30 Q 30 22 60 25 T 120 14 T 170 8 T 200 3",
+      },
+      revenue: {
+        label: "Attributed MRR",
+        counts: { "24h": "$340", "7d": "$2,450", "30d": "$9,840" },
+        pathD: "M 0 29 Q 40 24 80 19 T 140 11 T 180 6 T 200 2",
+      },
+    };
+    return map[metric];
+  }, [metric]);
+
   const embedUrl = useMemo(() => {
-    return `https://analytika.dev/embed/widget?site=${siteDomain}&type=${widgetType}&theme=${theme}&metric=${metric}&range=${timeRange}`;
-  }, [siteDomain, widgetType, theme, metric, timeRange]);
+    const targetId = websiteId || siteDomain;
+    return `https://analytika.app/embed/widget?id=${targetId}&type=${widgetType}&theme=${theme}&color=${encodeURIComponent(
+      chartColor
+    )}&metric=${metric}&range=${timeRange}`;
+  }, [siteDomain, websiteId, widgetType, theme, chartColor, metric, timeRange]);
 
   const badgeUrl = useMemo(() => {
-    return `https://analytika.dev/badge/${siteDomain}/${metric}.svg?theme=${theme}`;
-  }, [siteDomain, metric, theme]);
+    const targetId = websiteId || siteDomain;
+    return `https://analytika.app/badge/${targetId}/${metric}.svg?theme=${theme}&color=${encodeURIComponent(
+      chartColor
+    )}`;
+  }, [siteDomain, websiteId, metric, theme, chartColor]);
 
   // Generated Embed Code string for Clipboard
   const rawCodeToCopy = useMemo(() => {
     if (embedFormat === "iframe") {
-      return `<iframe\n  src="${embedUrl}"\n  width="${widgetDimensions.width}"\n  height="${widgetDimensions.height}"\n  frameborder="0"\n  scrolling="no"\n  loading="lazy"\n  style="border-radius: 16px; border: ${
+      return `<iframe\n  src="${embedUrl}"\n  width="${widgetDimensions.width}"\n  height="${widgetDimensions.height}"\n  frameborder="0"\n  scrolling="no"\n  loading="lazy"\n  style="border-radius: 18px; border: ${
         theme === "dark"
           ? "1px solid rgba(255,255,255,0.08)"
           : theme === "light"
@@ -115,87 +138,51 @@ export function ShareWidgetModal({
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(publicShareUrl);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#181818] border-white/[0.08] text-white max-w-4xl p-0 overflow-hidden shadow-2xl rounded-2xl">
+      <DialogContent className="max-w-6xl w-[96vw] h-[94vh] max-h-[95vh] bg-[#1A1A1A] border-white/[0.1] text-white p-0 overflow-hidden shadow-2xl flex flex-col">
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#1F1F1F]">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#800E13]/20 border border-[#800E13]/40 flex items-center justify-center text-rose-400 shrink-0">
-              <Share2 className="w-4.5 h-4.5" />
-            </div>
-            <div>
-              <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
-                <span>Share & Embed Widgets</span>
-              </DialogTitle>
-              <DialogDescription className="text-xs text-zinc-400 mt-0.5">
-                Embed live verified stats on your website or share a public link for <span className="font-mono text-zinc-200">{siteDomain}</span>.
-              </DialogDescription>
-            </div>
-          </div>
+        <DialogHeader className="p-5 border-b border-white/[0.08] shrink-0 bg-[#1F1F1F]">
+          <DialogTitle className="text-base font-semibold text-white flex items-center gap-2">
+            <Share2 className="w-4 h-4 text-zinc-400" />
+            <span>Share & Embed Widgets</span>
+          </DialogTitle>
+        </DialogHeader>
 
-          {/* Top Switcher */}
-          <div className="flex items-center gap-1 bg-[#141414] p-1 rounded-xl border border-white/[0.06] self-start sm:self-auto">
-            <button
-              type="button"
-              onClick={() => setModalTab("widget")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                modalTab === "widget"
-                  ? "bg-[#262626] text-white shadow-sm border border-white/[0.08]"
-                  : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              <Code2 className="w-3.5 h-3.5" />
-              Embed Widget
-            </button>
-            <button
-              type="button"
-              onClick={() => setModalTab("public-link")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                modalTab === "public-link"
-                  ? "bg-[#262626] text-white shadow-sm border border-white/[0.08]"
-                  : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              <Globe className="w-3.5 h-3.5" />
-              Public Link
-            </button>
-          </div>
-        </div>
-
-        {/* TAB 1: EMBED WIDGET STUDIO */}
-        {modalTab === "widget" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-stretch">
-            {/* Left Controls (5 cols) */}
-            <div className="lg:col-span-5 p-5 space-y-4 border-b lg:border-b-0 lg:border-r border-white/[0.06] bg-[#1C1C1C]">
+        {/* 2-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 min-h-0 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08] overflow-hidden">
+          
+          {/* Left Controls (5 cols) */}
+          <div className="lg:col-span-5 p-5 space-y-4 overflow-y-auto flex flex-col justify-between">
+            <div className="space-y-4">
+              
               {/* 1. Widget Style Selector */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Widget Style</label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: "sparkline", label: "Snapshot Card", desc: "Trend graph & growth" },
-                    { id: "live-pill", label: "Live Visitor Pill", desc: "Realtime online badge" },
-                    { id: "kpi-card", label: "Open Proof Card", desc: "Multi-metric proof" },
-                    { id: "github-badge", label: "README Badge", desc: "SVG Markdown badge" },
+                    { id: "sparkline", label: "Snapshot Card", desc: "Trend graph & live stats" },
+                    { id: "live-pill", label: "Live Visitor Pill", desc: "Realtime online beacon" },
                   ].map((item) => (
                     <button
                       key={item.id}
                       type="button"
                       onClick={() => setWidgetType(item.id as WidgetType)}
-                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1 ${
                         widgetType === item.id
-                          ? "bg-[#2A2A2A] border-[#800E13] text-white shadow-sm ring-1 ring-[#800E13]/50"
+                          ? "bg-[#262626] border-[#800E13] text-white shadow-sm ring-1 ring-[#800E13]/50"
                           : "bg-[#161616] border-white/[0.04] text-zinc-400 hover:text-zinc-200 hover:border-white/[0.08]"
                       }`}
                     >
-                      <div className="text-xs font-semibold">{item.label}</div>
-                      <div className="text-[10px] text-zinc-500 mt-0.5">{item.desc}</div>
+                      <div className="flex items-center gap-2">
+                        {item.id === "sparkline" ? (
+                          <BarChart2 className={`w-3.5 h-3.5 ${widgetType === item.id ? "text-rose-400" : "text-zinc-500"}`} />
+                        ) : (
+                          <Radio className={`w-3.5 h-3.5 ${widgetType === item.id ? "text-emerald-400" : "text-zinc-500"}`} />
+                        )}
+                        <span className="text-xs font-semibold text-white">{item.label}</span>
+                      </div>
+                      <div className="text-[10px] text-zinc-500">{item.desc}</div>
                     </button>
                   ))}
                 </div>
@@ -222,19 +209,53 @@ export function ShareWidgetModal({
                 </div>
               </div>
 
-              {/* 3. Metric & Range (When applicable) */}
-              {widgetType !== "live-pill" && (
+              {/* 3. 8 Chart Colors Selector (For Snapshot Card) */}
+              {widgetType === "sparkline" && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                      Chart Color
+                    </label>
+                    <span className="text-[11px] font-mono text-zinc-400">
+                      {CHART_COLORS.find((c) => c.hex === chartColor)?.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-[#141414] rounded-xl border border-white/[0.06] gap-1.5">
+                    {CHART_COLORS.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        title={c.name}
+                        onClick={() => setChartColor(c.hex)}
+                        className={`w-6 h-6 rounded-full transition-all cursor-pointer flex items-center justify-center shrink-0 ${
+                          chartColor === c.hex
+                            ? "ring-2 ring-white ring-offset-2 ring-offset-[#141414] scale-110"
+                            : "hover:scale-105 opacity-75 hover:opacity-100"
+                        }`}
+                        style={{ backgroundColor: c.hex }}
+                      >
+                        {chartColor === c.hex && <Check className="w-3 h-3 text-white drop-shadow-md" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 4. Metric & Range (When applicable) */}
+              {widgetType === "sparkline" && (
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Metric</label>
                     <Select value={metric} onValueChange={(val) => setMetric(val as any)}>
-                      <SelectTrigger className="bg-[#161616] border-white/[0.08] text-white text-xs h-9">
-                        <SelectValue placeholder="Metric" />
+                      <SelectTrigger className="bg-[#161616] border-white/[0.08] text-white text-xs h-9 rounded-xl">
+                        <span className="truncate text-left block">
+                          {metric === "visitors" ? "Unique Visitors" : metric === "pageviews" ? "Page Views" : "Revenue (MRR)"}
+                        </span>
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="visitors">Unique Visitors</SelectItem>
-                        <SelectItem value="pageviews">Pageviews</SelectItem>
-                        <SelectItem value="revenue">Revenue (MRR)</SelectItem>
+                      <SelectContent className="bg-[#1F1F1F] border-white/[0.08] text-zinc-200">
+                        <SelectItem value="visitors" className="text-xs cursor-pointer">Unique Visitors</SelectItem>
+                        <SelectItem value="pageviews" className="text-xs cursor-pointer">Page Views</SelectItem>
+                        <SelectItem value="revenue" className="text-xs cursor-pointer">Revenue (MRR)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -242,31 +263,28 @@ export function ShareWidgetModal({
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Timeframe</label>
                     <Select value={timeRange} onValueChange={(val) => setTimeRange(val as any)}>
-                      <SelectTrigger className="bg-[#161616] border-white/[0.08] text-white text-xs h-9">
-                        <SelectValue placeholder="Timeframe" />
+                      <SelectTrigger className="bg-[#161616] border-white/[0.08] text-white text-xs h-9 rounded-xl">
+                        <span className="truncate text-left block">
+                          {timeRange === "24h" ? "Last 24 Hours" : timeRange === "7d" ? "Last 7 Days" : "Last 30 Days"}
+                        </span>
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="24h">Last 24 Hours</SelectItem>
-                        <SelectItem value="7d">Last 7 Days</SelectItem>
-                        <SelectItem value="30d">Last 30 Days</SelectItem>
+                      <SelectContent className="bg-[#1F1F1F] border-white/[0.08] text-zinc-200">
+                        <SelectItem value="24h" className="text-xs cursor-pointer">Last 24 Hours</SelectItem>
+                        <SelectItem value="7d" className="text-xs cursor-pointer">Last 7 Days</SelectItem>
+                        <SelectItem value="30d" className="text-xs cursor-pointer">Last 30 Days</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
               )}
 
-              {/* Verified Branding Indicator */}
-              <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[#141414] border border-white/[0.06]">
-                <img src="/logo.svg" alt="Analytika" className="w-5 h-5 object-contain shrink-0" />
-                <div className="text-[11px] text-zinc-300">
-                  <span className="font-semibold text-white">Analytika Verified</span>
-                  <p className="text-[10px] text-zinc-500">Every widget includes tamper-proof verification.</p>
-                </div>
-              </div>
             </div>
+          </div>
 
-            {/* Right Preview & Code Column (7 cols) */}
-            <div className="lg:col-span-7 p-5 flex flex-col space-y-4 bg-[#141414]">
+          {/* Right Column: Preview & Embed Code (7 cols) */}
+          <div className="lg:col-span-7 p-5 space-y-4 overflow-y-auto bg-[#141414] flex flex-col justify-between">
+            <div className="space-y-4">
+              
               {/* Preview Container */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -280,85 +298,97 @@ export function ShareWidgetModal({
                 </div>
 
                 {/* The Visual Preview Canvas */}
-                <div className="rounded-2xl bg-[#0B0B0B] border border-white/[0.06] p-5 flex items-center justify-center min-h-[155px] relative overflow-hidden bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:12px_12px] shadow-inner">
-                  {/* TYPE 1: SNAPSHOT CARD (Sparkline) */}
+                <div className="rounded-2xl bg-[#0B0B0B] border border-white/[0.06] p-6 flex items-center justify-center min-h-[190px] relative overflow-hidden bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:12px_12px] shadow-inner">
+                  
+                  {/* TYPE 1: SNAPSHOT CARD */}
                   {widgetType === "sparkline" && (
                     <div
-                      className={`w-[310px] p-4 rounded-2xl transition-all shadow-xl flex flex-col justify-between ${
+                      className={`w-[320px] p-4 rounded-2xl transition-all shadow-2xl flex flex-col justify-between ${
                         theme === "dark"
-                          ? "bg-[#1E1E1E] border border-white/[0.08] text-white shadow-2xl"
+                          ? "bg-[#181818] border border-white/[0.08] text-white shadow-black/80"
                           : theme === "light"
-                          ? "bg-white border border-black/[0.08] text-zinc-900 shadow-md"
-                          : "bg-white/[0.06] backdrop-blur-xl text-white border border-white/[0.12]"
+                          ? "bg-white border border-black/[0.08] text-zinc-900 shadow-xl shadow-black/10"
+                          : "bg-white/[0.06] backdrop-blur-xl text-white border border-white/[0.12] shadow-2xl"
                       }`}
                     >
-                      {/* Top Row: Domain Identity & Trend Badge */}
+                      {/* Top Row: Domain Identity */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <img
                             src={`https://www.google.com/s2/favicons?domain=${siteDomain}&sz=64`}
                             alt=""
-                            className="w-4 h-4 rounded-sm"
+                            className="w-4 h-4 rounded-xs"
                           />
-                          <span className="font-bold text-xs truncate max-w-[130px]">{siteDomain}</span>
+                          <span className="font-bold text-xs truncate max-w-[200px]">{siteDomain}</span>
                         </div>
-                        <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-                          +24.8% ↑
-                        </span>
                       </div>
 
-                      {/* Middle Row: Big Number & Glowing Sparkline */}
-                      <div className="flex items-end justify-between my-2">
+                      {/* Middle Row: Big Metric Number & Spline Chart with Selected Color */}
+                      <div className="flex items-end justify-between my-2.5">
                         <div>
                           <div className="text-2xl font-extrabold font-mono tracking-tight leading-none">
-                            {metric === "visitors" ? "42,850" : metric === "pageviews" ? "128,400" : "$12,480"}
+                            {metricConfig.counts[timeRange]}
                           </div>
                           <div
                             className={`text-[10px] font-mono mt-1 ${
                               theme === "light" ? "text-zinc-500" : "text-zinc-400"
                             }`}
                           >
-                            {metric === "visitors"
-                              ? "Unique Visitors (30d)"
-                              : metric === "pageviews"
-                              ? "Page Views (30d)"
-                              : "Attributed MRR"}
+                            {metricConfig.label} ({timeRange})
                           </div>
                         </div>
 
-                        {/* Glowing Red Curve */}
-                        <svg className="w-24 h-9 overflow-visible" viewBox="0 0 100 30">
-                          <defs>
-                            <linearGradient id="widgetGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#800E13" stopOpacity="0.4" />
-                              <stop offset="100%" stopColor="#800E13" stopOpacity="0.0" />
-                            </linearGradient>
-                          </defs>
-                          <path
-                            d="M 0 25 Q 20 28 40 16 T 70 12 T 90 6 L 100 4 L 100 30 L 0 30 Z"
-                            fill="url(#widgetGrad)"
-                          />
-                          <path
-                            d="M 0 25 Q 20 28 40 16 T 70 12 T 90 6 L 100 4"
-                            fill="none"
-                            stroke="#800E13"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                          />
-                        </svg>
+                        {/* Spline Chart */}
+                        <div className="w-24 h-9 relative">
+                          <svg className="w-full h-full overflow-visible" viewBox="0 0 200 40">
+                            <defs>
+                              <linearGradient id="widgetSparkGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor={chartColor} stopOpacity="0.4" />
+                                <stop offset="100%" stopColor={chartColor} stopOpacity="0.0" />
+                              </linearGradient>
+                            </defs>
+                            {/* Area fill */}
+                            <path
+                              d={`${metricConfig.pathD} L 200 40 L 0 40 Z`}
+                              fill="url(#widgetSparkGrad)"
+                            />
+                            {/* Spline Stroke */}
+                            <path
+                              d={metricConfig.pathD}
+                              fill="none"
+                              stroke={chartColor}
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                            />
+                            {/* Glowing End Dot */}
+                            <circle cx="200" cy="4" r="3.5" fill={chartColor} />
+                          </svg>
+                        </div>
                       </div>
 
-                      {/* Bottom Row: Analytika Brand Verification */}
-                      <div
-                        className={`flex items-center justify-between pt-2 border-t text-[10px] font-mono ${
-                          theme === "light" ? "border-zinc-100 text-zinc-500" : "border-white/[0.06] text-zinc-400"
-                        }`}
-                      >
-                        <span className="text-[9px] text-zinc-500">Live Traffic</span>
-                        <div className="flex items-center gap-1 font-semibold text-zinc-300">
-                          <img src="/logo.svg" alt="" className="w-3.5 h-3.5 object-contain" />
-                          <span>Analytika</span>
-                        </div>
+                      {/* Bottom Row: Analytika Brand Link */}
+                      <div className={`pt-2 border-t flex items-center justify-between ${
+                        theme === "light" ? "border-black/[0.08]" : "border-white/[0.08]"
+                      }`}>
+                        <a
+                          href="https://analytika.app"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 transition-opacity hover:opacity-80 cursor-pointer"
+                        >
+                          <Image
+                            src="/logo.svg"
+                            alt="Analytika Logo"
+                            width={14}
+                            height={14}
+                            className="w-3.5 h-3.5 object-contain"
+                          />
+                          <span className={`text-[11px] font-bold tracking-tight ${
+                            theme === "light" ? "text-zinc-900" : "text-white"
+                          }`}>
+                            Analytika
+                          </span>
+                        </a>
                       </div>
                     </div>
                   )}
@@ -366,141 +396,73 @@ export function ShareWidgetModal({
                   {/* TYPE 2: LIVE VISITOR PILL */}
                   {widgetType === "live-pill" && (
                     <div
-                      className={`inline-flex items-center gap-2.5 px-4 py-2 rounded-full text-xs font-mono transition-all shadow-xl ${
+                      className={`inline-flex items-center gap-3 px-4 py-2.5 rounded-full transition-all shadow-2xl ${
                         theme === "dark"
-                          ? "bg-[#1E1E1E] border border-white/[0.08] text-white"
+                          ? "bg-[#181818] border border-white/[0.08] text-white shadow-black/80"
                           : theme === "light"
-                          ? "bg-white border border-black/[0.08] text-zinc-900 shadow-md"
-                          : "bg-white/[0.06] backdrop-blur-xl text-white border border-white/[0.12]"
+                          ? "bg-white border border-black/[0.08] text-zinc-900 shadow-xl shadow-black/10"
+                          : "bg-white/[0.08] backdrop-blur-xl text-white border border-white/[0.15] shadow-2xl"
                       }`}
                     >
-                      <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                      </span>
-                      <span className="font-extrabold text-sm text-white">{onlineCount}</span>
-                      <span className={theme === "light" ? "text-zinc-500 text-[11px]" : "text-zinc-400 text-[11px]"}>
-                        Live Visitors
-                      </span>
-                      <span className="h-3 w-px bg-white/10" />
-                      <div className="flex items-center gap-1 font-bold text-white tracking-tight text-[11px]">
-                        <img src="/logo.svg" alt="" className="w-3.5 h-3.5 object-contain" />
-                        <span>Analytika</span>
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex items-center justify-center">
+                          <span className="absolute inline-flex h-3 w-3 rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
+                        </div>
+                        <span className="font-mono font-bold text-xs">{onlineCount}</span>
+                        <span className="text-[11px] text-zinc-400 font-medium">online now</span>
+                      </div>
+                      <span className="text-zinc-600">|</span>
+                      <div className="flex items-center gap-1.5">
+                        <img
+                          src={`https://www.google.com/s2/favicons?domain=${siteDomain}&sz=32`}
+                          alt=""
+                          className="w-3.5 h-3.5 rounded-xs"
+                        />
+                        <span className="font-mono text-[11px] text-zinc-300 font-medium truncate max-w-[120px]">{siteDomain}</span>
                       </div>
                     </div>
                   )}
 
-                  {/* TYPE 3: OPEN PROOF CARD */}
-                  {widgetType === "kpi-card" && (
-                    <div
-                      className={`w-[310px] p-4 rounded-2xl transition-all shadow-xl space-y-3 ${
-                        theme === "dark"
-                          ? "bg-[#1E1E1E] border border-white/[0.08] text-white"
-                          : theme === "light"
-                          ? "bg-white border border-black/[0.08] text-zinc-900 shadow-md"
-                          : "bg-white/[0.06] backdrop-blur-xl text-white border border-white/[0.12]"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between border-b pb-2.5 border-white/[0.06]">
-                        <div className="flex items-center gap-1.5">
-                          <img
-                            src={`https://www.google.com/s2/favicons?domain=${siteDomain}&sz=64`}
-                            alt=""
-                            className="w-3.5 h-3.5 rounded-sm"
-                          />
-                          <span className="font-bold text-xs truncate max-w-[130px]">{siteDomain}</span>
-                        </div>
-                        <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1 font-semibold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          Verified Live
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2 text-center font-mono">
-                        <div
-                          className={`p-2 rounded-xl ${
-                            theme === "light" ? "bg-zinc-100" : "bg-[#141414] border border-white/[0.04]"
-                          }`}
-                        >
-                          <div className="text-[9px] text-zinc-400 uppercase">Visitors</div>
-                          <div className="text-xs font-bold mt-0.5">42.8k</div>
-                        </div>
-                        <div
-                          className={`p-2 rounded-xl ${
-                            theme === "light" ? "bg-zinc-100" : "bg-[#141414] border border-white/[0.04]"
-                          }`}
-                        >
-                          <div className="text-[9px] text-zinc-400 uppercase">Bounce</div>
-                          <div className="text-xs font-bold mt-0.5">38.4%</div>
-                        </div>
-                        <div
-                          className={`p-2 rounded-xl ${
-                            theme === "light" ? "bg-zinc-100" : "bg-[#141414] border border-white/[0.04]"
-                          }`}
-                        >
-                          <div className="text-[9px] text-zinc-400 uppercase">Conv.</div>
-                          <div className="text-xs font-bold mt-0.5">4.2%</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-1 text-[10px] font-mono text-zinc-400">
-                        <span>Open Metrics</span>
-                        <div className="flex items-center gap-1 text-white font-semibold">
-                          <img src="/logo.svg" alt="" className="w-3.5 h-3.5 object-contain" />
-                          <span>Analytika</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TYPE 4: GITHUB BADGE */}
-                  {widgetType === "github-badge" && (
-                    <div className="inline-flex rounded-lg overflow-hidden border border-white/[0.12] text-xs font-mono shadow-lg">
-                      <div className="bg-[#1F1F1F] text-white px-3 py-1 flex items-center gap-1.5 font-bold text-[11px]">
-                        <img src="/logo.svg" alt="" className="w-3.5 h-3.5 object-contain" />
-                        <span>analytika</span>
-                      </div>
-                      <div className="bg-[#800E13] text-white px-3 py-1 font-extrabold text-[11px] tracking-tight">
-                        42.8k visitors/mo
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
-              {/* Terminal Code Window with Syntax Highlighting */}
+              {/* Code Snippet Export Box */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  {/* Format Selector Pills */}
-                  <div className="flex items-center gap-1 bg-[#1A1A1A] p-0.5 rounded-lg border border-white/[0.06]">
+                  {/* Format Pills */}
+                  <div className="flex items-center gap-1 bg-[#181818] p-1 rounded-xl border border-white/[0.06]">
                     {(["iframe", "react", "markdown"] as EmbedFormat[]).map((fmt) => (
                       <button
                         key={fmt}
                         type="button"
                         onClick={() => setEmbedFormat(fmt)}
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-mono transition-colors cursor-pointer ${
-                          embedFormat === fmt ? "bg-[#800E13] text-white font-semibold" : "text-zinc-400 hover:text-white"
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold uppercase font-mono transition-all cursor-pointer ${
+                          embedFormat === fmt
+                            ? "bg-[#262626] text-white shadow-sm border border-white/[0.08]"
+                            : "text-zinc-500 hover:text-zinc-300"
                         }`}
                       >
-                        {fmt === "iframe" ? "HTML <iframe>" : fmt === "react" ? "React" : "Markdown"}
+                        {fmt}
                       </button>
                     ))}
                   </div>
 
                   <Button
                     size="sm"
+                    variant="outline"
                     onClick={handleCopyCode}
-                    className="bg-[#800E13] hover:bg-[#800E13]/90 text-white text-xs h-7 px-3 cursor-pointer shadow-xs"
+                    className="border-white/[0.08] hover:bg-[#262626] text-zinc-300 text-xs h-8 rounded-xl cursor-pointer"
                   >
                     {copiedCode ? (
                       <>
-                        <Check className="w-3.5 h-3.5 mr-1 text-emerald-300" />
-                        Copied Code
+                        <Check className="w-3.5 h-3.5 mr-1 text-emerald-400" />
+                        <span className="text-emerald-400 font-medium">Copied!</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5 mr-1" />
-                        Copy Embed Code
+                        Copy Code
                       </>
                     )}
                   </Button>
@@ -532,7 +494,7 @@ export function ShareWidgetModal({
                         {"  "}<span className="text-amber-300">frameborder</span>=<span className="text-emerald-300">&quot;0&quot;</span>{"\n"}
                         {"  "}<span className="text-amber-300">scrolling</span>=<span className="text-emerald-300">&quot;no&quot;</span>{"\n"}
                         {"  "}<span className="text-zinc-400">loading</span>=<span className="text-emerald-300">&quot;lazy&quot;</span>{"\n"}
-                        {"  "}<span className="text-amber-300">style</span>=<span className="text-emerald-300">&quot;border-radius: 16px; border: {theme === "dark" ? "1px solid rgba(255,255,255,0.08)" : theme === "light" ? "1px solid rgba(0,0,0,0.08)" : "none"};&quot;</span>{"\n"}
+                        {"  "}<span className="text-amber-300">style</span>=<span className="text-emerald-300">&quot;border-radius: 18px; border: {theme === "dark" ? "1px solid rgba(255,255,255,0.08)" : theme === "light" ? "1px solid rgba(0,0,0,0.08)" : "none"};&quot;</span>{"\n"}
                         &gt;&lt;/<span className="text-rose-400">iframe</span>&gt;
                       </>
                     )}
@@ -562,59 +524,34 @@ export function ShareWidgetModal({
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
-        )}
 
-        {/* TAB 2: PUBLIC DASHBOARD LINK */}
-        {modalTab === "public-link" && (
-          <div className="p-8 space-y-6 max-w-xl mx-auto flex flex-col justify-center">
-            <div className="text-center space-y-1.5">
-              <div className="w-14 h-14 rounded-2xl bg-[#800E13]/10 border border-[#800E13]/30 flex items-center justify-center mx-auto text-[#800E13] mb-2 shadow-inner">
-                <Globe className="w-7 h-7" />
-              </div>
-              <h3 className="text-lg font-bold text-white">Public Analytics Link</h3>
-              <p className="text-xs text-zinc-400 max-w-md mx-auto">
-                Share view-only analytics with your community, customers, or investors without giving account access.
-              </p>
-            </div>
+        </div>
 
-            <div className="p-5 rounded-2xl bg-[#141414] border border-white/[0.08] space-y-4 shadow-xl">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-300">Public Dashboard URL</label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    readOnly
-                    value={publicShareUrl}
-                    className="bg-[#1F1F1F] border-white/[0.08] text-zinc-200 text-xs font-mono select-all"
-                  />
-                  <Button
-                    onClick={handleCopyLink}
-                    className="bg-[#800E13] hover:bg-[#800E13]/90 text-white shrink-0 text-xs"
-                  >
-                    {copiedLink ? <Check className="w-4 h-4 text-emerald-300 mr-1" /> : <Copy className="w-4 h-4 mr-1" />}
-                    {copiedLink ? "Copied" : "Copy Link"}
-                  </Button>
-                </div>
-              </div>
+        {/* Modal Footer Controls */}
+        <div className="flex items-center justify-end gap-2.5 p-4 border-t border-white/[0.08] bg-[#1F1F1F] shrink-0">
+          <Button 
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="text-zinc-400 hover:text-white text-xs h-9 px-3 rounded-xl cursor-pointer"
+          >
+            Close
+          </Button>
+          <Button 
+            type="button"
+            size="sm"
+            onClick={handleCopyCode}
+            className="bg-[#800E13] hover:bg-[#9e1218] text-white text-xs font-medium h-9 px-5 rounded-xl cursor-pointer shadow-xs transition-all flex items-center gap-1.5"
+          >
+            {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{copiedCode ? "Copied to Clipboard!" : "Copy Embed Code"}</span>
+          </Button>
+        </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-white/[0.04] text-xs">
-                <span className="text-zinc-400 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  Read-only view (Settings & credentials hidden)
-                </span>
-                <a
-                  href={publicShareUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-rose-400 hover:text-rose-300 flex items-center gap-1 font-mono text-[11px]"
-                >
-                  Preview Link <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );

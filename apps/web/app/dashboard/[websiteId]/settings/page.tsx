@@ -22,7 +22,25 @@ import {
   Terminal,
   ExternalLink,
   CheckCircle2,
-  Server
+  Server,
+  CreditCard,
+  Eye,
+  EyeOff,
+  Sparkles,
+  Bell,
+  Mail,
+  Zap,
+  User,
+  MapPin,
+  Pencil,
+  Info,
+  Star,
+  Reply,
+  Send,
+  Inbox,
+  Tag,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,6 +87,121 @@ function Switch({ checked, onCheckedChange }: { checked: boolean; onCheckedChang
   );
 }
 
+interface CustomEventAlert {
+  id: string;
+  name: string;
+  eventId: string;
+  subject: string;
+  body: string;
+  enabled: boolean;
+  createdAt: string;
+  lastTriggered?: string;
+  icon: string;
+}
+
+const ALERT_VARIABLE_GROUPS = [
+  {
+    category: "Alert & Event",
+    icon: Zap,
+    color: "text-amber-400 border-amber-500/20 bg-amber-500/10",
+    items: [
+      { tag: "{{alert_name}}", label: "alert_name", sample: "Payment Completed" },
+      { tag: "{{event.name}}", label: "name", sample: "Payment Completed" },
+      { tag: "{{event.timestamp}}", label: "timestamp", sample: "Sep 1, 2026 21:45 UTC" },
+    ],
+  },
+  {
+    category: "Location",
+    icon: MapPin,
+    color: "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
+    items: [
+      { tag: "{{visitor.country}}", label: "country", sample: "United States" },
+      { tag: "{{location.region}}", label: "region", sample: "California" },
+      { tag: "{{location.city}}", label: "city", sample: "San Francisco" },
+    ],
+  },
+  {
+    category: "Visitor",
+    icon: User,
+    color: "text-blue-400 border-blue-500/20 bg-blue-500/10",
+    items: [
+      { tag: "{{visitor.name}}", label: "name", sample: "Alex Morgan" },
+      { tag: "{{visitor.email}}", label: "email", sample: "alex.morgan@acme.com" },
+    ],
+  },
+  {
+    category: "Source",
+    icon: Globe,
+    color: "text-purple-400 border-purple-500/20 bg-purple-500/10",
+    items: [
+      { tag: "{{source.referrer}}", label: "referrer", sample: "https://news.ycombinator.com" },
+      { tag: "{{source.ref}}", label: "ref", sample: "producthunt" },
+      { tag: "{{source.source}}", label: "source", sample: "newsletter" },
+      { tag: "{{source.via}}", label: "via", sample: "twitter_ad" },
+      { tag: "{{source.utm_source}}", label: "utm_source", sample: "google" },
+      { tag: "{{source.utm_medium}}", label: "utm_medium", sample: "cpc" },
+      { tag: "{{source.utm_campaign}}", label: "utm_campaign", sample: "summer_launch_2026" },
+      { tag: "{{source.utm_term}}", label: "utm_term", sample: "web_analytics" },
+      { tag: "{{source.utm_content}}", label: "utm_content", sample: "hero_banner" },
+    ],
+  },
+  {
+    category: "System",
+    icon: Server,
+    color: "text-rose-400 border-rose-500/20 bg-rose-500/10",
+    items: [
+      { tag: "{{system.device}}", label: "device", sample: "MacBook Pro" },
+      { tag: "{{system.os}}", label: "os", sample: "macOS Sequoia" },
+      { tag: "{{system.browser}}", label: "browser", sample: "Chrome 128.0" },
+    ],
+  },
+];
+
+function interpolateAlertText(text: string, alertName: string) {
+  const displayName = alertName.trim() || "Payment Completed";
+  return text
+    .replace(/\{\{alert_name\}\}/g, displayName)
+    .replace(/\{\{event_id\}\}/g, displayName)
+    .replace(/\{\{event\.name\}\}/g, displayName)
+    .replace(/\{\{event\.timestamp\}\}/g, "Sep 1, 2026, 9:45 PM UTC")
+    .replace(/\{\{visitor\.country\}\}/g, "United States")
+    .replace(/\{\{location\.country\}\}/g, "United States")
+    .replace(/\{\{location\.region\}\}/g, "California")
+    .replace(/\{\{location\.city\}\}/g, "San Francisco")
+    .replace(/\{\{visitor\.name\}\}/g, "Alex Morgan")
+    .replace(/\{\{visitor\.email\}\}/g, "alex.morgan@acme.com")
+    .replace(/\{\{source\.referrer\}\}/g, "https://news.ycombinator.com")
+    .replace(/\{\{source\.ref\}\}/g, "producthunt")
+    .replace(/\{\{source\.source\}\}/g, "newsletter")
+    .replace(/\{\{source\.via\}\}/g, "twitter_ad")
+    .replace(/\{\{source\.utm_source\}\}/g, "google")
+    .replace(/\{\{source\.utm_medium\}\}/g, "cpc")
+    .replace(/\{\{source\.utm_campaign\}\}/g, "summer_launch_2026")
+    .replace(/\{\{source\.utm_term\}\}/g, "web_analytics")
+    .replace(/\{\{source\.utm_content\}\}/g, "hero_banner")
+    .replace(/\{\{system\.device\}\}/g, "Desktop (Mac)")
+    .replace(/\{\{system\.os\}\}/g, "macOS Sequoia")
+    .replace(/\{\{system\.browser\}\}/g, "Chrome 128.0");
+}
+
+function getAlertIconComponent(iconName: string) {
+  switch (iconName) {
+    case "dollar":
+      return DollarSign;
+    case "user":
+      return User;
+    case "bell":
+      return Bell;
+    case "sparkles":
+      return Sparkles;
+    case "globe":
+      return Globe;
+    case "zap":
+    default:
+      return Zap;
+  }
+}
+
 export default function WebsiteSettingsPage() {
   const params = useParams();
   const router = useRouter();
@@ -78,7 +211,7 @@ export default function WebsiteSettingsPage() {
   const initialName = websiteId === "1" ? "Analytika Production" : websiteId === "2" ? "SaaS Growth Hub" : "DevPulse App";
 
   // Top Tabs
-  const [activeTab, setActiveTab] = useState<"general" | "snippet" | "filters" | "danger">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "revenue" | "alerts" | "filters" | "danger">("general");
 
   // General Tab State
   const [siteName, setSiteName] = useState(initialName);
@@ -115,8 +248,198 @@ export default function WebsiteSettingsPage() {
   // Danger Zone State
   const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
 
+  // Revenue Attribution / Payment Integrations State
+  type PaymentPlatform = "stripe" | "polar" | "dodo" | "paddle" | "lemonsqueezy";
+  const [paymentPlatform, setPaymentPlatform] = useState<PaymentPlatform>("stripe");
+  const [autoAttribution, setAutoAttribution] = useState(true);
+
+  // Platform Form Inputs (Direct API)
+  const [stripeKey, setStripeKey] = useState("rk_live_51Msz82...93xL");
+  const [polarToken, setPolarToken] = useState("");
+  const [dodoApiKey, setDodoApiKey] = useState("");
+  const [paddleApiKey, setPaddleApiKey] = useState("");
+  const [lemonApiKey, setLemonApiKey] = useState("");
+  const [lemonStoreId, setLemonStoreId] = useState("");
+
+  // Visibility toggle for secret inputs
+  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
+  const toggleSecret = (field: string) => {
+    setShowSecrets((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  // Connection status per platform
+  const [connectionState, setConnectionState] = useState<
+    Record<PaymentPlatform, { isConnected: boolean; isConnecting: boolean; connectedAt?: string }>
+  >({
+    stripe: { isConnected: true, isConnecting: false, connectedAt: "Yesterday at 4:12 PM" },
+    polar: { isConnected: false, isConnecting: false },
+    dodo: { isConnected: false, isConnecting: false },
+    paddle: { isConnected: false, isConnecting: false },
+    lemonsqueezy: { isConnected: false, isConnecting: false },
+  });
+
+  const handleConnectPlatform = (platform: PaymentPlatform) => {
+    setConnectionState((prev) => ({
+      ...prev,
+      [platform]: { ...prev[platform], isConnecting: true },
+    }));
+
+    setTimeout(() => {
+      setConnectionState((prev) => ({
+        ...prev,
+        [platform]: {
+          isConnected: true,
+          isConnecting: false,
+          connectedAt: "Just now",
+        },
+      }));
+    }, 1200);
+  };
+
+  const handleDisconnectPlatform = (platform: PaymentPlatform) => {
+    setConnectionState((prev) => ({
+      ...prev,
+      [platform]: { isConnected: false, isConnecting: false },
+    }));
+  };
+
+  // Alerts State
+  const [alerts, setAlerts] = useState<CustomEventAlert[]>([
+    {
+      id: "alert-1",
+      name: "Payment Completed",
+      eventId: "checkout_completed",
+      subject: "New {{alert_name}} from {{visitor.country}}",
+      body: `Hi Team,\n\nA new {{alert_name}} occurred on ${initialDomain}!\n\nCustomer: {{visitor.name}} ({{visitor.email}})\nLocation: {{location.city}}, {{location.country}}\nAttributed Channel: {{source.utm_source}} / {{source.utm_campaign}}\nDevice: {{system.browser}} on {{system.os}}`,
+      enabled: true,
+      createdAt: "2 days ago",
+      lastTriggered: "14 minutes ago",
+      icon: "dollar",
+    },
+    {
+      id: "alert-2",
+      name: "Enterprise Demo Requested",
+      eventId: "demo_booked",
+      subject: "New {{alert_name}} from {{visitor.country}}",
+      body: `High-value lead alert!\n\nA prospect just booked a demo:\n- Action: {{alert_name}}\n- Name: {{visitor.name}}\n- Email: {{visitor.email}}\n- Location: {{location.region}}, {{location.country}}\n- Source Referrer: {{source.referrer}}\n- Device: {{system.device}}`,
+      enabled: true,
+      createdAt: "1 week ago",
+      lastTriggered: "3 hours ago",
+      icon: "zap",
+    },
+    {
+      id: "alert-3",
+      name: "New User Registration",
+      eventId: "user_signup",
+      subject: "New {{alert_name}} from {{visitor.country}}",
+      body: `New user registration detected:\n\nAction: {{alert_name}}\nEmail: {{visitor.email}}\nSource: {{source.utm_source}} ({{source.utm_medium}})\nLocation: {{location.city}}, {{location.country}}`,
+      enabled: false,
+      createdAt: "2 weeks ago",
+      icon: "user",
+    },
+  ]);
+
+  // Alert Modal State
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+  const [editingAlertId, setEditingAlertId] = useState<string | null>(null);
+  const [modalEventId, setModalEventId] = useState("");
+  const [modalName, setModalName] = useState("");
+  const [modalSubject, setModalSubject] = useState("New {{alert_name}} from {{visitor.country}}");
+  const [modalBody, setModalBody] = useState(`Hi Team,\n\nA new {{alert_name}} occurred on ${initialDomain}!\n\nVisitor: {{visitor.name}} ({{visitor.email}})\nLocation: {{location.city}}, {{location.country}}\nSource: {{source.utm_source}} / {{source.utm_campaign}}\nDevice: {{system.browser}} on {{system.os}}`);
+  const [modalIcon, setModalIcon] = useState("zap");
+  const [modalPreviewTab, setModalPreviewTab] = useState<"edit" | "preview">("edit");
+  const [isVariablesDrawerOpen, setIsVariablesDrawerOpen] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
+  const [testSentSuccess, setTestSentSuccess] = useState(false);
+
+  const handleOpenCreateAlert = () => {
+    setEditingAlertId(null);
+    setModalEventId("");
+    setModalName("");
+    setModalSubject("New {{alert_name}} from {{visitor.country}}");
+    setModalBody(`Hi Team,\n\nA new {{alert_name}} occurred on ${initialDomain}!\n\nVisitor: {{visitor.name}} ({{visitor.email}})\nLocation: {{location.city}}, {{location.country}}\nSource: {{source.utm_source}} / {{source.utm_campaign}}\nDevice: {{system.browser}} on {{system.os}}`);
+    setModalIcon("zap");
+    setModalPreviewTab("edit");
+    setIsVariablesDrawerOpen(false);
+    setTestSentSuccess(false);
+    setIsAlertModalOpen(true);
+  };
+
+  const handleEditAlert = (alert: CustomEventAlert) => {
+    setEditingAlertId(alert.id);
+    setModalEventId(alert.eventId);
+    setModalName(alert.name);
+    setModalSubject(alert.subject);
+    setModalBody(alert.body);
+    setModalIcon(alert.icon || "zap");
+    setModalPreviewTab("edit");
+    setIsVariablesDrawerOpen(false);
+    setTestSentSuccess(false);
+    setIsAlertModalOpen(true);
+  };
+
+  const handleSaveAlert = () => {
+    if (!modalEventId.trim() || !modalName.trim()) return;
+
+    if (editingAlertId) {
+      setAlerts((prev) =>
+        prev.map((a) =>
+          a.id === editingAlertId
+            ? {
+                ...a,
+                eventId: modalEventId.trim(),
+                name: modalName.trim(),
+                subject: modalSubject,
+                body: modalBody,
+                icon: modalIcon,
+              }
+            : a
+        )
+      );
+    } else {
+      const newAlert: CustomEventAlert = {
+        id: `alert-${Date.now()}`,
+        name: modalName.trim(),
+        eventId: modalEventId.trim(),
+        subject: modalSubject || "New {{alert_name}} from {{visitor.country}}",
+        body: modalBody,
+        enabled: true,
+        createdAt: "Just now",
+        icon: modalIcon,
+      };
+      setAlerts((prev) => [newAlert, ...prev]);
+    }
+    setIsAlertModalOpen(false);
+  };
+
+  const handleDeleteAlert = (id: string) => {
+    setAlerts((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  const handleToggleAlert = (id: string) => {
+    setAlerts((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, enabled: !a.enabled } : a))
+    );
+  };
+
+  const handleInsertVariable = (tag: string) => {
+    setModalBody((prev) => `${prev} ${tag}`);
+  };
+
+  const handleSendTestEmail = () => {
+    setIsSendingTest(true);
+    setTimeout(() => {
+      setIsSendingTest(false);
+      setTestSentSuccess(true);
+      setTimeout(() => setTestSentSuccess(false), 3000);
+    }, 700);
+  };
+
   // Check if General Form is dirty
-  const isGeneralDirty = siteName.trim() !== initialSavedName.trim() || timezone !== initialTimezone || currency !== initialCurrency;
+  const isGeneralDirty =
+    siteName.trim() !== initialSavedName.trim() ||
+    timezone !== initialTimezone ||
+    currency !== initialCurrency;
 
   const handleSaveGeneral = () => {
     setInitialSavedName(siteName);
@@ -177,13 +500,17 @@ export default function WebsiteSettingsPage() {
     <div className="space-y-6">
       {/* Top Header - Back Button & Site Title */}
       <div className="flex items-center gap-3.5">
-        <Link
-          href={`/dashboard/${websiteId}`}
-          className="text-zinc-400 hover:text-white transition-colors p-2 -ml-1 rounded-xl bg-[#262626] border border-white/[0.08] hover:border-white/[0.15] cursor-pointer"
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="h-9 w-9 p-0 bg-[#1F1F1F] border-white/[0.08] hover:bg-[#262626] hover:border-white/[0.15] text-zinc-400 hover:text-white rounded-xl cursor-pointer shrink-0"
           title="Back to Analytics"
         >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
+          <Link href={`/dashboard/${websiteId}`}>
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white leading-tight">
             Project Settings
@@ -196,7 +523,8 @@ export default function WebsiteSettingsPage() {
       <div className="flex items-center gap-1.5 border-b border-white/[0.08] pb-3 flex-wrap">
         {[
           { id: "general", label: "General", icon: Settings },
-          { id: "snippet", label: "Tracking & Proxy", icon: Code },
+          { id: "revenue", label: "Revenue & Payments", icon: DollarSign },
+          { id: "alerts", label: "Alerts", icon: Bell },
           { id: "filters", label: "Filters & Privacy", icon: Shield },
           { id: "danger", label: "Danger Zone", icon: Trash2, danger: true },
         ].map((tab) => {
@@ -344,70 +672,13 @@ export default function WebsiteSettingsPage() {
             </div>
           </div>
 
-          {/* Public Dashboard Card */}
-          <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-semibold text-white flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-zinc-400" />
-                  <span>Public Dashboard Sharing</span>
-                </h2>
-                <p className="text-xs text-zinc-400 mt-0.5">Allow anyone with the link to view this site's stats.</p>
-              </div>
-              <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-            </div>
-
-            {isPublic && (
-              <div className="space-y-4 pt-3 border-t border-white/[0.06] animate-in fade-in duration-200">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-zinc-300">Public URL</label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      readOnly
-                      value={`https://analytika.dev/share/${initialDomain}`}
-                      className="bg-[#1F1F1F] border-white/[0.08] text-zinc-300 text-xs font-mono select-all"
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={() => copyToClipboard(`https://analytika.dev/share/${initialDomain}`, "snippet")}
-                      className="border-white/[0.08] hover:bg-white/[0.04] text-white shrink-0 text-xs"
-                    >
-                      <Copy className="w-3.5 h-3.5 mr-1" />
-                      Copy
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <div>
-                    <div className="text-xs font-medium text-zinc-300">PIN Code Protection</div>
-                    <div className="text-[11px] text-zinc-500">Require visitors to enter a PIN to access stats.</div>
-                  </div>
-                  <Switch checked={hasPassword} onCheckedChange={setHasPassword} />
-                </div>
-
-                {hasPassword && (
-                  <Input
-                    type="password"
-                    placeholder="Enter PIN code / password"
-                    value={sharePassword}
-                    onChange={(e) => setSharePassword(e.target.value)}
-                    className="bg-[#1F1F1F] border-white/[0.08] text-white text-sm max-w-xs"
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 2: TRACKING & PROXY */}
-      {activeTab === "snippet" && (
-        <div className="max-w-2xl space-y-6">
           {/* Tracking Snippet & Framework Selector Card */}
           <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 space-y-4">
             <div>
-              <h2 className="text-base font-semibold text-white">Tracking & SDK Setup</h2>
+              <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                <Code className="w-4 h-4 text-zinc-400" />
+                <span>Tracking & SDK Setup</span>
+              </h2>
               <p className="text-xs text-zinc-400 mt-0.5">
                 Choose your framework or installation method to start collecting stats.
               </p>
@@ -676,10 +947,818 @@ export default function WebsiteSettingsPage() {
               </div>
             </div>
           </div>
+
+          {/* Public Dashboard Card */}
+          <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-zinc-400" />
+                  <span>Public Dashboard Sharing</span>
+                </h2>
+                <p className="text-xs text-zinc-400 mt-0.5">Allow anyone with the link to view this site's stats.</p>
+              </div>
+              <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+            </div>
+
+            {isPublic && (
+              <div className="space-y-4 pt-3 border-t border-white/[0.06] animate-in fade-in duration-200">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-zinc-300">Public URL</label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      readOnly
+                      value={`https://analytika.dev/share/${initialDomain}`}
+                      className="bg-[#1F1F1F] border-white/[0.08] text-zinc-300 text-xs font-mono select-all"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => copyToClipboard(`https://analytika.dev/share/${initialDomain}`, "snippet")}
+                      className="border-white/[0.08] hover:bg-white/[0.04] text-white shrink-0 text-xs"
+                    >
+                      <Copy className="w-3.5 h-3.5 mr-1" />
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <div>
+                    <div className="text-xs font-medium text-zinc-300">PIN Code Protection</div>
+                    <div className="text-[11px] text-zinc-500">Require visitors to enter a PIN to access stats.</div>
+                  </div>
+                  <Switch checked={hasPassword} onCheckedChange={setHasPassword} />
+                </div>
+
+                {hasPassword && (
+                  <Input
+                    type="password"
+                    placeholder="Enter PIN code / password"
+                    value={sharePassword}
+                    onChange={(e) => setSharePassword(e.target.value)}
+                    className="bg-[#1F1F1F] border-white/[0.08] text-white text-sm max-w-xs"
+                  />
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* TAB 3: FILTERS & PRIVACY */}
+      {/* TAB 2: REVENUE & PAYMENTS */}
+      {activeTab === "revenue" && (
+        <div className="max-w-2xl space-y-6">
+          {/* Revenue Attribution & Payment Gateways Card */}
+          <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 space-y-5">
+            <div>
+              <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-zinc-400" />
+                <span>Revenue Attribution & Payments</span>
+              </h2>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Connect your billing provider to attribute revenue, conversion rates, and LTV directly to marketing channels.
+              </p>
+            </div>
+
+            {/* Platform Selector Dropdown using Shadcn Select */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-zinc-300">Payment Provider</label>
+              <Select
+                value={paymentPlatform}
+                onValueChange={(val) => setPaymentPlatform(val as PaymentPlatform)}
+              >
+                <SelectTrigger className="bg-[#1F1F1F] border-white/[0.08] text-white text-xs h-10">
+                  <SelectValue placeholder="Select platform" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stripe">
+                    <div className="flex items-center gap-2 font-medium">
+                      <span className="px-1.5 py-0.5 rounded bg-[#635BFF]/20 text-[#9B95FF] text-[10px] font-bold font-mono">
+                        STRIPE
+                      </span>
+                      <span>Stripe Payments</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="polar">
+                    <div className="flex items-center gap-2 font-medium">
+                      <span className="px-1.5 py-0.5 rounded bg-[#0062FF]/20 text-[#4D94FF] text-[10px] font-bold font-mono">
+                        POLAR
+                      </span>
+                      <span>Polar (polar.sh)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="dodo">
+                    <div className="flex items-center gap-2 font-medium">
+                      <span className="px-1.5 py-0.5 rounded bg-[#FF6B00]/20 text-[#FFA05C] text-[10px] font-bold font-mono">
+                        DODO
+                      </span>
+                      <span>Dodo Payments</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="paddle">
+                    <div className="flex items-center gap-2 font-medium">
+                      <span className="px-1.5 py-0.5 rounded bg-[#00D09C]/20 text-[#5CFFD4] text-[10px] font-bold font-mono">
+                        PADDLE
+                      </span>
+                      <span>Paddle Billing</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="lemonsqueezy">
+                    <div className="flex items-center gap-2 font-medium">
+                      <span className="px-1.5 py-0.5 rounded bg-[#FFC233]/20 text-[#FFE082] text-[10px] font-bold font-mono">
+                        LEMON
+                      </span>
+                      <span>Lemon Squeezy</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Dynamic Platform Fields (Direct API) */}
+            <div className="space-y-3.5 pt-1">
+              {paymentPlatform === "stripe" && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-zinc-300">
+                      Restricted / Secret API Key
+                    </label>
+                    <span className="text-[11px] text-zinc-500 font-mono">rk_live_...</span>
+                  </div>
+                  <div className="relative flex items-center">
+                    <Input
+                      type={showSecrets.stripeKey ? "text" : "password"}
+                      value={stripeKey}
+                      onChange={(e) => setStripeKey(e.target.value)}
+                      placeholder="rk_live_... or sk_live_..."
+                      className="bg-[#1F1F1F] border-white/[0.08] text-white text-xs font-mono pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSecret("stripeKey")}
+                      className="absolute right-3 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                    >
+                      {showSecrets.stripeKey ? (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-zinc-500">
+                    Analytika securely queries charges, checkout sessions, and invoices directly through the Stripe API.
+                  </p>
+                </div>
+              )}
+
+              {paymentPlatform === "polar" && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-zinc-300">
+                      Organization Access Token
+                    </label>
+                    <span className="text-[11px] text-zinc-500 font-mono">polar_oat_...</span>
+                  </div>
+                  <div className="relative flex items-center">
+                    <Input
+                      type={showSecrets.polarToken ? "text" : "password"}
+                      value={polarToken}
+                      onChange={(e) => setPolarToken(e.target.value)}
+                      placeholder="polar_oat_... or polar_at_..."
+                      className="bg-[#1F1F1F] border-white/[0.08] text-white text-xs font-mono pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSecret("polarToken")}
+                      className="absolute right-3 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                    >
+                      {showSecrets.polarToken ? (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-zinc-500">
+                    Create a token with read permissions in Polar &rarr; Settings &rarr; Developers &rarr; Access Tokens.
+                  </p>
+                </div>
+              )}
+
+              {paymentPlatform === "dodo" && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-zinc-300">
+                      Live API Key
+                    </label>
+                    <span className="text-[11px] text-zinc-500 font-mono">dodo_live_...</span>
+                  </div>
+                  <div className="relative flex items-center">
+                    <Input
+                      type={showSecrets.dodoApiKey ? "text" : "password"}
+                      value={dodoApiKey}
+                      onChange={(e) => setDodoApiKey(e.target.value)}
+                      placeholder="dodo_live_..."
+                      className="bg-[#1F1F1F] border-white/[0.08] text-white text-xs font-mono pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSecret("dodoApiKey")}
+                      className="absolute right-3 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                    >
+                      {showSecrets.dodoApiKey ? (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-zinc-500">
+                    Direct API integration for Dodo Payments charge syncing and MRR metrics.
+                  </p>
+                </div>
+              )}
+
+              {paymentPlatform === "paddle" && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-zinc-300">
+                      API Secret Key
+                    </label>
+                    <span className="text-[11px] text-zinc-500 font-mono">pdl_live_apikey_...</span>
+                  </div>
+                  <div className="relative flex items-center">
+                    <Input
+                      type={showSecrets.paddleApiKey ? "text" : "password"}
+                      value={paddleApiKey}
+                      onChange={(e) => setPaddleApiKey(e.target.value)}
+                      placeholder="pdl_live_apikey_..."
+                      className="bg-[#1F1F1F] border-white/[0.08] text-white text-xs font-mono pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSecret("paddleApiKey")}
+                      className="absolute right-3 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                    >
+                      {showSecrets.paddleApiKey ? (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-zinc-500">
+                    Generated from Paddle Billing &rarr; Developer Tools &rarr; Authentication.
+                  </p>
+                </div>
+              )}
+
+              {paymentPlatform === "lemonsqueezy" && (
+                <>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-medium text-zinc-300">
+                        API Token
+                      </label>
+                      <span className="text-[11px] text-zinc-500 font-mono">eyJhbGciOi...</span>
+                    </div>
+                    <div className="relative flex items-center">
+                      <Input
+                        type={showSecrets.lemonApiKey ? "text" : "password"}
+                        value={lemonApiKey}
+                        onChange={(e) => setLemonApiKey(e.target.value)}
+                        placeholder="eyJhbGciOi..."
+                        className="bg-[#1F1F1F] border-white/[0.08] text-white text-xs font-mono pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => toggleSecret("lemonApiKey")}
+                        className="absolute right-3 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                      >
+                        {showSecrets.lemonApiKey ? (
+                          <EyeOff className="w-3.5 h-3.5" />
+                        ) : (
+                          <Eye className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-zinc-500">
+                      Generate an API key in Lemon Squeezy &rarr; Settings &rarr; API.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-zinc-300">
+                      Store ID
+                    </label>
+                    <Input
+                      type="text"
+                      value={lemonStoreId}
+                      onChange={(e) => setLemonStoreId(e.target.value)}
+                      placeholder="e.g. 12849"
+                      className="bg-[#1F1F1F] border-white/[0.08] text-white text-xs font-mono"
+                    />
+                    <p className="text-[11px] text-zinc-500">
+                      Your Lemon Squeezy numeric Store ID.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Auto Attribution Toggle */}
+            <div className="flex items-center justify-between py-2.5 border-t border-white/[0.06]">
+              <div>
+                <div className="text-xs font-medium text-zinc-200">Auto-Sync Revenue Attribution</div>
+                <div className="text-[11px] text-zinc-500">
+                  Automatically match incoming transactions and subscriptions to visitor sessions and UTM campaigns.
+                </div>
+              </div>
+              <Switch checked={autoAttribution} onCheckedChange={setAutoAttribution} />
+            </div>
+
+            {/* Connection Actions Footer */}
+            <div className="flex items-center justify-between pt-3 border-t border-white/[0.04]">
+              {connectionState[paymentPlatform].isConnected ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-zinc-400 font-mono">
+                    Verified {connectionState[paymentPlatform].connectedAt}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-xs text-zinc-500">
+                  Click connect to verify credentials with {paymentPlatform.toUpperCase()}
+                </span>
+              )}
+
+              <div className="flex items-center gap-2">
+                {connectionState[paymentPlatform].isConnected ? (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDisconnectPlatform(paymentPlatform)}
+                      className="border-rose-500/30 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 text-xs h-8 cursor-pointer"
+                    >
+                      Disconnect
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => handleConnectPlatform(paymentPlatform)}
+                      disabled={connectionState[paymentPlatform].isConnecting}
+                      className="bg-[#1F1F1F] hover:bg-[#252525] border border-white/[0.1] text-zinc-200 text-xs h-8 cursor-pointer"
+                    >
+                      <RefreshCcw
+                        className={`w-3.5 h-3.5 mr-1.5 ${
+                          connectionState[paymentPlatform].isConnecting ? "animate-spin text-rose-400" : ""
+                        }`}
+                      />
+                      Re-verify
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleConnectPlatform(paymentPlatform)}
+                    disabled={connectionState[paymentPlatform].isConnecting}
+                    className="bg-[#800E13] hover:bg-[#9e1218] text-white text-xs h-8 px-4 cursor-pointer"
+                  >
+                    <RefreshCcw
+                      className={`w-3.5 h-3.5 mr-1.5 ${
+                        connectionState[paymentPlatform].isConnecting ? "animate-spin" : ""
+                      }`}
+                    />
+                    {connectionState[paymentPlatform].isConnecting
+                      ? "Verifying API..."
+                      : `Connect ${
+                          paymentPlatform === "stripe"
+                            ? "Stripe"
+                            : paymentPlatform === "polar"
+                            ? "Polar"
+                            : paymentPlatform === "dodo"
+                            ? "Dodo"
+                            : paymentPlatform === "paddle"
+                            ? "Paddle"
+                            : "Lemon Squeezy"
+                        }`}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: ALERTS & NOTIFICATIONS */}
+      {activeTab === "alerts" && (
+        <div className="max-w-3xl space-y-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                <Bell className="w-4 h-4 text-zinc-400" />
+                <span>Custom Event Alerts</span>
+              </h2>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Receive instant email alerts when visitors trigger custom events, conversions, or milestones.
+              </p>
+            </div>
+            <Button
+              onClick={handleOpenCreateAlert}
+              className="bg-[#800E13] hover:bg-[#9e1218] text-white text-xs h-9 px-3.5 cursor-pointer shadow-sm shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              New Alert
+            </Button>
+          </div>
+
+          {/* Alerts List */}
+          {alerts.length === 0 ? (
+            <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-8 text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#1F1F1F] border border-white/[0.08] flex items-center justify-center mx-auto text-zinc-400">
+                <Bell className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-white">No custom alerts configured</h3>
+                <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto">
+                  Create alert rules to receive automated notifications when high-value events occur.
+                </p>
+              </div>
+              <Button
+                onClick={handleOpenCreateAlert}
+                size="sm"
+                className="bg-[#800E13] hover:bg-[#9e1218] text-white text-xs h-8 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1.5" /> Create Alert
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {alerts.map((alert) => {
+                const IconComponent = getAlertIconComponent(alert.icon);
+                return (
+                  <div
+                    key={alert.id}
+                    className="rounded-2xl bg-[#262626] border border-white/[0.08] p-4 transition-all hover:border-white/[0.12] flex items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-[#1F1F1F] border border-white/[0.08] flex items-center justify-center shrink-0 text-zinc-300">
+                        <IconComponent className="w-4 h-4 text-zinc-300" />
+                      </div>
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold text-white truncate">
+                            {alert.name}
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-white/[0.06] text-zinc-300 text-[11px] font-mono border border-white/[0.04]">
+                            event: {alert.eventId}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-zinc-400 flex-wrap">
+                          <span>Created: {alert.createdAt}</span>
+                          {alert.lastTriggered && (
+                            <>
+                              <span>•</span>
+                              <span className="text-zinc-500 font-mono">
+                                Last triggered: {alert.lastTriggered}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Switch
+                        checked={alert.enabled}
+                        onCheckedChange={() => handleToggleAlert(alert.id)}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditAlert(alert)}
+                        className="h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-white/[0.08] cursor-pointer"
+                        title="Edit Alert"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteAlert(alert.id)}
+                        className="h-8 w-8 p-0 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
+                        title="Delete Alert"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* EXPANDED ALERT CREATION & EDIT MODAL */}
+      <Dialog open={isAlertModalOpen} onOpenChange={setIsAlertModalOpen}>
+        <DialogContent className="max-w-6xl w-[96vw] h-[94vh] max-h-[95vh] bg-[#1A1A1A] border-white/[0.1] text-white p-0 overflow-hidden shadow-2xl flex flex-col">
+          <DialogHeader className="p-5 border-b border-white/[0.08] shrink-0">
+            <DialogTitle className="text-base font-semibold text-white flex items-center gap-2">
+              <Bell className="w-4 h-4 text-zinc-400" />
+              <span>{editingAlertId ? "Edit Custom Event Alert" : "Create New Custom Event Alert"}</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* 2-Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 min-h-0 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08] overflow-hidden">
+            {/* Left Column: Event ID -> Alert Name -> Icons -> Code Guide */}
+            <div className="lg:col-span-4 p-5 space-y-4 overflow-y-auto flex flex-col justify-between">
+              <div className="space-y-4">
+                {/* 1. Event ID */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-zinc-300">
+                    Event ID <span className="text-rose-400">*</span>
+                  </label>
+                  <Input
+                    value={modalEventId}
+                    onChange={(e) => setModalEventId(e.target.value)}
+                    placeholder="e.g. checkout_completed, demo_booked"
+                    className="bg-[#141414] border-white/[0.08] text-white text-xs font-mono"
+                  />
+                  <p className="text-[11px] text-zinc-500">
+                    Backend identifier sent via <code className="text-zinc-400 font-mono">analytika.track(&apos;event_id&apos;)</code>.
+                  </p>
+                </div>
+
+                {/* 2. Alert Name */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-zinc-300">
+                    Alert Name <span className="text-rose-400">*</span>
+                  </label>
+                  <Input
+                    value={modalName}
+                    onChange={(e) => setModalName(e.target.value)}
+                    placeholder="e.g. Payment Succeeded, Enterprise Demo"
+                    className="bg-[#141414] border-white/[0.08] text-white text-xs"
+                  />
+                  <p className="text-[11px] text-zinc-500">
+                    Display name used in notification subjects and bodies.
+                  </p>
+                </div>
+
+                {/* 3. Icon Selector */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-zinc-300">Icon Badge</label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {[
+                      { id: "zap", icon: Zap, label: "Event" },
+                      { id: "dollar", icon: DollarSign, label: "Payment" },
+                      { id: "user", icon: User, label: "User" },
+                      { id: "bell", icon: Bell, label: "Alert" },
+                      { id: "sparkles", icon: Sparkles, label: "Special" },
+                      { id: "globe", icon: Globe, label: "Traffic" },
+                    ].map((ic) => {
+                      const Ic = ic.icon;
+                      const isSelected = modalIcon === ic.id;
+                      return (
+                        <button
+                          key={ic.id}
+                          type="button"
+                          onClick={() => setModalIcon(ic.id)}
+                          className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 text-xs ${
+                            isSelected
+                              ? "bg-[#800E13]/20 border-[#800E13] text-white"
+                              : "bg-[#141414] border-white/[0.06] text-zinc-400 hover:text-zinc-200"
+                          }`}
+                          title={ic.label}
+                        >
+                          <Ic className="w-3.5 h-3.5" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Learn About Events Box */}
+              <div className="p-3.5 rounded-xl bg-[#141414] border border-white/[0.06] space-y-2 mt-4">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-300">
+                  <Info className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>How to trigger custom events</span>
+                </div>
+                <div className="bg-[#1C1C1C] p-2.5 rounded-lg font-mono text-[11px] text-zinc-300 overflow-x-auto whitespace-pre">
+                  <span className="text-purple-400">analytika</span>.<span className="text-amber-300">track</span>(
+                  <span className="text-emerald-300">&quot;{modalEventId.trim() || "checkout_completed"}&quot;</span>, {"{\n"}
+                  {"  "}name: <span className="text-emerald-300">&quot;Alex Morgan&quot;</span>,{"\n"}
+                  {"  "}email: <span className="text-emerald-300">&quot;alex@acme.com&quot;</span>{"\n"}
+                  {"}"});
+                </div>
+                <div className="text-[11px] text-zinc-500">
+                  Properties passed to track payload dynamically populate template variables.
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Template Builder & Gmail Preview (Fully Scrollable) */}
+            <div className="lg:col-span-8 p-6 space-y-4 overflow-y-auto flex flex-col justify-between">
+              <div className="space-y-4">
+                {/* Subject Line */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-zinc-300">
+                    Subject Line Template
+                  </label>
+                  <Input
+                    value={modalSubject}
+                    onChange={(e) => setModalSubject(e.target.value)}
+                    placeholder="New {{alert_name}} from {{visitor.country}}"
+                    className="bg-[#141414] border-white/[0.08] text-white text-xs font-mono"
+                  />
+                </div>
+
+                {/* Collapsible Dynamic Variables Accordion / Drawer */}
+                <div className="rounded-xl bg-[#141414] border border-white/[0.06] overflow-hidden transition-all">
+                  <button
+                    type="button"
+                    onClick={() => setIsVariablesDrawerOpen(!isVariablesDrawerOpen)}
+                    className="w-full px-3.5 py-2.5 flex items-center justify-between hover:bg-white/[0.02] cursor-pointer transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Tag className="w-3.5 h-3.5 text-zinc-400" />
+                      <span className="text-xs font-medium text-zinc-200">Dynamic Variables</span>
+                      <span className="text-[10px] text-zinc-500 bg-white/[0.06] px-1.5 py-0.5 rounded font-mono">
+                        Click to insert
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-zinc-400">
+                      <span className="text-[11px] text-zinc-500">
+                        {isVariablesDrawerOpen ? "Hide variables" : "Show variables"}
+                      </span>
+                      {isVariablesDrawerOpen ? (
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      )}
+                    </div>
+                  </button>
+
+                  {isVariablesDrawerOpen && (
+                    <div className="p-3.5 pt-2 border-t border-white/[0.04] space-y-2.5 animate-in fade-in duration-150">
+                      {ALERT_VARIABLE_GROUPS.map((grp) => (
+                        <div key={grp.category} className="space-y-1">
+                          <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                            {grp.category}
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {grp.items.map((item) => (
+                              <button
+                                key={item.tag}
+                                type="button"
+                                onClick={() => handleInsertVariable(item.tag)}
+                                className={`px-2 py-0.5 rounded text-[11px] font-mono border transition-all cursor-pointer hover:scale-105 active:scale-95 ${grp.color}`}
+                                title={`Sample value: ${item.sample}`}
+                              >
+                                {item.tag}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Tabs: Edit Body vs Gmail Live Preview */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-zinc-300">Email Notification Body</label>
+                    <div className="flex items-center gap-1 p-0.5 bg-[#141414] rounded-lg border border-white/[0.06]">
+                      <button
+                        type="button"
+                        onClick={() => setModalPreviewTab("edit")}
+                        className={`px-2.5 py-1 text-xs rounded-md transition-all cursor-pointer ${
+                          modalPreviewTab === "edit"
+                            ? "bg-[#262626] text-white shadow-sm font-medium"
+                            : "text-zinc-400 hover:text-zinc-200"
+                        }`}
+                      >
+                        Template Body
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setModalPreviewTab("preview")}
+                        className={`px-2.5 py-1 text-xs rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                          modalPreviewTab === "preview"
+                            ? "bg-[#262626] text-white shadow-sm font-medium"
+                            : "text-zinc-400 hover:text-zinc-200"
+                        }`}
+                      >
+                        <Mail className="w-3 h-3 text-rose-400" />
+                        Gmail Preview
+                      </button>
+                    </div>
+                  </div>
+
+                  {modalPreviewTab === "edit" ? (
+                    <textarea
+                      rows={10}
+                      value={modalBody}
+                      onChange={(e) => setModalBody(e.target.value)}
+                      placeholder="Write your email notification body..."
+                      className="w-full min-h-[280px] bg-[#141414] border border-white/[0.08] text-zinc-200 text-xs font-mono p-3.5 rounded-xl focus:outline-none focus:border-rose-500/50 resize-y leading-relaxed"
+                    />
+                  ) : (
+                    /* Gmail-style Email Preview Box */
+                    <div className="rounded-xl bg-[#141414] border border-white/[0.08] overflow-hidden text-xs flex flex-col">
+                      {/* Gmail Header */}
+                      <div className="bg-[#1C1C1C] px-4 py-2.5 border-b border-white/[0.06] flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold text-[10px] font-mono">
+                            M
+                          </span>
+                          <span className="text-zinc-300 font-medium text-[11px]">
+                            Gmail Notification Simulation
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-zinc-500">
+                          <Star className="w-3.5 h-3.5 hover:text-amber-400 cursor-pointer" />
+                          <Reply className="w-3.5 h-3.5 hover:text-zinc-300 cursor-pointer" />
+                        </div>
+                      </div>
+
+                      {/* Email Content Container */}
+                      <div className="p-4 space-y-3.5 bg-[#111111]">
+                        <div>
+                          <div className="text-sm font-semibold text-white">
+                            {interpolateAlertText(modalSubject || "New {{alert_name}} Alert", modalName)}
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px] text-zinc-400 mt-1">
+                            <span className="w-5 h-5 rounded-full bg-[#800E13] text-white flex items-center justify-center text-[10px] font-bold">
+                              A
+                            </span>
+                            <span className="font-medium text-zinc-300">Analytika Alerts</span>
+                            <span className="text-zinc-500">&lt;alerts@analytika.dev&gt;</span>
+                            <span className="text-zinc-600">to me</span>
+                            <span className="text-zinc-500 ml-auto font-mono text-[10px]">Just now</span>
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-lg bg-[#1A1A1A] border border-white/[0.06] text-zinc-200 text-xs whitespace-pre-wrap font-sans leading-relaxed">
+                          {interpolateAlertText(modalBody, modalName)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Modal Footer Controls */}
+              <div className="flex items-center justify-between pt-4 border-t border-white/[0.06] shrink-0 mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSendTestEmail}
+                  disabled={isSendingTest}
+                  className="border-white/[0.08] hover:bg-white/[0.04] text-zinc-300 text-xs h-8 cursor-pointer"
+                >
+                  <Send className={`w-3 h-3 mr-1.5 ${isSendingTest ? "animate-spin" : ""}`} />
+                  {isSendingTest
+                    ? "Dispatching..."
+                    : testSentSuccess
+                    ? "✓ Test Email Sent!"
+                    : "Send Test Email"}
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAlertModalOpen(false)}
+                    className="text-zinc-400 hover:text-white text-xs h-8 cursor-pointer"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!modalEventId.trim() || !modalName.trim()}
+                    onClick={handleSaveAlert}
+                    className="bg-[#800E13] hover:bg-[#9e1218] text-white text-xs h-8 px-4 cursor-pointer disabled:opacity-40"
+                  >
+                    {editingAlertId ? "Update Alert" : "Save Alert"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* TAB 4: FILTERS & PRIVACY */}
       {activeTab === "filters" && (
         <div className="max-w-2xl space-y-6">
           {/* Exclude My Visits */}

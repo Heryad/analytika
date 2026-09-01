@@ -155,11 +155,19 @@ export function SelectItem({
     }
   }, [isSelected, children]);
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (typeof children === "string") {
+      context.setSelectedLabel(children);
+    }
+    context.onValueChange(value);
+  };
+
   return (
     <div
       role="option"
       aria-selected={isSelected}
-      onClick={() => context.onValueChange(value)}
+      onClick={handleClick}
       className={cn(
         "relative flex w-full cursor-pointer select-none items-center justify-between rounded-lg py-2 px-2.5 text-xs outline-none transition-colors hover:bg-[#1F1F1F] hover:text-white",
         isSelected && "bg-[#1F1F1F] text-white font-medium",

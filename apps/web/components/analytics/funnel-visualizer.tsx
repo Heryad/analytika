@@ -21,16 +21,25 @@ interface FunnelVisualizerProps {
 
 import { AddFunnelModal } from "./add-funnel-modal";
 import { Plus, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function FunnelVisualizer({ funnels }: FunnelVisualizerProps) {
+  const [funnelList, setFunnelList] = useState<Funnel[]>(funnels);
   const [activeFunnelId, setActiveFunnelId] = useState(funnels[0]?.id);
-  const activeFunnel = funnels.find((f) => f.id === activeFunnelId) || funnels[0];
+  const activeFunnel = funnelList.find((f) => f.id === activeFunnelId) || funnelList[0];
   
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [hoveredStepIndex, setHoveredStepIndex] = useState<number | null>(null);
@@ -42,6 +51,39 @@ export function FunnelVisualizer({ funnels }: FunnelVisualizerProps) {
     const t = setTimeout(() => setMounted(true), 40);
     return () => clearTimeout(t);
   }, [activeFunnelId]);
+
+  const handleAddNewFunnel = ({ name, steps }: { name: string; steps: any[] }) => {
+    const newFunnelId = `f-${Date.now()}`;
+    const baseVisitors = 18450;
+    const computedSteps = steps.map((s, idx) => {
+      const dropMultiplier = Math.pow(0.72, idx);
+      const userCount = Math.round(baseVisitors * dropMultiplier);
+      const pct = Math.round((userCount / baseVisitors) * 100);
+      return {
+        name: s.name,
+        users: userCount,
+        percentage: pct,
+      };
+    });
+
+    const newFunnel: Funnel = {
+      id: newFunnelId,
+      name,
+      steps: computedSteps,
+    };
+
+    setFunnelList((prev) => [...prev, newFunnel]);
+    setActiveFunnelId(newFunnelId);
+  };
+
+  const handleDeleteFunnel = (id: string) => {
+    if (funnelList.length <= 1) return;
+    const filtered = funnelList.filter((f) => f.id !== id);
+    setFunnelList(filtered);
+    if (activeFunnelId === id) {
+      setActiveFunnelId(filtered[0]?.id);
+    }
+  };
 
   if (!activeFunnel) return null;
 
@@ -70,9 +112,9 @@ export function FunnelVisualizer({ funnels }: FunnelVisualizerProps) {
         { name: "Referral", pct: "15%" },
       ],
       [
-        { name: "Google", pct: "54%" },
-        { name: "Direct / None", pct: "34%" },
-        { name: "Email", pct: "12%" },
+        { name: "Google", pct: "55%" },
+        { name: "Direct / None", pct: "35%" },
+        { name: "Referral", pct: "10%" },
       ],
     ];
 
@@ -99,28 +141,75 @@ export function FunnelVisualizer({ funnels }: FunnelVisualizerProps) {
       ],
     ];
 
+    const sources = sourcesMap[Math.min(stepIndex, sourcesMap.length - 1)];
+    const countries = countriesMap[Math.min(stepIndex, countriesMap.length - 1)];
+
     return {
       step,
+      name: step.name,
+      users: step.users,
+      percentage: step.percentage,
       stepValue,
-      sources: sourcesMap[stepIndex % sourcesMap.length],
-      countries: countriesMap[stepIndex % countriesMap.length],
+      sources,
+      countries,
     };
   };
 
   const hoveredDetails = hoveredStepIndex !== null ? getStepDetails(hoveredStepIndex) : null;
 
   return (
-    <div className="w-full h-full flex pt-1 pb-1 gap-3 relative">
-      {/* Left Sidebar */}
+    <div className="w-full h-full flex flex-col md:flex-row gap-3 min-h-0">
+      
+      {/* Mobile Toolbar (md:hidden) */}
+      <div className="flex md:hidden items-center justify-between gap-2.5 pb-1">
+        <div className="flex-1 min-w-0">
+          <Select
+            value={activeFunnelId}
+            onValueChange={(val) => {
+              setMounted(false);
+              setActiveFunnelId(val);
+            }}
+          >
+            <SelectTrigger className="w-full bg-[#1F1F1F] border-white/[0.08] text-white text-xs h-9">
+              <div className="flex items-center gap-2 truncate">
+                <div className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                <span className="truncate">{activeFunnel?.name || "Select Funnel"}</span>
+              </div>
+            </SelectTrigger>
+            <SelectContent className="bg-[#1F1F1F] border-white/[0.08] text-zinc-200">
+              {funnelList.map((funnel) => (
+                <SelectItem key={funnel.id} value={funnel.id} className="text-xs cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${funnel.id === activeFunnelId ? "bg-rose-500" : "bg-zinc-500"}`} />
+                    <span>{funnel.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <AddFunnelModal onAddFunnel={handleAddNewFunnel}>
+          <Button
+            size="sm"
+            className="bg-[#800E13] hover:bg-[#9e1218] text-white text-xs h-9 px-3 rounded-xl font-medium transition-all shadow-sm shrink-0 cursor-pointer flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Funnel</span>
+          </Button>
+        </AddFunnelModal>
+      </div>
+
+      {/* Desktop Left Sidebar (hidden md:flex) */}
       <div 
-        className={`group transition-all duration-300 ease-out flex flex-col border border-white/[0.08] rounded-xl bg-[#1F1F1F] shadow-inner relative shrink-0 overflow-hidden ${
+        className={`hidden md:flex group transition-all duration-300 ease-out flex-col border border-white/[0.08] rounded-xl bg-[#1F1F1F] shadow-inner relative shrink-0 overflow-hidden ${
           openMenuId ? 'w-[250px]' : 'w-[175px] hover:w-[250px]'
         }`}
       >
         
         {/* Funnel List */}
         <div className="flex-1 flex flex-col p-2 gap-1 overflow-y-auto custom-scrollbar">
-          {funnels.map((funnel) => {
+          {funnelList.map((funnel) => {
             const isActive = activeFunnelId === funnel.id;
             return (
               <div 
@@ -168,13 +257,18 @@ export function FunnelVisualizer({ funnels }: FunnelVisualizerProps) {
                       <Edit className="w-3.5 h-3.5 mr-2" />
                       Edit Funnel
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 cursor-pointer focus:bg-rose-500/10 focus:text-rose-300"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
+                    {funnelList.length > 1 && (
+                      <DropdownMenuItem 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteFunnel(funnel.id);
+                        }}
+                        className="text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 cursor-pointer focus:bg-rose-500/10 focus:text-rose-300"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -184,20 +278,22 @@ export function FunnelVisualizer({ funnels }: FunnelVisualizerProps) {
 
         {/* Sticky Add Funnel Footer */}
         <div className="p-2 border-t border-white/[0.08] bg-[#1F1F1F]">
-          <AddFunnelModal>
-            <button className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-colors whitespace-nowrap overflow-hidden">
+          <AddFunnelModal onAddFunnel={handleAddNewFunnel}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-2 w-full justify-start px-3 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-colors whitespace-nowrap overflow-hidden cursor-pointer h-9 text-[13px] font-medium"
+            >
               <Plus className="w-4 h-4 shrink-0" />
-              <span className="text-[13px] font-medium">
-                Add Funnel
-              </span>
-            </button>
+              <span>Add Funnel</span>
+            </Button>
           </AddFunnelModal>
         </div>
       </div>
 
       {/* Main Visualizer Area */}
       <div 
-        className="flex-1 flex flex-col justify-between p-4 bg-[#181818]/60 border border-white/[0.04] rounded-xl overflow-hidden min-w-0 relative"
+        className="flex-1 flex flex-col justify-between p-3 sm:p-4 bg-[#181818]/60 border border-white/[0.04] rounded-xl overflow-hidden min-w-0 relative"
       >
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes funnelStreamReveal {
@@ -219,24 +315,24 @@ export function FunnelVisualizer({ funnels }: FunnelVisualizerProps) {
         ` }} />
 
         {/* Top Header Summary (Static, No Animation) */}
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-1">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-white">{activeFunnel.name}</span>
             <span className="text-xs text-zinc-500">({activeFunnel.steps.length} steps)</span>
           </div>
-          <div className="text-right">
-            <div className="text-sm font-bold text-white font-mono">
+          <div className="flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-start gap-1">
+            <div className="text-xs sm:text-sm font-bold text-white font-mono">
               {((activeFunnel.steps[activeFunnel.steps.length - 1].users / activeFunnel.steps[0].users) * 100).toFixed(1)}%
               <span className="text-zinc-400 text-xs font-normal ml-1 font-sans">conversion rate</span>
             </div>
-            <div className="text-[11px] text-zinc-500">
+            <div className="text-[10px] sm:text-[11px] text-zinc-500">
               {activeFunnel.steps[0].users.toLocaleString()} total visitors
             </div>
           </div>
         </div>
 
         {/* Horizontal Funnel Stream Canvas */}
-        <div key={`stream-${activeFunnel.id}`} className="relative w-full h-[185px] flex items-center justify-center my-1">
+        <div key={`stream-${activeFunnel.id}`} className="relative w-full h-[150px] sm:h-[185px] flex items-center justify-center my-1">
           {(() => {
             const steps = activeFunnel.steps;
             const N = steps.length;
@@ -399,9 +495,9 @@ export function FunnelVisualizer({ funnels }: FunnelVisualizerProps) {
                         animation: `stepBadgePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) ${(i + 1) * 150 + 50}ms forwards`,
                       }}
                     >
-                      <div className="flex items-center gap-1 px-2.5 py-1 bg-[#141414]/90 border border-white/10 rounded-full shadow-lg backdrop-blur-md text-[11px] font-mono font-medium text-zinc-300">
+                      <div className="flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 bg-[#141414]/90 border border-white/10 rounded-full shadow-lg backdrop-blur-md text-[10px] sm:text-[11px] font-mono font-medium text-zinc-300">
                         <span className="text-rose-400">-{dropoff}%</span>
-                        <span className="text-zinc-500 text-[10px]">→</span>
+                        <span className="text-zinc-500 text-[9px] sm:text-[10px]">→</span>
                       </div>
                     </div>
                   );
@@ -414,14 +510,13 @@ export function FunnelVisualizer({ funnels }: FunnelVisualizerProps) {
         {/* Bottom Step Labels with Staggered Cascading Slide-up */}
         <div 
           key={`cards-${activeFunnel.id}`}
-          className="grid pt-2.5 border-t border-white/[0.06] gap-2.5 z-10 shrink-0" 
-          style={{ gridTemplateColumns: `repeat(${activeFunnel.steps.length}, minmax(0, 1fr))` }}
+          className="grid grid-cols-2 sm:grid-cols-4 md:flex md:items-stretch pt-2.5 border-t border-white/[0.06] gap-2 z-10 shrink-0" 
         >
           {activeFunnel.steps.map((step, index) => (
             <div 
               key={step.name} 
-              className={`flex flex-col min-w-0 px-2 py-1.5 rounded-lg cursor-pointer transition-all ${
-                hoveredStepIndex === index ? "bg-white/[0.06]" : "hover:bg-white/[0.02]"
+              className={`flex-1 flex flex-col min-w-0 p-2 sm:px-2.5 sm:py-1.5 rounded-lg cursor-pointer transition-all bg-[#1F1F1F]/40 border border-white/[0.03] md:bg-transparent md:border-0 ${
+                hoveredStepIndex === index ? "bg-white/[0.08]" : "hover:bg-white/[0.04]"
               }`}
               style={{
                 opacity: 0,
@@ -436,12 +531,13 @@ export function FunnelVisualizer({ funnels }: FunnelVisualizerProps) {
               }}
               onMouseLeave={() => setHoveredStepIndex(null)}
             >
-              <div className="text-[13px] font-semibold text-white tracking-tight flex items-baseline gap-1.5">
+              <div className="text-xs sm:text-[13px] font-semibold text-white tracking-tight flex items-baseline gap-1">
                 <span>{step.users.toLocaleString()}</span>
-                <span className="text-zinc-500 text-[11px] font-normal font-sans">visitors</span>
+                <span className="text-zinc-500 text-[10px] sm:text-[11px] font-normal font-sans">visitors</span>
               </div>
               
-              <div className="text-[12px] text-zinc-400 font-medium truncate mt-0.5" title={step.name}>
+              <div className="text-[11px] sm:text-[12px] text-zinc-300 sm:text-zinc-400 font-medium truncate mt-0.5" title={step.name}>
+                <span className="text-zinc-500 mr-1 text-[10px] font-mono">{index + 1}.</span>
                 {step.name}
               </div>
             </div>

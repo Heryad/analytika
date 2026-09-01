@@ -68,7 +68,7 @@ export function ChannelPieChart({ data }: ChannelPieChartProps) {
       
       {/* Pie Chart Area */}
       <div 
-        className="relative w-1/2 flex flex-col items-center justify-center"
+        className="relative w-full md:w-1/2 flex flex-col items-center justify-center"
         onMouseLeave={onPieLeave}
       >
         
@@ -131,8 +131,8 @@ export function ChannelPieChart({ data }: ChannelPieChartProps) {
         </div>
       </div>
 
-      {/* Custom Legend with Icons */}
-      <div className="w-1/2 h-full flex flex-col pl-6 pr-2">
+      {/* Custom Legend with Icons (Hidden on mobile) */}
+      <div className="hidden md:flex w-1/2 h-full flex-col pl-6 pr-2">
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-1.5 pr-2">
           {data.map((entry, index) => {
             return (
