@@ -9,6 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": false,
     "declarationMap": false,
+    "noEmit": true,
     "types": ["bun"]
   }
 }

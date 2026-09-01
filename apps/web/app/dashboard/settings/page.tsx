@@ -81,59 +81,74 @@ function AnimatedPrice({ value }: { value: number }) {
   return <span className="tabular-nums font-mono">{displayValue.toLocaleString()}</span>;
 }
 
+import { useAuth } from "@/lib/auth-context";
+import { authApi } from "@/lib/api";
+
 function SettingsContent() {
   const searchParams = useSearchParams();
   const urlTab = searchParams.get("tab");
+  const { user, refreshUser, logout } = useAuth();
 
   // Pure local React state - zero router jumps on tab clicks
   const [activeTab, setActiveTab] = useState<"general" | "mcp" | "billing">(
-    urlTab === "mcp" || urlTab === "billing" ? urlTab : "general"
+    urlTab === "billing" ? "billing" : urlTab === "mcp" ? "mcp" : "general"
   );
 
   // Sync initial tab if URL query changes
   useEffect(() => {
-    if (urlTab === "general" || urlTab === "mcp" || urlTab === "billing") {
+    if (urlTab === "billing" || urlTab === "mcp" || urlTab === "general") {
       setActiveTab(urlTab);
     }
   }, [urlTab]);
 
   // General tab states
-  const [initialName, setInitialName] = useState("Heryad");
-  const [fullName, setFullName] = useState("Heryad");
-  const [initialEmail, setInitialEmail] = useState("founder@analytika.dev");
-  const [email, setEmail] = useState("founder@analytika.dev");
-  const [theme, setTheme] = useState<"dark" | "system" | "light">("dark");
-  const [emailDigest, setEmailDigest] = useState(true);
-  const [productAnnouncements, setProductAnnouncements] = useState(true);
+  const [initialName, setInitialName] = useState(user?.name || "");
+  const [fullName, setFullName] = useState(user?.name || "");
+  const [initialEmail, setInitialEmail] = useState(user?.email || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [theme, setTheme] = useState<"dark" | "system" | "light">(user?.theme || "dark");
+  const [emailDigest, setEmailDigest] = useState(user?.emailDigest ?? true);
+  const [productAnnouncements, setProductAnnouncements] = useState(user?.productAnnouncements ?? true);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Load from localStorage if available
+  // Sync state when user profile is loaded
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("analytika_user");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (parsed.name) {
-            setFullName(parsed.name);
-            setInitialName(parsed.name);
-          }
-          if (parsed.email) {
-            setEmail(parsed.email);
-            setInitialEmail(parsed.email);
-          }
-        } catch {}
+    if (user) {
+      if (user.name) {
+        setFullName(user.name);
+        setInitialName(user.name);
+      }
+      if (user.email) {
+        setEmail(user.email);
+        setInitialEmail(user.email);
+      }
+      if (user.theme) {
+        setTheme(user.theme);
+      }
+      if (user.emailDigest !== undefined) {
+        setEmailDigest(user.emailDigest);
+      }
+      if (user.productAnnouncements !== undefined) {
+        setProductAnnouncements(user.productAnnouncements);
       }
     }
-  }, []);
+  }, [user]);
 
-  const isProfileDirty = fullName.trim() !== initialName.trim() || email.trim() !== initialEmail.trim();
+  const isProfileDirty = fullName.trim() !== initialName.trim();
 
   // MCP tab states
-  const [mcpToken, setMcpToken] = useState("ana_mcp_live_948a29b01c3e882f0199e");
+  const [mcpToken, setMcpToken] = useState(user?.mcpApiKey || "ana_mcp_live_948a29b01c3e882f0199e");
   const [showToken, setShowToken] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const handleCopy = (text: string, fieldId: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldId);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   // Billing tab states
   const [annual, setAnnual] = useState(true);
@@ -142,12 +157,12 @@ function SettingsContent() {
   const trackRef = useRef<HTMLDivElement>(null);
 
   const tiers = [
-    { events: 10_000, label: "10k", starterM: 9, starterA: 7, proM: 19, proA: 15 },
+    { events: 10_000, label: "10k", starterM: 7, starterA: 5.5, proM: 15, proA: 12 },
     { events: 100_000, label: "100k", starterM: 19, starterA: 15, proM: 39, proA: 31 },
     { events: 500_000, label: "500k", starterM: 49, starterA: 39, proM: 89, proA: 71 },
     { events: 2_000_000, label: "2m", starterM: 119, starterA: 95, proM: 189, proA: 151 },
     { events: 5_000_000, label: "5m", starterM: 199, starterA: 159, proM: 299, proA: 239 },
-    { events: 20_000_000, label: "20m", starterM: 499, starterA: 399, proM: 699, proA: 559 },
+    { events: 20_000_000, label: "20m", starterM: 349, starterA: 279, proM: 549, proA: 439 },
   ];
 
   const currentTier = tiers[sliderIndex];
@@ -169,28 +184,67 @@ function SettingsContent() {
     setSliderIndex(index);
   };
 
-  const handleCopy = (text: string, fieldId: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedField(fieldId);
-    setTimeout(() => setCopiedField(null), 2000);
-  };
-
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (typeof window !== "undefined") {
-      localStorage.setItem("analytika_user", JSON.stringify({ name: fullName.trim(), email: email.trim() }));
+    setIsSaving(true);
+    try {
+      const res = await authApi.updateProfile({ name: fullName.trim() });
+      if (res.success && res.user) {
+        setInitialName(fullName.trim());
+        setSavedSuccess(true);
+        await refreshUser();
+        setTimeout(() => setSavedSuccess(false), 2500);
+      }
+    } catch (err) {
+      console.error("Failed to update profile", err);
+    } finally {
+      setIsSaving(false);
     }
-    setInitialName(fullName.trim());
-    setInitialEmail(email.trim());
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 2500);
   };
 
-  const handleSignOut = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("analytika_user");
+  const handleThemeChange = async (newTheme: "dark" | "system" | "light") => {
+    setTheme(newTheme);
+    try {
+      await authApi.updateProfile({ theme: newTheme });
+      await refreshUser();
+    } catch (err) {
+      console.error("Failed to update theme", err);
     }
-    window.location.href = "/auth/login";
+  };
+
+  const handleEmailDigestChange = async (checked: boolean) => {
+    setEmailDigest(checked);
+    try {
+      await authApi.updateProfile({ emailDigest: checked });
+      await refreshUser();
+    } catch (err) {
+      console.error("Failed to update email digest", err);
+    }
+  };
+
+  const handleProductAnnouncementsChange = async (checked: boolean) => {
+    setProductAnnouncements(checked);
+    try {
+      await authApi.updateProfile({ productAnnouncements: checked });
+      await refreshUser();
+    } catch (err) {
+      console.error("Failed to update product announcements", err);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await authApi.deleteAccount();
+      await logout();
+    } catch (err) {
+      console.error("Failed to delete account", err);
+      setIsDeleting(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await logout();
   };
 
   const mcpConfigJson = JSON.stringify(
@@ -217,7 +271,7 @@ function SettingsContent() {
         Settings
       </h1>
 
-      {/* Tabs Navigation - Exact same width and alignment */}
+      {/* Tabs Navigation - General & Billing */}
       <div className="flex items-center gap-1.5 border-b border-white/[0.08] pb-3">
         <button
           type="button"
@@ -230,19 +284,6 @@ function SettingsContent() {
         >
           <User className="h-3.5 w-3.5 text-zinc-400" />
           General
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("mcp")}
-          className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
-            activeTab === "mcp"
-              ? "bg-[#262626] text-white border border-white/[0.08]"
-              : "text-zinc-400 hover:text-white hover:bg-[#262626]/50"
-          }`}
-        >
-          <Bot className="h-3.5 w-3.5 text-zinc-400" />
-          MCP Server
         </button>
 
         <button
@@ -266,14 +307,20 @@ function SettingsContent() {
           {/* Profile Card */}
           <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 space-y-4">
             <div className="flex items-center gap-3.5 pb-2 border-b border-white/[0.04]">
-              <img
-                src="https://unavatar.io/x/heryad_"
-                alt="Avatar"
-                className="w-11 h-11 rounded-xl object-cover bg-[#1F1F1F] border border-white/[0.08] shrink-0"
-              />
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt="Avatar"
+                  className="w-11 h-11 rounded-xl object-cover bg-[#1F1F1F] border border-white/[0.08] shrink-0"
+                />
+              ) : (
+                <div className="w-11 h-11 rounded-xl bg-[#800E13] border border-white/[0.08] text-white font-bold text-base flex items-center justify-center shrink-0">
+                  {(fullName || email || "A").charAt(0).toUpperCase()}
+                </div>
+              )}
               <div>
                 <h2 className="text-sm font-bold text-white leading-tight">
-                  {fullName || "User"}
+                  {fullName || "Founder"}
                 </h2>
                 <span className="text-xs text-zinc-500 font-mono block mt-0.5">
                   {email}
@@ -301,10 +348,10 @@ function SettingsContent() {
 
                 <Button
                   type="submit"
-                  disabled={!isProfileDirty}
+                  disabled={!isProfileDirty || isSaving}
                   className="bg-[#800E13] hover:bg-[#9e1218] text-white font-medium text-xs px-4 h-10 rounded-xl transition-all border border-[#800E13] disabled:opacity-40 disabled:pointer-events-none cursor-pointer shrink-0"
                 >
-                  {savedSuccess ? "Saved" : "Save Changes"}
+                  {isSaving ? "Saving..." : savedSuccess ? "Saved" : "Save Changes"}
                 </Button>
               </div>
             </form>
@@ -320,7 +367,7 @@ function SettingsContent() {
             <div className="inline-flex items-center gap-1 rounded-xl bg-[#1F1F1F] p-1 border border-white/[0.06]">
               <button
                 type="button"
-                onClick={() => setTheme("dark")}
+                onClick={() => handleThemeChange("dark")}
                 className={`px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
                   theme === "dark" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
                 }`}
@@ -330,7 +377,7 @@ function SettingsContent() {
               </button>
               <button
                 type="button"
-                onClick={() => setTheme("system")}
+                onClick={() => handleThemeChange("system")}
                 className={`px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
                   theme === "system" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
                 }`}
@@ -340,7 +387,7 @@ function SettingsContent() {
               </button>
               <button
                 type="button"
-                onClick={() => setTheme("light")}
+                onClick={() => handleThemeChange("light")}
                 className={`px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
                   theme === "light" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
                 }`}
@@ -361,7 +408,7 @@ function SettingsContent() {
                   <span className="text-xs font-medium text-zinc-200 block">Weekly Digest</span>
                   <span className="text-[11px] text-zinc-500 font-mono block">Weekly summary of traffic and revenue</span>
                 </div>
-                <Switch checked={emailDigest} onCheckedChange={setEmailDigest} />
+                <Switch checked={emailDigest} onCheckedChange={handleEmailDigestChange} />
               </div>
 
               <div className="border-t border-white/[0.04]" />
@@ -371,7 +418,7 @@ function SettingsContent() {
                   <span className="text-xs font-medium text-zinc-200 block">Product Updates</span>
                   <span className="text-[11px] text-zinc-500 font-mono block">New features and MCP tools announcements</span>
                 </div>
-                <Switch checked={productAnnouncements} onCheckedChange={setProductAnnouncements} />
+                <Switch checked={productAnnouncements} onCheckedChange={handleProductAnnouncementsChange} />
               </div>
             </div>
           </div>
@@ -428,10 +475,11 @@ function SettingsContent() {
                     </Button>
                     <Button
                       type="button"
-                      onClick={handleSignOut}
-                      className="bg-rose-600 hover:bg-rose-700 text-white font-medium h-8 rounded-xl text-xs px-3 cursor-pointer"
+                      disabled={isDeleting}
+                      onClick={handleDeleteAccount}
+                      className="bg-rose-600 hover:bg-rose-700 text-white font-medium h-8 rounded-xl text-xs px-3 cursor-pointer disabled:opacity-50"
                     >
-                      Confirm
+                      {isDeleting ? "Deleting..." : "Confirm"}
                     </Button>
                   </div>
                 </DialogContent>

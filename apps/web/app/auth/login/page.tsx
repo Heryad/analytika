@@ -6,17 +6,23 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Mail, ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowRight, Mail, ArrowLeft, Loader2, User, AlertCircle, Sparkles } from "lucide-react";
+import { authApi } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
 function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { login } = useAuth();
   const prefillDomain = searchParams.get("domain") || "";
 
+  // Form State
   const [email, setEmail] = useState("");
-  const [step, setStep] = useState<"email" | "otp">("email");
+  const [name, setName] = useState("");
+  const [step, setStep] = useState<"email" | "register" | "otp-login" | "otp-register">("email");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [resendCountdown, setResendCountdown] = useState(30);
   const [canResend, setCanResend] = useState(false);
 
@@ -25,7 +31,7 @@ function LoginForm() {
   // Resend Countdown timer
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (step === "otp" && resendCountdown > 0) {
+    if ((step === "otp-login" || step === "otp-register") && resendCountdown > 0) {
       timer = setTimeout(() => {
         setResendCountdown((prev) => prev - 1);
       }, 1000);
@@ -35,23 +41,71 @@ function LoginForm() {
     return () => clearTimeout(timer);
   }, [step, resendCountdown]);
 
-  // Handle Send Code
-  const handleSendCode = async (e: React.FormEvent) => {
+  // Step 1: Check Email
+  const handleCheckEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !email.includes("@")) return;
 
     setIsLoading(true);
-    setTimeout(() => {
+    setErrorMessage(null);
+
+    try {
+      const res = await authApi.checkEmail(email.trim());
+
+      if (!res.success) {
+        setErrorMessage(res.error || "Failed to check email.");
+        setIsLoading(false);
+        return;
+      }
+
+      if (res.isRegistered) {
+        // User already registered -> OTP sent via Resend
+        setStep("otp-login");
+        setResendCountdown(30);
+        setCanResend(false);
+        setTimeout(() => otpInputsRef.current[0]?.focus(), 100);
+      } else {
+        // User NOT registered -> Show Registration Form
+        setStep("register");
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || "An unexpected error occurred.");
+    } finally {
       setIsLoading(false);
-      setStep("otp");
-      setResendCountdown(30);
-      setCanResend(false);
-      setTimeout(() => otpInputsRef.current[0]?.focus(), 100);
-    }, 600);
+    }
+  };
+
+  // Step 2: Request Registration OTP
+  const handleRegisterRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      setErrorMessage("Please enter your name.");
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const res = await authApi.registerRequest(email.trim(), name.trim());
+      if (res.success) {
+        setStep("otp-register");
+        setResendCountdown(30);
+        setCanResend(false);
+        setTimeout(() => otpInputsRef.current[0]?.focus(), 100);
+      } else {
+        setErrorMessage(res.error || "Failed to send confirmation code.");
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to request confirmation code.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Handle OTP Input Change with Auto-Advance & Paste
   const handleOtpChange = (index: number, value: string) => {
+    setErrorMessage(null);
     if (value.length > 1) {
       const pasted = value.replace(/\D/g, "").slice(0, 6);
       if (pasted.length > 0) {
@@ -83,46 +137,90 @@ function LoginForm() {
     }
   };
 
-  // Handle OTP Verification
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  // Handle OTP Verification (Login or Register Confirm)
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = otp.join("");
     if (code.length < 6) return;
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("analytika_user", JSON.stringify({ email }));
-      }
-      if (prefillDomain) {
-        router.push(`/dashboard?domain=${encodeURIComponent(prefillDomain)}`);
+    setErrorMessage(null);
+
+    try {
+      if (step === "otp-login") {
+        // Verify Login
+        const res = await authApi.verifyOtp(email.trim(), code);
+        if (res.success && res.token && res.user) {
+          login(res.token, res.user);
+          if (prefillDomain) {
+            router.push(`/dashboard?domain=${encodeURIComponent(prefillDomain)}`);
+          } else {
+            router.push("/dashboard");
+          }
+        } else {
+          setErrorMessage(res.error || "Invalid or expired verification code.");
+        }
       } else {
-        router.push("/dashboard");
+        // Confirm Registration
+        const res = await authApi.registerConfirm(email.trim(), code, name.trim());
+        if (res.success && res.token && res.user) {
+          login(res.token, res.user);
+          if (prefillDomain) {
+            router.push(`/dashboard?domain=${encodeURIComponent(prefillDomain)}`);
+          } else {
+            router.push("/dashboard");
+          }
+        } else {
+          setErrorMessage(res.error || "Invalid or expired confirmation code.");
+        }
       }
-    }, 700);
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to verify code.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Google 1-Click Login
+  // Handle Resend Code
+  const handleResendCode = async () => {
+    if (!canResend || isLoading) return;
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      if (step === "otp-login") {
+        await authApi.checkEmail(email.trim());
+      } else {
+        await authApi.registerRequest(email.trim(), name.trim());
+      }
+      setCanResend(false);
+      setResendCountdown(30);
+    } catch (err: any) {
+      setErrorMessage("Failed to resend code. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Sync error from query param if redirected back with error
+  useEffect(() => {
+    const urlError = searchParams.get("error");
+    if (urlError) {
+      setErrorMessage(decodeURIComponent(urlError));
+    }
+  }, [searchParams]);
+
+  // Google 1-Click Login (OAuth 2.0)
   const handleGoogleLogin = () => {
     setIsLoading(true);
-    setTimeout(() => {
-      if (typeof window !== "undefined") {
-        localStorage.setItem("analytika_user", JSON.stringify({ email: "founder@example.com", provider: "google" }));
-      }
-      if (prefillDomain) {
-        router.push(`/dashboard?domain=${encodeURIComponent(prefillDomain)}`);
-      } else {
-        router.push("/dashboard");
-      }
-    }, 500);
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    window.location.href = `${apiBase}/api/v1/auth/oauth/google`;
   };
 
   return (
     <div className="relative min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-[#1F1F1F] text-zinc-100 selection:bg-[#800E13]/50 overflow-hidden">
-      
       {/* Background Red Accent Dot Grid with Radial Mask */}
-      <div 
+      <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(#800E13_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-40"
         style={{
           maskImage: "radial-gradient(ellipse at center, black 40%, transparent 85%)",
@@ -132,14 +230,13 @@ function LoginForm() {
       />
 
       {/* Ambient Crimson Center Glow */}
-      <div 
-        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#800E13]/15 blur-[130px] rounded-full" 
+      <div
+        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#800E13]/15 blur-[130px] rounded-full"
         aria-hidden="true"
       />
 
       {/* All-in-One Unified Login Card Container */}
       <div className="relative z-10 w-full max-w-[430px] rounded-2xl bg-[#262626]/95 backdrop-blur-md border border-white/[0.08] p-8 sm:p-9 shadow-2xl space-y-6">
-        
         {/* Brand Header Inside Card */}
         <div className="flex flex-col items-center text-center space-y-3">
           <Link href="/" className="inline-flex items-center gap-2.5 transition-opacity hover:opacity-90">
@@ -151,36 +248,45 @@ function LoginForm() {
               className="w-12 h-12 object-contain"
               priority
             />
-            <span className="text-2xl font-bold tracking-tight text-white">
-              Analytika
-            </span>
+            <span className="text-2xl font-bold tracking-tight text-white">Analytika</span>
           </Link>
 
           <div className="space-y-1 pt-1">
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              {step === "email" ? "Welcome to Analytika" : "Check your email"}
+              {step === "email" && "Welcome to Analytika"}
+              {step === "register" && "Create your account"}
+              {(step === "otp-login" || step === "otp-register") && "Check your email"}
             </h1>
+
             <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xs mx-auto">
-              {step === "email" 
-                ? (prefillDomain 
-                    ? `Start your 14-day free trial for ${prefillDomain}` 
-                    : "Start your 14-day free trial. Cookieless analytics & revenue tracking, no credit card required.")
-                : `We sent a 6-digit verification code to ${email}`}
+              {step === "email" &&
+                (prefillDomain
+                  ? `Start your 14-day free trial for ${prefillDomain}`
+                  : "Sign in or start your 14-day full Pro trial with zero cookies.")}
+
+              {step === "register" && "New account detected. Enter your name to activate your 14-day Pro trial."}
+
+              {(step === "otp-login" || step === "otp-register") &&
+                `We sent a 6-digit verification code to ${email}`}
             </p>
           </div>
         </div>
 
-        {/* Card Body with Unified Spacing */}
-        {step === "email" ? (
+        {/* Error Alert Banner */}
+        {errorMessage && (
+          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs animate-in fade-in slide-in-from-top-1">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+            <p className="leading-tight">{errorMessage}</p>
+          </div>
+        )}
+
+        {/* STEP 1: EMAIL INPUT */}
+        {step === "email" && (
           <div className="space-y-4">
-            
-            {/* 1. Email Form */}
-            <form onSubmit={handleSendCode} className="space-y-4">
+            <form onSubmit={handleCheckEmail} className="space-y-4">
               <div className="space-y-1.5 text-left">
-                <label className="text-xs font-medium text-zinc-300 block">
-                  Email address
-                </label>
-                
+                <label className="text-xs font-medium text-zinc-300 block">Email address</label>
+
                 <div className="relative flex items-center">
                   <Mail className="absolute left-3.5 h-4 w-4 text-zinc-500 pointer-events-none" />
                   <Input
@@ -203,11 +309,11 @@ function LoginForm() {
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Sending code...
+                    Checking...
                   </>
                 ) : (
                   <>
-                    Continue
+                    Continue with Email
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -223,7 +329,7 @@ function LoginForm() {
               <div className="border-t border-white/[0.06] w-full" />
             </div>
 
-            {/* 2. Google OAuth at Bottom */}
+            {/* Google OAuth */}
             <button
               type="button"
               onClick={handleGoogleLogin}
@@ -250,16 +356,79 @@ function LoginForm() {
               </svg>
               Continue with Google
             </button>
-
           </div>
-        ) : (
-          /* STEP 2: 6-DIGIT OTP WITH MATCHING SPACING */
-          <form onSubmit={handleVerifyOtp} className="space-y-4">
-            
+        )}
+
+        {/* STEP 2: REGISTRATION FORM FOR NEW USERS */}
+        {step === "register" && (
+          <form onSubmit={handleRegisterRequest} className="space-y-4">
+            <div className="p-3 rounded-xl bg-[#800E13]/10 border border-[#800E13]/25 text-xs text-rose-300 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-rose-400 shrink-0" />
+              <span>Includes 14-day full Pro trial with MRR & Live Maps.</span>
+            </div>
+
             <div className="space-y-1.5 text-left">
-              <label className="text-xs font-medium text-zinc-300 block">
-                Verification code
-              </label>
+              <label className="text-xs font-medium text-zinc-300 block">Your Name</label>
+              <div className="relative flex items-center">
+                <User className="absolute left-3.5 h-4 w-4 text-zinc-500 pointer-events-none" />
+                <Input
+                  type="text"
+                  placeholder="Alex Morgan"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  autoFocus
+                  className="pl-10 h-11 bg-[#1F1F1F] border-white/[0.08] text-white placeholder:text-zinc-500 rounded-xl focus-visible:ring-1 focus-visible:ring-[#800E13] focus-visible:border-[#800E13] text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5 text-left">
+              <label className="text-xs font-medium text-zinc-300 block">Email</label>
+              <Input
+                type="email"
+                value={email}
+                disabled
+                className="h-11 bg-[#181818] border-white/[0.05] text-zinc-400 rounded-xl text-sm"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isLoading || !name.trim()}
+              className="w-full h-11 bg-[#800E13] hover:bg-[#9e1218] text-white font-medium text-sm rounded-xl transition-all border border-[#800E13] shadow-md flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Sending confirmation code...
+                </>
+              ) : (
+                <>
+                  Send Confirmation Code
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </Button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setStep("email");
+                setErrorMessage(null);
+              }}
+              className="w-full text-center text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer pt-1"
+            >
+              &larr; Use a different email
+            </button>
+          </form>
+        )}
+
+        {/* STEP 3: 6-DIGIT OTP INPUT (LOGIN OR REGISTRATION) */}
+        {(step === "otp-login" || step === "otp-register") && (
+          <form onSubmit={handleVerifyOtp} className="space-y-4">
+            <div className="space-y-1.5 text-left">
+              <label className="text-xs font-medium text-zinc-300 block">Verification code</label>
 
               {/* 6 Digit Input Grid */}
               <div className="flex items-center justify-between gap-2">
@@ -295,7 +464,7 @@ function LoginForm() {
                 </>
               ) : (
                 <>
-                  Continue
+                  {step === "otp-login" ? "Verify & Sign In" : "Confirm & Activate Trial"}
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
@@ -308,6 +477,7 @@ function LoginForm() {
                 onClick={() => {
                   setStep("email");
                   setOtp(["", "", "", "", "", ""]);
+                  setErrorMessage(null);
                 }}
                 className="text-zinc-400 hover:text-white flex items-center gap-1 transition-colors cursor-pointer text-xs"
               >
@@ -318,10 +488,7 @@ function LoginForm() {
               <button
                 type="button"
                 disabled={!canResend || isLoading}
-                onClick={() => {
-                  setCanResend(false);
-                  setResendCountdown(30);
-                }}
+                onClick={handleResendCode}
                 className={`${
                   canResend
                     ? "text-rose-400 hover:text-rose-300 cursor-pointer font-medium"
@@ -331,23 +498,22 @@ function LoginForm() {
                 {canResend ? "Resend code" : `Resend in ${resendCountdown}s`}
               </button>
             </div>
-
           </form>
         )}
-
       </div>
-
     </div>
   );
 }
 
 export default function AuthPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[#171717] text-zinc-400">
-        <Loader2 className="h-5 w-5 animate-spin text-[#800E13]" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#171717] text-zinc-400">
+          <Loader2 className="h-5 w-5 animate-spin text-[#800E13]" />
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );
