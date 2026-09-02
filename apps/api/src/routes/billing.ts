@@ -7,6 +7,10 @@ import { env } from "@/config/env";
 import { logger } from "@/lib/logger";
 import { PLANS, VOLUME_TIERS } from "@/config/plans";
 import { clickhouse } from "@/db/clickhouse";
+import { 
+  sendSubscriptionSuccessEmail, 
+  sendSubscriptionCanceledEmail 
+} from "@/services/resend";
 
 export const billingRoutes = new Elysia({ prefix: "/api/v1/billing" })
   .use(authMiddleware)
@@ -205,6 +209,16 @@ export const billingRoutes = new Elysia({ prefix: "/api/v1/billing" })
           })
           .where(eq(users.id, user.id));
 
+        // Dispatch Subscription Confirmation Email
+        sendSubscriptionSuccessEmail({
+          email: currentUser.email,
+          name: currentUser.name || undefined,
+          planName: planConfig.name,
+          billingInterval: validInterval,
+          eventQuota: selectedTier.events,
+          currentPeriodEnd: periodEnd,
+        }).catch((emailErr) => logger.warn("Failed to dispatch subscription success email:", emailErr));
+
         return {
           success: true,
           mock: true,
@@ -331,6 +345,15 @@ export const billingRoutes = new Elysia({ prefix: "/api/v1/billing" })
         })
         .where(eq(users.id, user.id));
 
+      // Dispatch Cancellation Confirmation Email
+      const cancelPlanConfig = PLANS[currentUser.plan as "solo" | "growth"] || PLANS.solo;
+      sendSubscriptionCanceledEmail({
+        email: currentUser.email,
+        name: currentUser.name || undefined,
+        planName: cancelPlanConfig.name,
+        currentPeriodEnd: currentUser.currentPeriodEnd,
+      }).catch((emailErr) => logger.warn("Failed to dispatch cancellation email:", emailErr));
+
       return {
         success: true,
         message: "Subscription successfully canceled. You retain full access until the end of your billing cycle.",
@@ -431,7 +454,7 @@ export const billingRoutes = new Elysia({ prefix: "/api/v1/billing" })
           const quota = Number(data.metadata?.eventQuota || 100000);
           const interval = data.metadata?.billingInterval || (data.recurring_interval === "year" ? "year" : "month");
 
-          await db
+          const [updatedUser] = await db
             .update(users)
             .set({
               plan,
@@ -442,25 +465,47 @@ export const billingRoutes = new Elysia({ prefix: "/api/v1/billing" })
               maxAlerts: planConfig.maxAlerts,
               hasSocialRadar: planConfig.hasSocialRadar,
               retentionDays: planConfig.retentionDays,
-              subscriptionStatus: data.status === "active" ? "active" : "active",
+              subscriptionStatus: "active",
               polarCustomerId: data.customer_id || data.customer?.id,
               polarSubscriptionId: data.id,
               currentPeriodEnd: data.current_period_end ? new Date(data.current_period_end) : undefined,
               updatedAt: new Date(),
             })
-            .where(eq(users.id, userId));
+            .where(eq(users.id, userId))
+            .returning();
+
+          if (updatedUser) {
+            sendSubscriptionSuccessEmail({
+              email: updatedUser.email,
+              name: updatedUser.name || undefined,
+              planName: planConfig.name,
+              billingInterval: interval,
+              eventQuota: quota,
+              currentPeriodEnd: updatedUser.currentPeriodEnd,
+            }).catch((emailErr) => logger.warn("Webhook subscription confirmation email error:", emailErr));
+          }
           break;
         }
 
         case "subscription.canceled":
         case "subscription.revoked": {
-          await db
+          const [canceledUser] = await db
             .update(users)
             .set({
               subscriptionStatus: "canceled",
               updatedAt: new Date(),
             })
-            .where(eq(users.id, userId));
+            .where(eq(users.id, userId))
+            .returning();
+
+          if (canceledUser) {
+            sendSubscriptionCanceledEmail({
+              email: canceledUser.email,
+              name: canceledUser.name || undefined,
+              planName: (PLANS[canceledUser.plan as "solo" | "growth"] || PLANS.solo).name,
+              currentPeriodEnd: canceledUser.currentPeriodEnd,
+            }).catch((emailErr) => logger.warn("Webhook cancellation email error:", emailErr));
+          }
           break;
         }
       }

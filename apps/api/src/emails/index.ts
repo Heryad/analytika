@@ -3,3 +3,7 @@ export * from "./templates/otp";
 export * from "./templates/welcome";
 export * from "./templates/alert";
 export * from "./templates/quota-notice";
+export * from "./templates/subscription-success";
+export * from "./templates/trial-expiring";
+export * from "./templates/subscription-canceled";
+export * from "./templates/account-deleted";

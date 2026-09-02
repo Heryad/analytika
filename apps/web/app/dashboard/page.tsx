@@ -162,9 +162,6 @@ function WebsitesHub() {
   const [websites, setWebsites] = useState<Website[]>([]);
   const [meta, setMeta] = useState<{ count: number; maxWebsites: number; canAdd: boolean; plan: string } | null>(null);
 
-  const isTrialing = user?.subscriptionStatus === "trialing" || (user && !user.currentPeriodEnd);
-  const trialDays = user?.trialDaysRemaining ?? 14;
-
   // Fetch real websites from API
   useEffect(() => {
     let mounted = true;
@@ -189,43 +186,6 @@ function WebsitesHub() {
 
   return (
     <div className="space-y-6">
-      {/* Active Trial Notice (Only shown when user is trialing) */}
-      {isTrialing && (
-        <div className="rounded-2xl bg-[#262626] border border-[#800E13]/40 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="relative flex h-2.5 w-2.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#800E13]" />
-            </span>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-white">
-                  Solo Plan Trial
-                </span>
-                <span className="text-[10px] font-mono text-rose-300 bg-[#800E13]/20 px-2 py-0.5 rounded-full border border-[#800E13]/30">
-                  {trialDays} {trialDays === 1 ? "day" : "days"} left
-                </span>
-              </div>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Full analytics access active. Subscribe to keep uninterrupted tracking and custom domains.
-              </p>
-            </div>
-          </div>
-
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="bg-[#1F1F1F] border-white/[0.08] hover:bg-[#262626] hover:border-white/[0.15] text-xs text-white font-medium h-9 px-4 rounded-xl shrink-0 cursor-pointer self-start sm:self-auto"
-          >
-            <Link href="/dashboard/settings?tab=billing">
-              Subscribe Plan
-              <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-            </Link>
-          </Button>
-        </div>
-      )}
-
       {/* Clean Header: Title + Plan Quota + Add Website Button */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

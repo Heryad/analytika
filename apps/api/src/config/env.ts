@@ -30,4 +30,8 @@ export const env = {
   // Google OAuth 2.0
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "null",
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "null",
+
+  // X (Twitter) API v2
+  X_BEARER_TOKEN: process.env.X_BEARER_TOKEN || "",
+  X_API_SECRET: process.env.X_API_SECRET || "",
 };

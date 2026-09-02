@@ -6,7 +6,15 @@ import {
   renderWelcomeEmail,
   renderAlertEmail,
   renderQuotaNoticeEmail,
+  renderSubscriptionSuccessEmail,
+  renderTrialExpiringEmail,
+  renderSubscriptionCanceledEmail,
+  renderAccountDeletedEmail,
   AlertEmailProps,
+  SubscriptionSuccessEmailProps,
+  TrialExpiringEmailProps,
+  SubscriptionCanceledEmailProps,
+  AccountDeletedEmailProps,
 } from "@/emails";
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
@@ -86,6 +94,46 @@ export async function sendQuotaNoticeEmail({
     planName,
   });
   return sendMail(email, subject, html);
+}
+
+/**
+ * 5. Send Subscription Activated / Tier Upgraded Email
+ */
+export async function sendSubscriptionSuccessEmail(
+  props: SubscriptionSuccessEmailProps
+): Promise<BaseEmailResult> {
+  const { subject, html } = renderSubscriptionSuccessEmail(props);
+  return sendMail(props.email, subject, html);
+}
+
+/**
+ * 6. Send Trial Expiring Notice Email (3 Days Remaining)
+ */
+export async function sendTrialExpiringEmail(
+  props: TrialExpiringEmailProps
+): Promise<BaseEmailResult> {
+  const { subject, html } = renderTrialExpiringEmail(props);
+  return sendMail(props.email, subject, html);
+}
+
+/**
+ * 7. Send Subscription Canceled Email
+ */
+export async function sendSubscriptionCanceledEmail(
+  props: SubscriptionCanceledEmailProps
+): Promise<BaseEmailResult> {
+  const { subject, html } = renderSubscriptionCanceledEmail(props);
+  return sendMail(props.email, subject, html);
+}
+
+/**
+ * 8. Send Account Deleted Confirmation Email
+ */
+export async function sendAccountDeletedEmail(
+  props: AccountDeletedEmailProps
+): Promise<BaseEmailResult> {
+  const { subject, html } = renderAccountDeletedEmail(props);
+  return sendMail(props.email, subject, html);
 }
 
 /**

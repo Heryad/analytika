@@ -221,6 +221,33 @@ html.light .bg-rose-950\/20 {
   border-color: rgba(225, 29, 72, 0.2) !important;
 }
 
+/* 7.5 Social Mention Radar in Light Mode */
+html.light .bg-black\/20,
+html.light .bg-black\/30,
+html.light .bg-black\/40,
+html.light .bg-black\/50 {
+  background-color: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+  color: #334155 !important;
+}
+
+html.light .bg-black\/40:hover,
+html.light .bg-black\/50:hover {
+  background-color: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+}
+
+html.light .bg-\[\#18181b\] {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #0F172A !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.06) !important;
+}
+
+html.light .social-radar-locked-overlay {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+}
+
 /* 8. Forms, Inputs, Selects & Textareas */
 html.light input,
 html.light textarea,

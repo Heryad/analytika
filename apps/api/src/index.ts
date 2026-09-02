@@ -15,7 +15,9 @@ import { funnelsRoutes } from "@/routes/funnels";
 import { alertsRoutes } from "@/routes/alerts";
 import { paymentsRoutes } from "@/routes/payments";
 import { billingRoutes } from "@/routes/billing";
+import { mcpRoutes } from "@/routes/mcp";
 import { initClickHouseSchema, testClickHouseConnection } from "@/db/clickhouse";
+import { startLifecycleCron } from "@/services/lifecycle-cron";
 
 const app = new Elysia()
   // 1. CORS Middleware
@@ -150,6 +152,7 @@ const app = new Elysia()
   .use(alertsRoutes)
   .use(paymentsRoutes)
   .use(billingRoutes)
+  .use(mcpRoutes)
 
   // 8. Start Server Listener
   .listen(env.PORT, async ({ hostname, port }) => {
@@ -163,6 +166,9 @@ const app = new Elysia()
     // Verify DB & ClickHouse on boot
     await testDbConnection();
     await initClickHouseSchema();
+
+    // Start Automated Background Lifecycle Cron Worker
+    startLifecycleCron();
   });
 
 export type App = typeof app;

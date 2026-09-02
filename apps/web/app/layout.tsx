@@ -27,6 +27,7 @@ export const metadata: Metadata = {
   },
 };
 
+import Script from "next/script";
 import { AuthProvider } from "@/lib/auth-context";
 
 export default async function RootLayout({
@@ -40,9 +41,11 @@ export default async function RootLayout({
   const initialClass = isLight ? "light scroll-smooth" : "dark scroll-smooth";
 
   return (
-    <html lang="en" className={initialClass} suppressHydrationWarning>
+    <html lang="en" className={initialClass} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
-        <script
+        <Script
+          id="theme-initializer"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {

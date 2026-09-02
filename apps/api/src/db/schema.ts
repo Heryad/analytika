@@ -42,6 +42,8 @@ export const users = pgTable("users", {
   polarSubscriptionId: varchar("polar_subscription_id", { length: 255 }),
   subscriptionStatus: varchar("subscription_status", { length: 50 }).default("trialing").notNull(),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
+  trialReminderSentAt: timestamp("trial_reminder_sent_at", { withTimezone: true }),
+  lastQuotaNoticeSentAt: timestamp("last_quota_notice_sent_at", { withTimezone: true }),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
 
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -214,6 +216,32 @@ export const milestones = pgTable("milestones", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// 11. Social Mentions (X & Reddit Social Radar)
+export const socialMentions = pgTable(
+  "social_mentions",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(), // 'sm_...'
+    websiteId: varchar("website_id", { length: 64 })
+      .references(() => websites.id, { onDelete: "cascade" })
+      .notNull(),
+    platform: varchar("platform", { length: 20 }).notNull(), // 'x' | 'reddit'
+    externalId: varchar("external_id", { length: 255 }).notNull(),
+    authorName: varchar("author_name", { length: 255 }).notNull(),
+    authorHandle: varchar("author_handle", { length: 255 }).notNull(), // e.g. '@username' or 'r/SaaS'
+    authorAvatarUrl: text("author_avatar_url"),
+    content: text("content").notNull(),
+    url: text("url").notNull(),
+    likes: integer("likes").default(0).notNull(),
+    reposts: integer("reposts").default(0).notNull(),
+    replies: integer("replies").default(0).notNull(),
+    postedAt: timestamp("posted_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    siteExternalIdx: uniqueIndex("social_mentions_site_ext_idx").on(table.websiteId, table.externalId),
+  })
+);
+
 // Relational Definitions
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
@@ -235,6 +263,7 @@ export const websitesRelations = relations(websites, ({ one, many }) => ({
   alerts: many(alerts),
   funnels: many(funnels),
   milestones: many(milestones),
+  socialMentions: many(socialMentions),
 }));
 
 export const paymentIntegrationsRelations = relations(paymentIntegrations, ({ one }) => ({
@@ -251,4 +280,8 @@ export const funnelsRelations = relations(funnels, ({ one }) => ({
 
 export const milestonesRelations = relations(milestones, ({ one }) => ({
   website: one(websites, { fields: [milestones.websiteId], references: [websites.id] }),
+}));
+
+export const socialMentionsRelations = relations(socialMentions, ({ one }) => ({
+  website: one(websites, { fields: [socialMentions.websiteId], references: [websites.id] }),
 }));

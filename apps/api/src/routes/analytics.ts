@@ -5,6 +5,7 @@ import { websites } from "@/db/schema";
 import { clickhouse } from "@/db/clickhouse";
 import { authMiddleware } from "@/middleware/auth";
 import { logger } from "@/lib/logger";
+import { getSocialRadarMetrics } from "@/services/social-radar";
 
 /**
  * Resolves timeframe string to UTC ISO date boundaries and grouping intervals
@@ -806,5 +807,58 @@ export const analyticsRoutes = new Elysia({ prefix: "/api/v1/analytics" })
         set.status = 500;
         return { success: false, error: "Failed to query custom events" };
       }
+    }
+  )
+
+  /**
+   * 11. Social Radar (X & Reddit Domain Mention Timeseries & Live Posts)
+   */
+  .get(
+    "/:siteId/social-radar",
+    async ({ user, params: { siteId }, query, set }) => {
+      if (!user) {
+        set.status = 401;
+        return { success: false, error: "Unauthorized" };
+      }
+
+      try {
+        const [website] = await db
+          .select({
+            id: websites.id,
+            domain: websites.domain,
+            userId: websites.userId,
+          })
+          .from(websites)
+          .where(and(eq(websites.id, siteId), eq(websites.userId, user.id)))
+          .limit(1);
+
+        if (!website) {
+          set.status = 404;
+          return { success: false, error: "Website not found." };
+        }
+
+        const timeRange = (query.timeRange as string) || "30 Days";
+        const radarData = await getSocialRadarMetrics({
+          websiteId: website.id,
+          domain: website.domain,
+          timeRange,
+        });
+
+        return {
+          success: true,
+          domain: website.domain,
+          planRestricted: !user.hasSocialRadar,
+          ...radarData,
+        };
+      } catch (err: any) {
+        logger.error("Failed to fetch social radar data:", err);
+        set.status = 500;
+        return { success: false, error: "Failed to fetch social radar" };
+      }
+    },
+    {
+      query: t.Object({
+        timeRange: t.Optional(t.String()),
+      }),
     }
   );

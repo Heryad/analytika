@@ -187,14 +187,39 @@ export function SettingsClient({
   const isProfileDirty = fullName.trim() !== initialName.trim();
 
   // MCP tab states
-  const [mcpToken, setMcpToken] = useState(user?.mcpApiKey || "ana_mcp_live_948a29b01c3e882f0199e");
+  const [mcpToken, setMcpToken] = useState(initialUser?.mcpApiKey || user?.mcpApiKey || authUser?.mcpApiKey || "");
   const [showToken, setShowToken] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isRegeneratingKey, setIsRegeneratingKey] = useState(false);
+  const [mcpClientTab, setMcpClientTab] = useState<"claude" | "openai" | "cursor">("claude");
+
+  // Sync token if authUser updates
+  useEffect(() => {
+    if (authUser?.mcpApiKey) {
+      setMcpToken(authUser.mcpApiKey);
+    }
+  }, [authUser?.mcpApiKey]);
 
   const handleCopy = (text: string, fieldId: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(fieldId);
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleRegenerateMcpKey = async () => {
+    if (isRegeneratingKey) return;
+    setIsRegeneratingKey(true);
+    try {
+      const res = await authApi.regenerateMcpKey();
+      if (res.success && res.mcpApiKey) {
+        setMcpToken(res.mcpApiKey);
+        updateUser({ mcpApiKey: res.mcpApiKey });
+      }
+    } catch (err) {
+      console.error("Failed to regenerate MCP key:", err);
+    } finally {
+      setIsRegeneratingKey(false);
+    }
   };
 
   // Billing tab states & dynamic subscription integration (SSR Pre-Fetched for 0ms initial render)
@@ -640,31 +665,36 @@ export function SettingsClient({
         </div>
       )}
 
-      {/* TAB 2: MCP SERVER */}
+      {/* TAB 2: REMOTE MCP SERVER */}
       {activeTab === "mcp" && (
         <div className="max-w-2xl space-y-5">
           
           {/* Server Connection Info */}
           <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 space-y-4">
-            <h2 className="text-xs font-semibold text-white">
-              MCP Server Endpoint
-            </h2>
+            <div>
+              <h2 className="text-xs font-semibold text-white">
+                Remote MCP Server (Model Context Protocol)
+              </h2>
+              <p className="text-[11px] text-zinc-400 mt-0.5">
+                Connect Claude.ai, ChatGPT, Cursor, or AI agents directly to your live analytics via HTTPS.
+              </p>
+            </div>
 
             <div className="space-y-1 text-left">
               <label className="text-xs text-zinc-400">
-                SSE Endpoint URL
+                Remote MCP Server URL
               </label>
               <div className="flex items-center gap-2">
                 <Input
                   type="text"
                   readOnly
-                  value="https://mcp.analytika.dev/v1/sse"
+                  value="https://api.analytika.me/api/v1/mcp"
                   className="h-9 bg-[#1F1F1F] border-white/[0.08] text-zinc-300 font-mono text-xs rounded-xl"
                 />
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => handleCopy("https://mcp.analytika.dev/v1/sse", "endpoint")}
+                  onClick={() => handleCopy("https://api.analytika.me/api/v1/mcp", "endpoint")}
                   className="border-white/[0.08] hover:bg-[#2d2d2d] text-zinc-300 h-9 px-3 rounded-xl shrink-0 cursor-pointer"
                 >
                   {copiedField === "endpoint" ? (
@@ -679,18 +709,16 @@ export function SettingsClient({
             <div className="space-y-1 text-left">
               <div className="flex items-center justify-between">
                 <label className="text-xs text-zinc-400">
-                  Personal Access Token
+                  Personal Access Token (Bearer Auth)
                 </label>
                 <button
                   type="button"
-                  onClick={() => {
-                    const newToken = `ana_mcp_live_${Math.random().toString(36).substring(2, 18)}`;
-                    setMcpToken(newToken);
-                  }}
-                  className="text-[11px] font-mono text-rose-300 hover:text-white flex items-center gap-1 cursor-pointer"
+                  disabled={isRegeneratingKey}
+                  onClick={handleRegenerateMcpKey}
+                  className="text-[11px] font-mono text-rose-300 hover:text-white flex items-center gap-1 cursor-pointer disabled:opacity-50"
                 >
-                  <RotateCw className="h-3 w-3" />
-                  Regenerate
+                  <RotateCw className={`h-3 w-3 ${isRegeneratingKey ? "animate-spin" : ""}`} />
+                  {isRegeneratingKey ? "Rotating..." : "Regenerate"}
                 </button>
               </div>
 
@@ -698,7 +726,7 @@ export function SettingsClient({
                 <Input
                   type={showToken ? "text" : "password"}
                   readOnly
-                  value={mcpToken}
+                  value={mcpToken || "Generating key..."}
                   className="h-9 bg-[#1F1F1F] border-white/[0.08] text-zinc-300 font-mono text-xs rounded-xl"
                 />
                 <Button
@@ -729,61 +757,162 @@ export function SettingsClient({
             </div>
           </div>
 
-          {/* Client Configuration */}
-          <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xs font-semibold text-white">
-                  Client Configuration
-                </h2>
-                <span className="text-[11px] text-zinc-500 font-mono block">
-                  For Claude Desktop & Cursor
-                </span>
+          {/* Setup Guide by Client */}
+          <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h2 className="text-xs font-semibold text-white">
+                How to Connect
+              </h2>
+              <div className="inline-flex items-center gap-1 rounded-xl bg-[#1F1F1F] p-1 border border-white/[0.06]">
+                <button
+                  type="button"
+                  onClick={() => setMcpClientTab("claude")}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${
+                    mcpClientTab === "claude" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  Claude.ai
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMcpClientTab("openai")}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${
+                    mcpClientTab === "openai" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  OpenAI / ChatGPT
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMcpClientTab("cursor")}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${
+                    mcpClientTab === "cursor" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  Cursor / Desktop
+                </button>
               </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleCopy(mcpConfigJson, "config")}
-                className="border-white/[0.08] hover:bg-[#2d2d2d] text-zinc-300 h-7 px-2.5 rounded-lg text-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
-              >
-                {copiedField === "config" ? (
-                  <>
-                    <Check className="h-3 w-3 text-emerald-400" />
-                    <span className="text-emerald-400">Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-3 w-3 text-zinc-400" />
-                    <span>Copy</span>
-                  </>
-                )}
-              </Button>
             </div>
 
-            <pre className="p-3 rounded-xl bg-[#1F1F1F] border border-white/[0.04] text-zinc-300 font-mono text-xs overflow-x-auto">
-              <code>{mcpConfigJson}</code>
-            </pre>
+            {/* Guide: Claude.ai Custom Connector */}
+            {mcpClientTab === "claude" && (
+              <div className="space-y-3 text-xs text-zinc-300 bg-[#1F1F1F] p-3.5 rounded-xl border border-white/[0.04]">
+                <div className="font-semibold text-white">Adding to Claude.ai (Custom Connectors):</div>
+                <ol className="list-decimal list-inside space-y-1.5 text-zinc-400 font-mono text-[11px]">
+                  <li>Open <strong>Claude.ai &rarr; Settings &rarr; Connectors</strong> and click <strong>Add custom connector</strong>.</li>
+                  <li>Set Name to: <strong className="text-white font-mono">Analytika</strong></li>
+                  <li>Set MCP Server URL to: <strong className="text-rose-300 font-mono">https://api.analytika.me/api/v1/mcp</strong></li>
+                  <li>Set Authentication to: <strong className="text-white font-mono">Bearer Token</strong> and paste your Personal Access Token.</li>
+                  <li>Click <strong>Connect</strong>. You can now ask Claude about your traffic, revenue, and mentions!</li>
+                </ol>
+              </div>
+            )}
+
+            {/* Guide: OpenAI / ChatGPT */}
+            {mcpClientTab === "openai" && (
+              <div className="space-y-3 text-xs text-zinc-300 bg-[#1F1F1F] p-3.5 rounded-xl border border-white/[0.04]">
+                <div className="font-semibold text-white">Adding to OpenAI / ChatGPT Custom Actions:</div>
+                <ol className="list-decimal list-inside space-y-1.5 text-zinc-400 font-mono text-[11px]">
+                  <li>In your Custom GPT / Action settings, enter the MCP Server URL: <strong className="text-rose-300 font-mono">https://api.analytika.me/api/v1/mcp</strong></li>
+                  <li>Select Authentication: <strong className="text-white font-mono">Bearer</strong></li>
+                  <li>Paste your Personal Access Token into the token field.</li>
+                  <li>ChatGPT will automatically discover your tools and query your live telemetry.</li>
+                </ol>
+              </div>
+            )}
+
+            {/* Guide: Cursor & Claude Desktop Config */}
+            {mcpClientTab === "cursor" && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs text-zinc-400">
+                  <span>Paste into <code>.cursor/mcp.json</code> or Claude Desktop config:</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      handleCopy(
+                        JSON.stringify(
+                          {
+                            mcpServers: {
+                              analytika: {
+                                url: "https://api.analytika.me/api/v1/mcp",
+                                headers: {
+                                  Authorization: `Bearer ${mcpToken || "YOUR_MCP_TOKEN"}`,
+                                },
+                              },
+                            },
+                          },
+                          null,
+                          2
+                        ),
+                        "cursor-json"
+                      )
+                    }
+                    className="border-white/[0.08] hover:bg-[#2d2d2d] text-zinc-300 h-6 px-2 text-[11px] rounded-lg cursor-pointer"
+                  >
+                    {copiedField === "cursor-json" ? (
+                      <Check className="h-3 w-3 text-emerald-400" />
+                    ) : (
+                      <Copy className="h-3 w-3 text-zinc-400" />
+                    )}
+                  </Button>
+                </div>
+                <pre className="p-3 rounded-xl bg-[#1F1F1F] border border-white/[0.04] text-zinc-300 font-mono text-xs overflow-x-auto">
+                  <code>
+                    {JSON.stringify(
+                      {
+                        mcpServers: {
+                          analytika: {
+                            url: "https://api.analytika.me/api/v1/mcp",
+                            headers: {
+                              Authorization: `Bearer ${mcpToken || "YOUR_MCP_TOKEN"}`,
+                            },
+                          },
+                        },
+                      },
+                      null,
+                      2
+                    )}
+                  </code>
+                </pre>
+              </div>
+            )}
           </div>
 
-          {/* Available Tools */}
+          {/* Available MCP Tools */}
           <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 space-y-2">
             <h2 className="text-xs font-semibold text-white mb-2">
-              Available MCP Tools
+              Available MCP Tools (Auto-Discovered by AI)
             </h2>
 
             <div className="space-y-1.5 text-xs font-mono">
               <div className="p-2.5 rounded-xl bg-[#1F1F1F] border border-white/[0.04] flex items-center justify-between">
+                <span className="text-white">list_websites</span>
+                <span className="text-zinc-500">List all tracked websites & domains</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-[#1F1F1F] border border-white/[0.04] flex items-center justify-between">
                 <span className="text-white">get_realtime_visitors</span>
-                <span className="text-zinc-500">Live visitors count</span>
+                <span className="text-zinc-500">Live 5-min online visitors & active URLs</span>
               </div>
               <div className="p-2.5 rounded-xl bg-[#1F1F1F] border border-white/[0.04] flex items-center justify-between">
-                <span className="text-white">query_pageviews</span>
-                <span className="text-zinc-500">Pageviews by date/source</span>
+                <span className="text-white">get_overview_metrics</span>
+                <span className="text-zinc-500">Visitors, Pageviews, Revenue & Bounce Rate</span>
               </div>
               <div className="p-2.5 rounded-xl bg-[#1F1F1F] border border-white/[0.04] flex items-center justify-between">
-                <span className="text-white">get_attributed_revenue</span>
-                <span className="text-zinc-500">Revenue by referrer & campaign</span>
+                <span className="text-white">get_traffic_sources</span>
+                <span className="text-zinc-500">Referrers, Search, Social & UTM campaigns</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-[#1F1F1F] border border-white/[0.04] flex items-center justify-between">
+                <span className="text-white">get_revenue_attribution</span>
+                <span className="text-zinc-500">Revenue by channel, campaign & landing page</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-[#1F1F1F] border border-white/[0.04] flex items-center justify-between">
+                <span className="text-white">get_social_radar</span>
+                <span className="text-zinc-500">Discovered X & Reddit mentions & community traffic</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-[#1F1F1F] border border-white/[0.04] flex items-center justify-between">
+                <span className="text-white">get_top_pages</span>
+                <span className="text-zinc-500">Page views, entry paths & duration</span>
               </div>
             </div>
           </div>

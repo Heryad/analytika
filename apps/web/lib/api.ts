@@ -197,6 +197,13 @@ export const authApi = {
     });
   },
 
+  // Regenerate MCP Personal Access Key
+  async regenerateMcpKey() {
+    return apiFetch<{ mcpApiKey: string; user: UserProfile }>("/api/v1/auth/regenerate-mcp-key", {
+      method: "POST",
+    });
+  },
+
   // Permanently delete account
   async deleteAccount() {
     return apiFetch<{ message: string }>("/api/v1/auth/me", {
@@ -530,7 +537,55 @@ export const analyticsApi = {
   async getEvents(siteId: string, range: string = "30d") {
     return apiFetch<{ events: CustomEventItem[] }>(`/api/v1/analytics/${siteId}/events?range=${range}`);
   },
+
+  // Social Mention Radar (X & Reddit)
+  async getSocialRadar(siteId: string, timeRange: string = "30 Days") {
+    const params = new URLSearchParams({ timeRange });
+    return apiFetch<SocialRadarData>(`/api/v1/analytics/${siteId}/social-radar?${params.toString()}`);
+  },
 };
+
+export interface SocialMentionItem {
+  id: string;
+  websiteId: string;
+  platform: "x" | "reddit";
+  externalId: string;
+  authorName: string;
+  authorHandle: string;
+  authorAvatarUrl?: string | null;
+  content: string;
+  url: string;
+  likes: number;
+  reposts: number;
+  replies: number;
+  postedAt: string;
+  createdAt: string;
+}
+
+export interface SocialRadarTimeseriesPoint {
+  date: string;
+  label?: string;
+  x: number;
+  reddit: number;
+  total: number;
+}
+
+export interface SocialRadarStats {
+  totalMentions: number;
+  xCount: number;
+  redditCount: number;
+  totalEngagements: number;
+  topPost: SocialMentionItem | null;
+}
+
+export interface SocialRadarData {
+  success: boolean;
+  domain: string;
+  planRestricted?: boolean;
+  mentions: SocialMentionItem[];
+  timeseries: SocialRadarTimeseriesPoint[];
+  stats: SocialRadarStats;
+}
 
 export interface MilestoneItem {
   id: string;

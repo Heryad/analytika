@@ -4,11 +4,12 @@ import { users, otpCodes, sessions, accounts, websites } from "@/db/schema";
 import { eq, and, desc, gt } from "drizzle-orm";
 import { generateOtpCode, hashOtpCode } from "@/lib/crypto";
 import { validateRegistrationEmail } from "@/lib/email-validator";
-import { sendOtpEmail, sendWelcomeEmail } from "@/services/resend";
+import { sendOtpEmail, sendWelcomeEmail, sendAccountDeletedEmail } from "@/services/resend";
 import { authMiddleware, requireAuth } from "@/middleware/auth";
 import { nanoid } from "nanoid";
 import { logger } from "@/lib/logger";
 import { env } from "@/config/env";
+import { clickhouse } from "@/db/clickhouse";
 
 export const authRoutes = new Elysia({ prefix: "/api/v1/auth" })
   .use(authMiddleware)
@@ -845,6 +846,40 @@ export const authRoutes = new Elysia({ prefix: "/api/v1/auth" })
   )
 
   /**
+   * 9.5. Regenerate MCP Access Key (Protected)
+   */
+  .post("/regenerate-mcp-key", async ({ user, set }) => {
+    if (!user) {
+      set.status = 401;
+      return { success: false, error: "Unauthorized" };
+    }
+
+    try {
+      const newMcpApiKey = `ana_mcp_live_${nanoid(24)}`;
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          mcpApiKey: newMcpApiKey,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, user.id))
+        .returning();
+
+      logger.success(`MCP Access Key rotated for user: ${user.email}`);
+
+      return {
+        success: true,
+        mcpApiKey: newMcpApiKey,
+        user: updatedUser,
+      };
+    } catch (err: any) {
+      logger.error("Failed to regenerate MCP key:", err);
+      set.status = 500;
+      return { success: false, error: "Failed to rotate MCP key." };
+    }
+  })
+
+  /**
    * 10. Delete Account (Protected)
    */
   .delete("/me", async ({ user, set }) => {
@@ -853,14 +888,69 @@ export const authRoutes = new Elysia({ prefix: "/api/v1/auth" })
       return { success: false, error: "Unauthorized" };
     }
 
-    // Cascade delete in PostgreSQL deletes all user records (sessions, accounts, websites, alerts, funnels)
-    await db.delete(users).where(eq(users.id, user.id));
-    logger.success(`User account permanently deleted: ${user.email}`);
+    try {
+      const [dbUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, user.id))
+        .limit(1);
 
-    return {
-      success: true,
-      message: "Account and associated data deleted permanently.",
-    };
+      if (!dbUser) {
+        set.status = 404;
+        return { success: false, error: "User not found." };
+      }
+
+      // 1. Dispatch Account Deletion Confirmation Email
+      sendAccountDeletedEmail({
+        name: dbUser.name || undefined,
+        email: dbUser.email,
+      }).catch((emailErr) => logger.warn("Failed to dispatch account deleted email:", emailErr));
+
+      // 2. Cancel Polar Subscription if active
+      if (env.POLAR_ACCESS_TOKEN && dbUser.polarSubscriptionId && !dbUser.polarSubscriptionId.startsWith("sub_sandbox_")) {
+        try {
+          await fetch(`https://api.polar.sh/v1/subscriptions/${dbUser.polarSubscriptionId}`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${env.POLAR_ACCESS_TOKEN}`,
+            },
+          });
+        } catch (polarErr) {
+          logger.warn("Polar subscription delete warning during account deletion:", polarErr);
+        }
+      }
+
+      // 3. Wipe all ClickHouse events for user's websites
+      try {
+        const userSites = await db
+          .select({ id: websites.id })
+          .from(websites)
+          .where(eq(websites.userId, user.id));
+
+        const siteIds = userSites.map((s) => s.id);
+        if (siteIds.length > 0) {
+          await clickhouse.command({
+            query: `ALTER TABLE analytika.events DELETE WHERE website_id IN ({siteIds: Array(String)}) SETTINGS mutations_sync = 1`,
+            query_params: { siteIds },
+          });
+        }
+      } catch (chErr) {
+        logger.warn("ClickHouse cleanup warning during account deletion:", chErr);
+      }
+
+      // 4. Cascade delete in PostgreSQL deletes all user records (sessions, accounts, websites, alerts, funnels)
+      await db.delete(users).where(eq(users.id, user.id));
+      logger.success(`User account permanently deleted: ${user.email}`);
+
+      return {
+        success: true,
+        message: "Account and associated data deleted permanently.",
+      };
+    } catch (err: any) {
+      logger.error("Error deleting user account:", err);
+      set.status = 500;
+      return { success: false, error: "Failed to delete account." };
+    }
   })
 
   /**

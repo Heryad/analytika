@@ -61,10 +61,10 @@ export function UserMenuDropdown({ initialUser }: { initialUser: UserProfile | n
           )}
 
           <div className="text-left hidden sm:block">
-            <span className="text-xs font-semibold text-white block leading-none truncate max-w-[120px]">
+            <span suppressHydrationWarning className="text-xs font-semibold text-white block leading-none truncate max-w-[120px]">
               {displayName}
             </span>
-            <span className="text-[10px] text-zinc-500 font-mono block mt-0.5 leading-none">
+            <span suppressHydrationWarning className="text-[10px] text-zinc-500 font-mono block mt-0.5 leading-none">
               {planLabel}
             </span>
           </div>
@@ -80,10 +80,10 @@ export function UserMenuDropdown({ initialUser }: { initialUser: UserProfile | n
       >
         {/* Profile Header */}
         <div className="px-3 py-2.5 bg-[#1F1F1F] rounded-lg border border-white/[0.04] space-y-0.5 mb-1">
-          <span className="font-semibold text-white block truncate text-sm">
+          <span suppressHydrationWarning className="font-semibold text-white block truncate text-sm">
             {displayName}
           </span>
-          <span className="text-zinc-400 font-mono text-[11px] block truncate">
+          <span suppressHydrationWarning className="text-zinc-400 font-mono text-[11px] block truncate">
             {displayEmail}
           </span>
         </div>

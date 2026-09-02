@@ -25,6 +25,8 @@ import { CustomBarList } from "@/components/analytics/custom-bar-list";
 import { FunnelVisualizer } from "@/components/analytics/funnel-visualizer";
 import { MilestonesVisualizer } from "@/components/analytics/milestones-visualizer";
 import { ShareWidgetModal } from "@/components/analytics/share-widget-modal";
+import { SocialRadarCard } from "@/components/analytics/social-radar-card";
+import { useAuth } from "@/lib/auth-context";
 import {
   Select,
   SelectContent,
@@ -90,6 +92,7 @@ function SkeletonMap() {
 }
 
 export default function WebsiteAnalyticsPage() {
+  const { user } = useAuth();
   const params = useParams();
   const websiteId = (params.websiteId as string) || "1";
 
@@ -789,6 +792,14 @@ export default function WebsiteAnalyticsPage() {
           </div>
         </div>
       </div>
+
+      {/* 2.5 Social Mention Radar (X & Reddit Live Attribution & Timeline) */}
+      <SocialRadarCard
+        websiteId={websiteId}
+        domain={siteDomain}
+        timeRange={timeRange}
+        hasSocialRadar={user?.hasSocialRadar}
+      />
 
       {/* 3. Grid of Charts (Breakdowns) */}
       <div className="flex flex-col gap-5">
