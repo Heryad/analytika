@@ -75,3 +75,58 @@ export async function getServerWebsite(
     return null;
   }
 }
+
+/**
+ * Server-Side Billing Status Fetcher for SSR
+ */
+export async function getServerBillingStatus() {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("analytika_token")?.value;
+
+    if (!token) return null;
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/billing/status`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      next: { revalidate: 0 },
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    if (data.success && data.subscription) {
+      return data.subscription;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Server-Side Plans Fetcher for SSR
+ */
+export async function getServerPlans() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/plans`, {
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    if (data.success) {
+      return {
+        plans: data.plans,
+        tiers: data.tiers,
+      };
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}

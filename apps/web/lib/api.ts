@@ -14,14 +14,17 @@ export interface UserProfile {
   emailDigest?: boolean;
   productAnnouncements?: boolean;
   plan: string;
+  billingInterval?: "month" | "year";
   eventQuota: number;
   maxWebsites: number;
   maxFunnels: number;
   maxAlerts: number;
   hasSocialRadar: boolean;
   mcpApiKey: string | null;
-  subscriptionStatus: string;
+  subscriptionStatus: "active" | "trialing" | "canceled" | "past_due" | string;
   trialEndsAt?: string | null;
+  trialDaysRemaining?: number;
+  currentPeriodEnd?: string | null;
   websitesCount?: number;
 }
 

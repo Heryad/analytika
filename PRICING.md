@@ -21,7 +21,7 @@ Analytika operates on a **2-Plan, Volume-Based Subscription Model** with no perp
 
 | Monthly Events | **Solo (Monthly)** | **Solo (Annual - 20% off)** | **Growth (Monthly)** | **Growth (Annual - 20% off)** |
 | :--- | :---: | :---: | :---: | :---: |
-| **10k events** | **$7** /mo | **$5.50** /mo <span style="color:#71717a">($66/yr)</span> | **$15** /mo | **$12** /mo <span style="color:#71717a">($144/yr)</span> |
+| **10k events** | **$7** /mo | **$6** /mo <span style="color:#71717a">($72/yr)</span> | **$15** /mo | **$12** /mo <span style="color:#71717a">($144/yr)</span> |
 | **100k events** | **$16** /mo | **$13** /mo <span style="color:#71717a">($156/yr)</span> | **$34** /mo | **$27** /mo <span style="color:#71717a">($324/yr)</span> |
 | **500k events** | **$39** /mo | **$31** /mo <span style="color:#71717a">($372/yr)</span> | **$79** /mo | **$63** /mo <span style="color:#71717a">($756/yr)</span> |
 | **2M events** | **$89** /mo | **$71** /mo <span style="color:#71717a">($852/yr)</span> | **$159** /mo | **$127** /mo <span style="color:#71717a">($1,524/yr)</span> |

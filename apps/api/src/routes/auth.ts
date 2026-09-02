@@ -754,6 +754,12 @@ export const authRoutes = new Elysia({ prefix: "/api/v1/auth" })
       .from(websites)
       .where(eq(websites.userId, user.id));
 
+    let trialDaysRemaining = 0;
+    if (dbUser.subscriptionStatus === "trialing" && dbUser.trialEndsAt) {
+      const diffMs = new Date(dbUser.trialEndsAt).getTime() - Date.now();
+      trialDaysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    }
+
     return {
       success: true,
       user: {
@@ -774,6 +780,7 @@ export const authRoutes = new Elysia({ prefix: "/api/v1/auth" })
         mcpApiKey: dbUser.mcpApiKey,
         subscriptionStatus: dbUser.subscriptionStatus,
         trialEndsAt: dbUser.trialEndsAt,
+        trialDaysRemaining,
         currentPeriodEnd: dbUser.currentPeriodEnd,
         websitesCount: userWebsites.length,
       },

@@ -36,7 +36,7 @@ export const VOLUME_TIERS: PricingTier[] = [
     events: 10_000,
     label: "10k",
     soloMonthly: 7,
-    soloAnnual: 5.5,
+    soloAnnual: 6,
     growthMonthly: 15,
     growthAnnual: 12,
   },
@@ -86,7 +86,7 @@ export const PLANS: Record<"solo" | "growth", PlanFeatureConfig> = {
   solo: {
     id: "solo",
     name: "Solo Plan",
-    tagline: "For indie founders, solo developers, and growing products.",
+    tagline: "For indie founders, creators, and solo products.",
     maxWebsites: 3,
     maxFunnels: 3,
     maxAlerts: 3,
@@ -98,6 +98,7 @@ export const PLANS: Record<"solo" | "growth", PlanFeatureConfig> = {
     features: [
       "Up to 3 Websites",
       "Real-time ClickHouse OLAP Analytics",
+      "Custom Proxy Subdomain (CNAME / SSL)",
       "Stripe & Polar MRR Attribution",
       "Model Context Protocol (MCP) AI Server",
       "3 Conversion Funnels & 3 Real-time Alerts",
@@ -108,7 +109,7 @@ export const PLANS: Record<"solo" | "growth", PlanFeatureConfig> = {
   growth: {
     id: "growth",
     name: "Growth Plan",
-    tagline: "For scaling startups, agencies, and high-volume platforms.",
+    tagline: "For scaling startups and high-traffic platforms.",
     maxWebsites: 25,
     maxFunnels: -1,
     maxAlerts: -1,

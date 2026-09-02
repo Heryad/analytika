@@ -74,7 +74,7 @@ export function Pricing() {
     events: 10000,
     label: "10k",
     soloMonthly: 7,
-    soloAnnual: 5.5,
+    soloAnnual: 6,
     growthMonthly: 15,
     growthAnnual: 12,
   };
@@ -212,16 +212,11 @@ export function Pricing() {
           {/* 1. Solo Plan */}
           <div className="flex flex-col justify-between rounded-2xl bg-[#262626] border border-white/[0.08] hover:border-white/[0.15] transition-all p-6">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-bold text-white">
-                  {plans?.solo.name || "Solo Plan"}
-                </h3>
-                <span className="text-[11px] font-mono text-zinc-400 bg-[#1F1F1F] px-2.5 py-0.5 rounded-md border border-white/[0.06]">
-                  Indie / Solo
-                </span>
-              </div>
-              <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
-                {plans?.solo.tagline || "For indie founders, solo developers, and growing products."}
+              <h3 className="text-lg font-bold text-white mb-1">
+                {plans?.solo.name || "Solo Plan"}
+              </h3>
+              <p className="text-xs text-zinc-400 mb-5 truncate">
+                {plans?.solo.tagline || "For indie founders, creators, and solo products."}
               </p>
 
               {/* Animated Price */}
@@ -278,16 +273,11 @@ export function Pricing() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-bold text-white">
-                  {plans?.growth.name || "Growth Plan"}
-                </h3>
-                <span className="text-[11px] font-mono text-rose-300 bg-[#800E13]/20 px-2.5 py-0.5 rounded-md border border-[#800E13]/30">
-                  Scale & Radar
-                </span>
-              </div>
-              <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
-                {plans?.growth.tagline || "For scaling startups, agencies, and high-volume platforms."}
+              <h3 className="text-lg font-bold text-white mb-1">
+                {plans?.growth.name || "Growth Plan"}
+              </h3>
+              <p className="text-xs text-zinc-400 mb-5 truncate">
+                {plans?.growth.tagline || "For scaling startups and high-traffic platforms."}
               </p>
 
               {/* Animated Price */}

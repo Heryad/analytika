@@ -108,14 +108,18 @@ function WidgetView() {
   const displayCount = metricValue || (metric === "revenue" ? "$0" : "0");
   const activePath = sparkPath || "M 0 35 L 200 35";
 
+  const referrerDomain = siteDomain || siteParam || "unknown";
+  const landingUrl = `/?ref=${encodeURIComponent(referrerDomain)}&utm_source=embed_widget&utm_medium=referral&utm_campaign=${encodeURIComponent(referrerDomain)}`;
+
   // TYPE 1: LIVE VISITOR PILL
   if (widgetType === "live-pill") {
     return (
       <div className="w-fit h-fit p-1 bg-transparent select-none">
         <a
-          href={`https://analytika.me/share/${siteParam}`}
+          href={landingUrl}
           target="_blank"
           rel="noopener noreferrer"
+          title={`Powered by Analytika — live analytics for ${siteDomain}`}
           className={`inline-flex items-center gap-3 px-4 py-2 rounded-full transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${
             theme === "dark"
               ? "bg-[#181818] border border-white/[0.08] text-white shadow-black/80"
@@ -164,68 +168,78 @@ function WidgetView() {
             : "bg-white/[0.06] backdrop-blur-xl text-white border border-white/[0.12] shadow-lg"
         }`}
       >
-        {/* Top Row: Domain Identity */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img
-              src={`https://www.google.com/s2/favicons?domain=${siteDomain}&sz=64`}
-              alt=""
-              className="w-4 h-4 rounded-xs"
-            />
-            <span className="font-bold text-xs truncate max-w-[200px]">{siteDomain}</span>
-          </div>
-        </div>
-
-        {/* Middle Row: Big Metric Number & Spline Chart with Selected Color */}
-        <div className="flex items-end justify-between my-2.5">
-          <div>
-            <div className="text-2xl font-extrabold font-mono tracking-tight leading-none">
-              {displayCount}
-            </div>
-            <div
-              className={`text-[10px] font-mono mt-1 ${
-                theme === "light" ? "text-zinc-500" : "text-zinc-400"
-              }`}
-            >
-              {metricLabel} ({timeRange})
-            </div>
-          </div>
-
-          {/* Spline Chart */}
-          <div className="w-24 h-9 relative">
-            <svg className="w-full h-full overflow-visible" viewBox="0 0 200 40">
-              <defs>
-                <linearGradient id="widgetSparkGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={chartColor} stopOpacity="0.4" />
-                  <stop offset="100%" stopColor={chartColor} stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-              {/* Area fill */}
-              <path d={`${activePath} L 200 40 L 0 40 Z`} fill="url(#widgetSparkGrad)" />
-              {/* Spline Stroke */}
-              <path
-                d={activePath}
-                fill="none"
-                stroke={chartColor}
-                strokeWidth="2.5"
-                strokeLinecap="round"
+        {/* Top & Middle: Clickable snapshot area pointing to landing page with ref */}
+        <a
+          href={landingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={`Powered by Analytika — analytics for ${siteDomain}`}
+          className="group block cursor-pointer transition-opacity hover:opacity-90"
+        >
+          {/* Top Row: Domain Identity */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <img
+                src={`https://www.google.com/s2/favicons?domain=${siteDomain}&sz=64`}
+                alt=""
+                className="w-4 h-4 rounded-xs"
               />
-              {/* Glowing End Dot */}
-              <circle cx="200" cy="4" r="3.5" fill={chartColor} />
-            </svg>
+              <span className="font-bold text-xs truncate max-w-[200px]">{siteDomain}</span>
+            </div>
           </div>
-        </div>
 
-        {/* Bottom Row: Analytika Brand Link */}
+          {/* Middle Row: Big Metric Number & Spline Chart with Selected Color */}
+          <div className="flex items-end justify-between my-2.5">
+            <div>
+              <div className="text-2xl font-extrabold font-mono tracking-tight leading-none">
+                {displayCount}
+              </div>
+              <div
+                className={`text-[10px] font-mono mt-1 ${
+                  theme === "light" ? "text-zinc-500" : "text-zinc-400"
+                }`}
+              >
+                {metricLabel} ({timeRange})
+              </div>
+            </div>
+
+            {/* Spline Chart */}
+            <div className="w-24 h-9 relative">
+              <svg className="w-full h-full overflow-visible" viewBox="0 0 200 40">
+                <defs>
+                  <linearGradient id="widgetSparkGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={chartColor} stopOpacity="0.4" />
+                    <stop offset="100%" stopColor={chartColor} stopOpacity="0.0" />
+                  </linearGradient>
+                </defs>
+                {/* Area fill */}
+                <path d={`${activePath} L 200 40 L 0 40 Z`} fill="url(#widgetSparkGrad)" />
+                {/* Spline Stroke */}
+                <path
+                  d={activePath}
+                  fill="none"
+                  stroke={chartColor}
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                />
+                {/* Glowing End Dot */}
+                <circle cx="200" cy="4" r="3.5" fill={chartColor} />
+              </svg>
+            </div>
+          </div>
+        </a>
+
+        {/* Bottom Row: Analytika Brand Link with ref */}
         <div
           className={`pt-2 border-t flex items-center justify-between ${
             theme === "light" ? "border-black/[0.08]" : "border-white/[0.08]"
           }`}
         >
           <a
-            href="https://analytika.app"
+            href={landingUrl}
             target="_blank"
             rel="noopener noreferrer"
+            title="Analytika Privacy-Friendly Web Analytics"
             className="flex items-center gap-1.5 transition-opacity hover:opacity-80 cursor-pointer"
           >
             <Image

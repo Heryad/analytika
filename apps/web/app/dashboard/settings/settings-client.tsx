@@ -33,7 +33,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
-import { authApi, UserProfile } from "@/lib/api";
+import { 
+  authApi, 
+  billingApi, 
+  plansApi,
+  UserProfile, 
+  BillingSubscription, 
+  PricingTier, 
+  PlanFeatureConfig 
+} from "@/lib/api";
 import { applyTheme } from "@/lib/theme";
 
 // Modern Toggle Switch Component
@@ -89,9 +97,17 @@ function AnimatedPrice({ value }: { value: number }) {
 
 interface SettingsClientProps {
   initialUser: UserProfile | null;
+  initialSubscription?: BillingSubscription | null;
+  initialPlans?: Record<"solo" | "growth", PlanFeatureConfig> | null;
+  initialTiers?: PricingTier[];
 }
 
-export function SettingsClient({ initialUser }: SettingsClientProps) {
+export function SettingsClient({ 
+  initialUser, 
+  initialSubscription, 
+  initialPlans, 
+  initialTiers 
+}: SettingsClientProps) {
   const searchParams = useSearchParams();
   const urlTab = searchParams.get("tab");
   const { user: authUser, refreshUser, logout, updateUser } = useAuth();
@@ -181,32 +197,74 @@ export function SettingsClient({ initialUser }: SettingsClientProps) {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  // Billing tab states
+  // Billing tab states & dynamic subscription integration (SSR Pre-Fetched for 0ms initial render)
+  const [billingSub, setBillingSub] = useState<BillingSubscription | null>(initialSubscription || null);
+  const [plans, setPlans] = useState<Record<"solo" | "growth", PlanFeatureConfig> | null>(initialPlans || null);
+  const [tiers, setTiers] = useState<PricingTier[]>(
+    initialTiers && initialTiers.length > 0
+      ? initialTiers
+      : [
+          { events: 10_000, label: "10k", soloMonthly: 7, soloAnnual: 6, growthMonthly: 15, growthAnnual: 12 },
+          { events: 100_000, label: "100k", soloMonthly: 19, soloAnnual: 15, growthMonthly: 39, growthAnnual: 31 },
+          { events: 500_000, label: "500k", soloMonthly: 49, soloAnnual: 39, growthMonthly: 89, growthAnnual: 71 },
+          { events: 2_000_000, label: "2m", soloMonthly: 119, soloAnnual: 95, growthMonthly: 189, growthAnnual: 151 },
+          { events: 5_000_000, label: "5m", soloMonthly: 199, soloAnnual: 159, growthMonthly: 299, growthAnnual: 239 },
+          { events: 20_000_000, label: "20m", soloMonthly: 349, soloAnnual: 279, growthMonthly: 549, growthAnnual: 439 },
+        ]
+  );
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [annual, setAnnual] = useState(true);
   const [sliderIndex, setSliderIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
 
-  const tiers = [
-    { events: 10_000, label: "10k", starterM: 7, starterA: 5.5, proM: 15, proA: 12 },
-    { events: 100_000, label: "100k", starterM: 19, starterA: 15, proM: 39, proA: 31 },
-    { events: 500_000, label: "500k", starterM: 49, starterA: 39, proM: 89, proA: 71 },
-    { events: 2_000_000, label: "2m", starterM: 119, starterA: 95, proM: 189, proA: 151 },
-    { events: 5_000_000, label: "5m", starterM: 199, starterA: 159, proM: 299, proA: 239 },
-    { events: 20_000_000, label: "20m", starterM: 349, starterA: 279, proM: 549, proA: 439 },
-  ];
+  const subscribedParam = searchParams.get("subscribed") || searchParams.get("checkout");
 
-  const currentTier = tiers[sliderIndex];
-  const starterPrice = annual ? currentTier.starterA : currentTier.starterM;
-  const proPrice = annual ? currentTier.proA : currentTier.proM;
-  const visualPercentage = 16 + (sliderIndex / (tiers.length - 1)) * 84;
+  // Background refresh to sync any live updates
+  useEffect(() => {
+    let mounted = true;
+    billingApi
+      .getStatus()
+      .then((res) => {
+        if (mounted && res.success && res.subscription) {
+          setBillingSub(res.subscription);
+        }
+      })
+      .catch(() => {});
+
+    if (subscribedParam) {
+      refreshUser().catch(() => {});
+    }
+
+    if (!plans || tiers.length === 0) {
+      plansApi
+        .get()
+        .then((res) => {
+          if (mounted && res.success) {
+            if (res.tiers && res.tiers.length > 0) setTiers(res.tiers);
+            if (res.plans) setPlans(res.plans);
+          }
+        })
+        .catch(() => {});
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [activeTab, subscribedParam]);
+
+  const currentTier = tiers[sliderIndex] || tiers[0];
+  const soloPrice = annual ? currentTier.soloAnnual : currentTier.soloMonthly;
+  const growthPrice = annual ? currentTier.growthAnnual : currentTier.growthMonthly;
+  const stepCount = Math.max(1, tiers.length - 1);
+  const visualPercentage = 16 + (sliderIndex / stepCount) * 84;
 
   const updateStageFromPointer = (clientX: number) => {
-    if (!trackRef.current) return;
+    if (!trackRef.current || tiers.length <= 1) return;
     const rect = trackRef.current.getBoundingClientRect();
     const rawRatio = (clientX - rect.left) / rect.width;
     const clamped = Math.max(0, Math.min(1, rawRatio));
-    const stepCount = tiers.length - 1;
     let index = 0;
     if (clamped > 0.1) {
       index = Math.round(((clamped - 0.16) / 0.84) * stepCount);
@@ -214,6 +272,50 @@ export function SettingsClient({ initialUser }: SettingsClientProps) {
     }
     setSliderIndex(index);
   };
+
+  const handleCheckout = async (plan: "solo" | "growth") => {
+    setIsCheckoutLoading(true);
+    try {
+      const res = await billingApi.createCheckout({
+        plan,
+        interval: annual ? "year" : "month",
+        tierEvents: currentTier.events,
+      });
+      if (res.success && res.checkoutUrl) {
+        window.location.href = res.checkoutUrl;
+      }
+    } catch (err) {
+      console.error("Failed to initiate checkout", err);
+    } finally {
+      setIsCheckoutLoading(false);
+    }
+  };
+
+  const handleOpenPortal = async () => {
+    setIsPortalLoading(true);
+    try {
+      const res = await billingApi.getPortalSession();
+      if (res.success && res.portalUrl) {
+        window.location.href = res.portalUrl;
+      }
+    } catch (err) {
+      console.error("Failed to open billing portal", err);
+    } finally {
+      setIsPortalLoading(false);
+    }
+  };
+
+  const isSubscribed =
+    billingSub?.status === "active" &&
+    Boolean(billingSub?.currentPeriodEnd || billingSub?.hasPolarSubscription);
+  const activePlan = billingSub?.plan || user?.plan || "solo";
+  const currentQuota = billingSub?.eventQuota || user?.eventQuota || 10000;
+  const isCurrentSoloTier = isSubscribed && activePlan === "solo" && currentTier.events === currentQuota;
+  const isSoloUpgrade = isSubscribed && activePlan === "solo" && currentTier.events > currentQuota;
+  const isSoloDowngrade = isSubscribed && activePlan === "solo" && currentTier.events < currentQuota;
+  const isCurrentGrowthTier = isSubscribed && activePlan === "growth" && currentTier.events === currentQuota;
+  const isGrowthUpgrade = isSubscribed && activePlan === "growth" && currentTier.events > currentQuota;
+  const isGrowthDowngrade = isSubscribed && activePlan === "growth" && currentTier.events < currentQuota;
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -692,26 +794,60 @@ export function SettingsClient({ initialUser }: SettingsClientProps) {
       {/* TAB 3: BILLING */}
       {activeTab === "billing" && (
         <div className="max-w-3xl space-y-6">
-          
-          {/* Active Trial Notice */}
-          <div className="rounded-2xl bg-[#262626] border border-[#800E13]/40 p-5 flex items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
-                <h2 className="text-sm font-bold text-white">
-                  Pro Plan Trial Active
-                </h2>
-              </div>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                14 days remaining in your free trial.
-              </p>
-            </div>
 
-            <div className="text-right shrink-0">
-              <span className="text-[10px] text-zinc-400 font-mono uppercase block">Days Left</span>
-              <span className="text-xl font-bold font-mono text-white">14</span>
+          {/* Subscribed User: Active Subscription & Quota Card */}
+          {isSubscribed && (
+            <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    <h2 className="text-sm font-bold text-white capitalize">
+                      {activePlan === "growth" ? "Growth Plan" : "Solo Plan"}
+                    </h2>
+                    <span className="text-[10px] font-mono text-zinc-400 bg-[#1F1F1F] px-2 py-0.5 rounded border border-white/[0.06]">
+                      {(billingSub?.billingInterval || user?.billingInterval) === "year" ? "Annual" : "Monthly"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    {billingSub?.currentPeriodEnd
+                      ? `Renews on ${new Date(billingSub.currentPeriodEnd).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                      : "Active subscription"}
+                  </p>
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={handleOpenPortal}
+                  disabled={isPortalLoading}
+                  variant="outline"
+                  size="sm"
+                  className="bg-[#1F1F1F] hover:bg-[#262626] border-white/[0.1] text-xs text-white h-9 px-4 rounded-xl cursor-pointer self-start sm:self-auto"
+                >
+                  {isPortalLoading ? "Opening..." : "Manage Billing"}
+                </Button>
+              </div>
+
+              {/* Usage Progress Bar */}
+              <div className="pt-3 border-t border-white/[0.06] space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="text-zinc-400">Monthly Event Usage</span>
+                  <span className="text-white font-medium">
+                    {(billingSub?.eventUsage ?? 0).toLocaleString()} / {(billingSub?.eventQuota ?? user?.eventQuota ?? 10000).toLocaleString()} ({billingSub?.usagePercentage ?? 0}%)
+                  </span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-[#1F1F1F] overflow-hidden">
+                  <div
+                    className="h-full bg-[#800E13] rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(100, Math.max(2, billingSub?.usagePercentage ?? 0))}%` }}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Clean Separator between Active Subscription and Plans */}
+          {isSubscribed && <div className="border-t border-white/[0.08] my-6" />}
 
           {/* Pricing Controls Slider */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
@@ -791,106 +927,130 @@ export function SettingsClient({ initialUser }: SettingsClientProps) {
 
           </div>
 
-          {/* 2 Plan Cards Grid */}
+          {/* Plan Cards Grid (Solo vs Growth) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
             
-            {/* Starter */}
-            <div className="flex flex-col justify-between rounded-xl bg-[#262626] border border-white/[0.08] p-5">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-base font-bold text-white">Starter</h3>
-                  <span className="text-[10px] font-mono text-zinc-400 bg-[#1F1F1F] px-1.5 py-0.5 rounded border border-white/[0.06]">
-                    Solo
-                  </span>
+            {/* 1. Solo Plan Card (Only shown if user is not on Growth or unsubscribed) */}
+            {activePlan !== "growth" && (
+              <div className="flex flex-col justify-between rounded-xl bg-[#262626] border border-white/[0.08] p-5">
+                <div>
+                  <h3 className="text-base font-bold text-white mb-1">
+                    {plans?.solo.name || "Solo Plan"}
+                  </h3>
+                  <p className="text-xs text-zinc-400 mb-4 truncate">
+                    {plans?.solo.tagline || "For indie founders, creators, and solo products."}
+                  </p>
+
+                  <div className="mb-4 flex items-baseline gap-1">
+                    <span className="text-3xl font-extrabold text-white tracking-tight">
+                      $<AnimatedPrice value={soloPrice} />
+                    </span>
+                    <span className="text-xs text-zinc-400">/mo</span>
+                  </div>
+
+                  <div className="pt-3 border-t border-white/[0.06] space-y-2 text-xs">
+                    <div className="flex items-center gap-2 text-zinc-200 font-medium">
+                      <Check className="h-3.5 w-3.5 text-[#800E13] shrink-0" />
+                      <span><strong><AnimatedPrice value={currentTier.events} /></strong> monthly events</span>
+                    </div>
+                    {(plans?.solo.features || [
+                      "Up to 3 Websites",
+                      "Real-time ClickHouse OLAP Analytics",
+                      "Custom Proxy Subdomain (CNAME / SSL)",
+                      "Stripe & Polar MRR Attribution",
+                      "Model Context Protocol (MCP) AI Server",
+                      "3 Conversion Funnels & 3 Real-time Alerts",
+                      "1-Year Historical Data Retention",
+                      "Cookieless & 100% GDPR Compliant",
+                    ]).map((feat, i) => (
+                      <div key={i} className="flex items-center gap-2 text-zinc-300">
+                        <Check className="h-3.5 w-3.5 text-[#800E13] shrink-0" />
+                        <span>{feat}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-2 text-zinc-500">
+                      <X className="h-3.5 w-3.5 text-zinc-600 shrink-0" />
+                      <span>No X (Twitter) Social Radar</span>
+                    </div>
+                  </div>
                 </div>
+
+                <div className="pt-5">
+                  <Button
+                    type="button"
+                    onClick={() => handleCheckout("solo")}
+                    disabled={isCheckoutLoading || isCurrentSoloTier || isSoloDowngrade || (isSubscribed && activePlan === "solo" && currentTier.events <= currentQuota)}
+                    className="w-full bg-[#1F1F1F] hover:bg-[#222222] text-white border border-white/[0.1] font-medium h-9 text-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCurrentSoloTier
+                      ? "Current Plan"
+                      : isSoloUpgrade
+                      ? `Upgrade to ${currentTier.label.toUpperCase()} Events`
+                      : isSoloDowngrade
+                      ? "Included in Current Plan"
+                      : isSubscribed && activePlan === "solo"
+                      ? "Current Plan"
+                      : "Subscribe to Solo"}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* 2. Growth Plan Card */}
+            <div className={`relative flex flex-col justify-between rounded-xl bg-[#262626] border-2 border-[#800E13] p-5 shadow-lg ${activePlan === "growth" ? "sm:col-span-2" : ""}`}>
+              <div>
+                <h3 className="text-base font-bold text-white mb-1">
+                  {plans?.growth.name || "Growth Plan"}
+                </h3>
+                <p className="text-xs text-zinc-400 mb-4 truncate">
+                  {plans?.growth.tagline || "For scaling startups and high-traffic platforms."}
+                </p>
 
                 <div className="mb-4 flex items-baseline gap-1">
                   <span className="text-3xl font-extrabold text-white tracking-tight">
-                    $<AnimatedPrice value={starterPrice} />
+                    $<AnimatedPrice value={growthPrice} />
                   </span>
                   <span className="text-xs text-zinc-400">/mo</span>
                 </div>
 
                 <div className="pt-3 border-t border-white/[0.06] space-y-2 text-xs">
-                  <div className="flex items-center gap-2 text-zinc-300">
-                    <Check className="h-3.5 w-3.5 text-[#800E13] shrink-0" />
-                    <span><AnimatedPrice value={currentTier.events} /> events/mo</span>
+                  <div className="flex items-center gap-2 text-zinc-200 font-medium">
+                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                    <span><strong><AnimatedPrice value={currentTier.events} /></strong> monthly events</span>
                   </div>
-                  <div className="flex items-center gap-2 text-zinc-300">
-                    <Check className="h-3.5 w-3.5 text-[#800E13] shrink-0" />
-                    <span>1 website</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-zinc-300">
-                    <Check className="h-3.5 w-3.5 text-[#800E13] shrink-0" />
-                    <span>30-day retention</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-zinc-500">
-                    <X className="h-3.5 w-3.5 text-zinc-600 shrink-0" />
-                    <span>No MCP AI Server</span>
-                  </div>
+                  {(plans?.growth.features || [
+                    "Up to 25 Websites",
+                    "X (Twitter) Social Radar Attribution",
+                    "Unlimited Conversion Funnels",
+                    "Unlimited Real-Time Email Alerts",
+                    "5-Year Historical Data Retention",
+                    "Custom Proxy Subdomain (CNAME / SSL)",
+                    "Priority Support & Dedicated Ingestion",
+                  ]).map((feat, i) => (
+                    <div key={i} className="flex items-center gap-2 text-zinc-200 font-medium">
+                      <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                      <span>{feat}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
               <div className="pt-5">
                 <Button
                   type="button"
-                  className="w-full bg-[#1F1F1F] hover:bg-[#222222] text-white border border-white/[0.1] font-medium h-9 text-xs cursor-pointer"
+                  onClick={() => handleCheckout("growth")}
+                  disabled={isCheckoutLoading || isCurrentGrowthTier || isGrowthDowngrade || (isSubscribed && activePlan === "growth" && currentTier.events <= currentQuota)}
+                  className="w-full bg-[#800E13] hover:bg-[#9e1218] text-white border border-[#800E13] font-medium h-9 text-xs shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Downgrade to Starter
-                </Button>
-              </div>
-            </div>
-
-            {/* Pro */}
-            <div className="relative flex flex-col justify-between rounded-xl bg-[#262626] border-2 border-[#800E13] p-5 shadow-lg">
-              <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
-                <span className="bg-[#800E13] text-white font-semibold text-[10px] px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  Trial Active
-                </span>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-base font-bold text-white">Pro</h3>
-                  <span className="text-[10px] font-mono text-rose-300 bg-[#800E13]/20 px-1.5 py-0.5 rounded border border-[#800E13]/30">
-                    Full Suite
-                  </span>
-                </div>
-
-                <div className="mb-4 flex items-baseline gap-1">
-                  <span className="text-3xl font-extrabold text-white tracking-tight">
-                    $<AnimatedPrice value={proPrice} />
-                  </span>
-                  <span className="text-xs text-zinc-400">/mo</span>
-                </div>
-
-                <div className="pt-3 border-t border-white/[0.06] space-y-2 text-xs">
-                  <div className="flex items-center gap-2 text-zinc-200 font-medium">
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                    <span><AnimatedPrice value={currentTier.events} /> events/mo</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-zinc-200 font-medium">
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                    <span>Unlimited websites</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-zinc-200 font-medium">
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                    <span>MCP AI Server</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-zinc-200">
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                    <span>Revenue attribution</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-5">
-                <Button
-                  type="button"
-                  className="w-full bg-[#800E13] hover:bg-[#9e1218] text-white border border-[#800E13] font-medium h-9 text-xs shadow-sm cursor-pointer"
-                >
-                  Upgrade & Keep Pro
+                  {isCurrentGrowthTier
+                    ? "Current Active Plan"
+                    : isGrowthUpgrade
+                    ? `Upgrade to ${currentTier.label.toUpperCase()} Events`
+                    : isGrowthDowngrade
+                    ? "Included in Current Plan"
+                    : isSubscribed && activePlan === "solo"
+                    ? "Upgrade to Growth"
+                    : "Upgrade to Growth"}
                 </Button>
               </div>
             </div>
