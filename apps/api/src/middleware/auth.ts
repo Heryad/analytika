@@ -8,6 +8,9 @@ export interface AuthenticatedUser {
   email: string;
   name: string | null;
   avatarUrl: string | null;
+  theme: "dark" | "light" | "system";
+  emailDigest: boolean;
+  productAnnouncements: boolean;
   plan: string;
   eventQuota: number;
   maxWebsites: number;
@@ -16,6 +19,7 @@ export interface AuthenticatedUser {
   hasSocialRadar: boolean;
   mcpApiKey: string | null;
   subscriptionStatus: string;
+  trialEndsAt: Date | null;
 }
 
 export const authMiddleware = new Elysia({ name: "auth-middleware" })
@@ -55,6 +59,9 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" })
           email: session.user.email,
           name: session.user.name,
           avatarUrl: session.user.avatarUrl,
+          theme: (session.user.theme as any) || "dark",
+          emailDigest: session.user.emailDigest ?? true,
+          productAnnouncements: session.user.productAnnouncements ?? true,
           plan: session.user.plan,
           eventQuota: session.user.eventQuota,
           maxWebsites: session.user.maxWebsites,
@@ -63,6 +70,7 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" })
           hasSocialRadar: session.user.hasSocialRadar,
           mcpApiKey: session.user.mcpApiKey,
           subscriptionStatus: session.user.subscriptionStatus,
+          trialEndsAt: session.user.trialEndsAt,
         } as AuthenticatedUser,
       };
     } catch {

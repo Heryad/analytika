@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { authApi, tokenStorage, UserProfile } from "./api";
+import { applyTheme, initThemeWatcher } from "./theme";
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -11,16 +12,35 @@ interface AuthContextType {
   login: (token: string, user: UserProfile) => void;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUser: (partial: Partial<UserProfile>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Synchronous initial hydration from localStorage to prevent auth layout flashes
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const cached = localStorage.getItem("analytika_user");
+      const parsed = cached ? JSON.parse(cached) : null;
+      if (parsed?.theme) {
+        applyTheme(parsed.theme);
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
+  });
+  const [isLoading, setIsLoading] = useState(!user);
   const router = useRouter();
 
-  // Load initial session on mount
+  // Watch system preference changes
+  useEffect(() => {
+    return initThemeWatcher();
+  }, []);
+
+  // Load initial session on mount with network error protection
   const refreshUser = useCallback(async () => {
     const token = tokenStorage.get();
     if (!token) {
@@ -33,16 +53,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await authApi.getMe();
       if (res.success && res.user) {
         setUser(res.user);
+        if (res.user.theme) {
+          applyTheme(res.user.theme);
+        }
         if (typeof window !== "undefined") {
           localStorage.setItem("analytika_user", JSON.stringify(res.user));
         }
-      } else {
+      } else if (res.error?.toLowerCase().includes("unauthorized") || (res as any).status === 401) {
+        // ONLY clear session if the server explicitly rejects the token as unauthorized
         tokenStorage.clear();
         setUser(null);
       }
     } catch {
-      tokenStorage.clear();
-      setUser(null);
+      // Do NOT clear token on transient network hiccups or server restarts!
     } finally {
       setIsLoading(false);
     }
@@ -56,10 +79,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = (token: string, userProfile: UserProfile) => {
     tokenStorage.set(token);
     setUser(userProfile);
+    if (userProfile.theme) {
+      applyTheme(userProfile.theme);
+    }
     if (typeof window !== "undefined") {
       localStorage.setItem("analytika_user", JSON.stringify(userProfile));
     }
   };
+
+  // Optimistically update local user fields
+  const updateUser = useCallback((partial: Partial<UserProfile>) => {
+    setUser((prev) => {
+      if (!prev) return null;
+      const updated = { ...prev, ...partial };
+      if (typeof window !== "undefined") {
+        localStorage.setItem("analytika_user", JSON.stringify(updated));
+      }
+      return updated;
+    });
+  }, []);
 
   // Logout
   const logout = async () => {
@@ -80,6 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         refreshUser,
+        updateUser,
       }}
     >
       {children}

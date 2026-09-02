@@ -1,3 +1,4 @@
+import path from "path";
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { swagger } from "@elysiajs/swagger";
@@ -5,6 +6,16 @@ import { env } from "@/config/env";
 import { testDbConnection } from "@/db";
 import { logger } from "@/lib/logger";
 import { authRoutes } from "@/routes/auth";
+import { websitesRoutes } from "@/routes/websites";
+import { plansRoutes } from "@/routes/plans";
+import { eventsRoutes } from "@/routes/events";
+import { analyticsRoutes } from "@/routes/analytics";
+import { milestonesRoutes } from "@/routes/milestones";
+import { funnelsRoutes } from "@/routes/funnels";
+import { alertsRoutes } from "@/routes/alerts";
+import { paymentsRoutes } from "@/routes/payments";
+import { billingRoutes } from "@/routes/billing";
+import { initClickHouseSchema, testClickHouseConnection } from "@/db/clickhouse";
 
 const app = new Elysia()
   // 1. CORS Middleware
@@ -14,8 +25,7 @@ const app = new Elysia()
         env.FRONTEND_URL,
         "http://localhost:3000",
         "http://localhost:3001",
-        "https://analytika.app",
-        "https://analytika.dev",
+        "https://analytika.me",
       ],
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization", "X-Website-ID"],
@@ -83,24 +93,65 @@ const app = new Elysia()
     };
   })
 
-  // 5. System Health Check Endpoint
+  // 5. Serve Standalone Tracking Script (/a.js & /script.js)
+  .get("/a.js", async ({ set }) => {
+    try {
+      const scriptPath = path.resolve(__dirname, "../../../packages/tracker/dist/a.js");
+      const file = Bun.file(scriptPath);
+      if (await file.exists()) {
+        set.headers["Content-Type"] = "application/javascript; charset=utf-8";
+        set.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=604800";
+        set.headers["Access-Control-Allow-Origin"] = "*";
+        return file;
+      }
+    } catch { }
+    set.status = 404;
+    return "// tracker script not found";
+  })
+  .get("/script.js", async ({ set }) => {
+    try {
+      const scriptPath = path.resolve(__dirname, "../../../packages/tracker/dist/a.js");
+      const file = Bun.file(scriptPath);
+      if (await file.exists()) {
+        set.headers["Content-Type"] = "application/javascript; charset=utf-8";
+        set.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=604800";
+        set.headers["Access-Control-Allow-Origin"] = "*";
+        return file;
+      }
+    } catch { }
+    set.status = 404;
+    return "// tracker script not found";
+  })
+
+  // 6. System Health Check Endpoint
   .get("/api/v1/health", async () => {
     const isDbConnected = await testDbConnection();
+    const isClickHouseConnected = await testClickHouseConnection();
     return {
-      status: isDbConnected ? "ok" : "degraded",
+      status: isDbConnected && isClickHouseConnected ? "ok" : "degraded",
       service: "analytika-api",
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       databases: {
         postgres: isDbConnected ? "connected" : "disconnected",
+        clickhouse: isClickHouseConnected ? "connected" : "disconnected",
       },
     };
   })
 
-  // 6. Mount Sub-Routes
+  // 7. Mount Sub-Routes
   .use(authRoutes)
+  .use(websitesRoutes)
+  .use(plansRoutes)
+  .use(eventsRoutes)
+  .use(analyticsRoutes)
+  .use(milestonesRoutes)
+  .use(funnelsRoutes)
+  .use(alertsRoutes)
+  .use(paymentsRoutes)
+  .use(billingRoutes)
 
-  // 7. Start Server Listener
+  // 8. Start Server Listener
   .listen(env.PORT, async ({ hostname, port }) => {
     console.log(`\n=================================================`);
     console.log(`🚀 ANALYTIKA API ENGINE STARTED`);
@@ -109,8 +160,9 @@ const app = new Elysia()
     console.log(`🏥 Health:     http://${hostname}:${port}/api/v1/health`);
     console.log(`=================================================\n`);
 
-    // Verify DB on boot
+    // Verify DB & ClickHouse on boot
     await testDbConnection();
+    await initClickHouseSchema();
   });
 
 export type App = typeof app;

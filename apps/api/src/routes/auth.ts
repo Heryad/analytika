@@ -737,6 +737,17 @@ export const authRoutes = new Elysia({ prefix: "/api/v1/auth" })
       return { success: false, error: "Unauthorized" };
     }
 
+    const [dbUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
+
+    if (!dbUser) {
+      set.status = 404;
+      return { success: false, error: "User not found" };
+    }
+
     // Fetch total websites count for this user
     const userWebsites = await db
       .select({ id: websites.id })
@@ -746,7 +757,24 @@ export const authRoutes = new Elysia({ prefix: "/api/v1/auth" })
     return {
       success: true,
       user: {
-        ...user,
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+        avatarUrl: dbUser.avatarUrl,
+        theme: dbUser.theme,
+        emailDigest: dbUser.emailDigest,
+        productAnnouncements: dbUser.productAnnouncements,
+        plan: dbUser.plan,
+        billingInterval: dbUser.billingInterval,
+        eventQuota: dbUser.eventQuota,
+        maxWebsites: dbUser.maxWebsites,
+        maxFunnels: dbUser.maxFunnels,
+        maxAlerts: dbUser.maxAlerts,
+        hasSocialRadar: dbUser.hasSocialRadar,
+        mcpApiKey: dbUser.mcpApiKey,
+        subscriptionStatus: dbUser.subscriptionStatus,
+        trialEndsAt: dbUser.trialEndsAt,
+        currentPeriodEnd: dbUser.currentPeriodEnd,
         websitesCount: userWebsites.length,
       },
     };

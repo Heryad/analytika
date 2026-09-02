@@ -100,9 +100,19 @@ export const SelectTrigger = React.forwardRef<
 });
 SelectTrigger.displayName = "SelectTrigger";
 
-export function SelectValue({ placeholder }: { placeholder?: string }) {
+export function SelectValue({
+  placeholder,
+  children,
+}: {
+  placeholder?: string;
+  children?: React.ReactNode;
+}) {
   const context = React.useContext(SelectContext);
   if (!context) throw new Error("SelectValue must be used within Select");
+
+  if (children) {
+    return <span className="truncate text-left block">{children}</span>;
+  }
 
   return (
     <span className="truncate text-left block">

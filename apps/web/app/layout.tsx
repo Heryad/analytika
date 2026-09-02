@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { cookies } from "next/headers";
 import "./globals.css";
 
 const inter = Inter({
@@ -28,13 +29,39 @@ export const metadata: Metadata = {
 
 import { AuthProvider } from "@/lib/auth-context";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get("analytika_theme")?.value;
+  const isLight = themeCookie === "light";
+  const initialClass = isLight ? "light scroll-smooth" : "dark scroll-smooth";
+
   return (
-    <html lang="en" className="dark scroll-smooth">
+    <html lang="en" className={initialClass} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var stored = localStorage.getItem('analytika_theme');
+                  var isDark = stored === 'dark' || (!stored && document.documentElement.classList.contains('dark')) || (stored === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                  if (stored === 'light' || (!isDark && stored === 'system')) {
+                    document.documentElement.classList.add('light');
+                    document.documentElement.classList.remove('dark');
+                  } else {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('light');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={`${inter.variable} font-sans bg-[#1F1F1F] text-zinc-100 min-h-screen antialiased selection:bg-[#800E13]/40 selection:text-rose-200`}>
         <AuthProvider>
           {children}

@@ -4,7 +4,7 @@ import React from "react";
 import { 
   Globe, Megaphone, Mail, Twitter, Facebook, Search, Link, 
   Monitor, Smartphone, Tablet, MousePointerClick, CreditCard, 
-  Download, Play, ShoppingCart, Zap, FileText, Sparkles, Activity
+  Download, Play, ShoppingCart, Zap, FileText, Sparkles, Activity, RotateCcw
 } from "lucide-react";
 
 interface BarListItem {
@@ -18,7 +18,7 @@ interface BarListItem {
 
 interface CustomBarListProps {
   data: BarListItem[];
-  type: "referrer" | "campaign" | "tech" | "location" | "event";
+  type: "referrer" | "campaign" | "tech" | "location" | "event" | "page";
 }
 
 const BRAND_COLORS = [
@@ -35,12 +35,16 @@ const BRAND_COLORS = [
 export function CustomBarList({ data, type }: CustomBarListProps) {
   
   const getIcon = (item: BarListItem) => {
+    if (type === "page") {
+      return <FileText className="w-4 h-4 text-zinc-400 shrink-0" />;
+    }
+
     if (type === "location" && item.code) {
       return (
         <img 
           src={`https://flagcdn.com/w40/${item.code.toLowerCase()}.png`} 
           alt={item.code}
-          className="w-5 h-3.5 object-cover rounded-sm shadow-sm"
+          className="w-5 h-3.5 object-cover rounded-sm shadow-sm shrink-0"
         />
       );
     }
@@ -49,31 +53,31 @@ export function CustomBarList({ data, type }: CustomBarListProps) {
       const fetchDomain = item.domain || item.name;
       return (
         <img 
-          src={`https://logo.clearbit.com/${fetchDomain}`} 
+          src={`https://www.google.com/s2/favicons?domain=${fetchDomain}&sz=128`} 
           alt={item.name} 
-          className="w-5 h-5 object-contain"
-          onError={(e) => { e.currentTarget.src = `https://www.google.com/s2/favicons?domain=${fetchDomain}&sz=128` }}
+          className="w-5 h-5 object-contain shrink-0 rounded-sm"
         />
       );
     }
 
     if (item.lucide) {
-      if (item.lucide === "Monitor") return <Monitor className="w-5 h-5 text-zinc-400" />;
-      if (item.lucide === "Smartphone") return <Smartphone className="w-5 h-5 text-zinc-400" />;
-      if (item.lucide === "Tablet") return <Tablet className="w-5 h-5 text-zinc-400" />;
-      if (item.lucide === "MousePointerClick") return <MousePointerClick className="w-5 h-5 text-rose-400" />;
-      if (item.lucide === "CreditCard") return <CreditCard className="w-5 h-5 text-emerald-400" />;
-      if (item.lucide === "Download") return <Download className="w-5 h-5 text-blue-400" />;
-      if (item.lucide === "Play") return <Play className="w-5 h-5 text-amber-400" />;
-      if (item.lucide === "ShoppingCart") return <ShoppingCart className="w-5 h-5 text-purple-400" />;
-      if (item.lucide === "Mail") return <Mail className="w-5 h-5 text-indigo-400" />;
-      if (item.lucide === "Zap") return <Zap className="w-5 h-5 text-yellow-400" />;
-      if (item.lucide === "FileText") return <FileText className="w-5 h-5 text-cyan-400" />;
-      if (item.lucide === "Sparkles") return <Sparkles className="w-5 h-5 text-pink-400" />;
+      if (item.lucide === "Monitor") return <Monitor className="w-4 h-4 text-zinc-400 shrink-0" />;
+      if (item.lucide === "Smartphone") return <Smartphone className="w-4 h-4 text-zinc-400 shrink-0" />;
+      if (item.lucide === "Tablet") return <Tablet className="w-4 h-4 text-zinc-400 shrink-0" />;
+      if (item.lucide === "MousePointerClick") return <MousePointerClick className="w-4 h-4 text-rose-400 shrink-0" />;
+      if (item.lucide === "CreditCard") return <CreditCard className="w-4 h-4 text-emerald-400 shrink-0" />;
+      if (item.lucide === "Download") return <Download className="w-4 h-4 text-blue-400 shrink-0" />;
+      if (item.lucide === "Play") return <Play className="w-4 h-4 text-amber-400 shrink-0" />;
+      if (item.lucide === "ShoppingCart") return <ShoppingCart className="w-4 h-4 text-purple-400 shrink-0" />;
+      if (item.lucide === "Mail") return <Mail className="w-4 h-4 text-indigo-400 shrink-0" />;
+      if (item.lucide === "Zap") return <Zap className="w-4 h-4 text-yellow-400 shrink-0" />;
+      if (item.lucide === "FileText") return <FileText className="w-4 h-4 text-cyan-400 shrink-0" />;
+      if (item.lucide === "Sparkles") return <Sparkles className="w-4 h-4 text-pink-400 shrink-0" />;
+      if (item.lucide === "RotateCcw") return <RotateCcw className="w-4 h-4 text-emerald-400 shrink-0" />;
     }
 
     if (type === "event") {
-      return <Activity className="w-5 h-5 text-rose-400" />;
+      return <Activity className="w-4 h-4 text-rose-400 shrink-0" />;
     }
 
     // For campaigns, do some string matching to find a nice icon
@@ -107,6 +111,15 @@ export function CustomBarList({ data, type }: CustomBarListProps) {
     const t = setTimeout(() => setMounted(true), 50);
     return () => clearTimeout(t);
   }, []);
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500 select-none">
+        <Activity className="w-6 h-6 mb-2 opacity-30 text-zinc-400" />
+        <p className="text-xs font-mono">No data recorded for this period</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full flex flex-col gap-4 overflow-y-scroll custom-scrollbar pr-3 pb-2 pt-1">

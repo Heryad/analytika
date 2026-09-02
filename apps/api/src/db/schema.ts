@@ -103,6 +103,7 @@ export const websites = pgTable("websites", {
   // General Settings
   timezone: varchar("timezone", { length: 100 }).default("UTC").notNull(),
   currency: varchar("currency", { length: 10 }).default("USD").notNull(),
+  revenueModel: varchar("revenue_model", { length: 50 }).default("revenue").notNull(), // 'revenue' | 'mrr' | 'arr'
 
   // Public Sharing
   isPublic: boolean("is_public").default(false).notNull(),
@@ -198,6 +199,21 @@ export const domainTrialHistory = pgTable(
   })
 );
 
+// 10. Milestones & Conversion Targets
+export const milestones = pgTable("milestones", {
+  id: varchar("id", { length: 64 }).primaryKey(), // 'm_...'
+  websiteId: varchar("website_id", { length: 64 })
+    .references(() => websites.id, { onDelete: "cascade" })
+    .notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 50 }).default("event").notNull(), // 'event' | 'pageview' | 'revenue'
+  trigger: varchar("trigger", { length: 255 }).notNull(), // e.g. 'purchase_pro' or '/checkout/success'
+  targetCount: integer("target_count").default(1000).notNull(),
+  revenuePerCompletion: integer("revenue_per_completion").default(0).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Relational Definitions
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
@@ -218,6 +234,7 @@ export const websitesRelations = relations(websites, ({ one, many }) => ({
   paymentIntegrations: many(paymentIntegrations),
   alerts: many(alerts),
   funnels: many(funnels),
+  milestones: many(milestones),
 }));
 
 export const paymentIntegrationsRelations = relations(paymentIntegrations, ({ one }) => ({
@@ -230,4 +247,8 @@ export const alertsRelations = relations(alerts, ({ one }) => ({
 
 export const funnelsRelations = relations(funnels, ({ one }) => ({
   website: one(websites, { fields: [funnels.websiteId], references: [websites.id] }),
+}));
+
+export const milestonesRelations = relations(milestones, ({ one }) => ({
+  website: one(websites, { fields: [milestones.websiteId], references: [websites.id] }),
 }));

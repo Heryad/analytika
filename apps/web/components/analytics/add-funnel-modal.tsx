@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 
 export interface FunnelStepItem {
-  id: string;
+  id?: string;
   name: string;
   type: "page" | "event";
   path?: string;
@@ -53,21 +53,7 @@ export function AddFunnelModal({ children, onAddFunnel }: AddFunnelModalProps) {
   const [eventId, setEventId] = useState("");
 
   // Funnel Steps sequence on Right side
-  const [steps, setSteps] = useState<FunnelStepItem[]>([
-    {
-      id: "s-1",
-      name: "Homepage Visit",
-      type: "page",
-      path: "/",
-    },
-    {
-      id: "s-2",
-      name: "Checkout Started",
-      type: "event",
-      condition: "completed",
-      eventId: "start_checkout",
-    },
-  ]);
+  const [steps, setSteps] = useState<FunnelStepItem[]>([]);
 
   const handleAddStep = () => {
     if (!stepName.trim()) return;
@@ -90,8 +76,8 @@ export function AddFunnelModal({ children, onAddFunnel }: AddFunnelModalProps) {
     setEventId("");
   };
 
-  const removeStep = (id: string) => {
-    setSteps(steps.filter((s) => s.id !== id));
+  const removeStep = (index: number) => {
+    setSteps(steps.filter((_, i) => i !== index));
   };
 
   const handleSave = () => {
@@ -104,10 +90,22 @@ export function AddFunnelModal({ children, onAddFunnel }: AddFunnelModalProps) {
     setStepName("");
     setPagePath("");
     setEventId("");
+    setSteps([]);
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setName("");
+      setStepName("");
+      setPagePath("");
+      setEventId("");
+      setSteps([]);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children ? (
           children
@@ -339,7 +337,7 @@ export function AddFunnelModal({ children, onAddFunnel }: AddFunnelModalProps) {
                         {/* Remove Action */}
                         <button
                           type="button"
-                          onClick={() => removeStep(step.id)}
+                          onClick={() => removeStep(index)}
                           className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer shrink-0 ml-2"
                           title="Remove Step"
                         >

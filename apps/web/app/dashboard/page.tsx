@@ -3,26 +3,10 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Plus, Globe, ArrowRight } from "lucide-react";
+import { Plus, Globe, ArrowRight, BarChart2, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogTrigger 
-} from "@/components/ui/dialog";
-
-interface Website {
-  id: string;
-  domain: string;
-  name: string;
-  monthlyVisitors: number;
-  monthlyRevenue: number;
-  sparkline: number[];
-}
+import { websitesApi, Website } from "@/lib/api";
+import { getCurrencySymbol } from "@/lib/utils";
 
 // Smooth Number Counter Animation
 function AnimatedNumber({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) {
@@ -30,12 +14,11 @@ function AnimatedNumber({ value, prefix = "", suffix = "" }: { value: number; pr
 
   useEffect(() => {
     let startTimestamp: number | null = null;
-    const duration = 1200; // 1.2s smooth ticker
+    const duration = 1000;
 
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      // Ease out exponential
       const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       setDisplayValue(Math.floor(easeProgress * value));
 
@@ -136,7 +119,7 @@ function SparklineChart({ data, id }: { data: number[]; id: string }) {
   );
 }
 
-// Exact 1-to-1 Geometry Skeleton Card
+// 1-to-1 Geometry Skeleton Card
 function WebsiteCardSkeleton() {
   return (
     <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 shadow-sm animate-pulse h-[196px] flex flex-col justify-between">
@@ -173,87 +156,46 @@ function WebsiteCardSkeleton() {
 }
 
 function WebsitesHub() {
-  const searchParams = useSearchParams();
-  const incomingDomain = searchParams.get("domain");
-
   const [isLoading, setIsLoading] = useState(true);
-  const [websites, setWebsites] = useState<Website[]>([
-    {
-      id: "supadeploy",
-      domain: "supadeploy.com",
-      name: "SupaDeploy",
-      monthlyVisitors: 48920,
-      monthlyRevenue: 9840,
-      // Hockey-stick viral breakout trajectory
-      sparkline: [14, 18, 16, 26, 34, 48, 52, 68, 85, 115, 140, 180, 220, 265],
-    },
-    {
-      id: "vectorflow",
-      domain: "vectorflow.io",
-      name: "VectorFlow",
-      monthlyVisitors: 21450,
-      monthlyRevenue: 4320,
-      // Dynamic mid-month spike & high-volatility surge curve
-      sparkline: [40, 48, 42, 95, 185, 140, 88, 105, 135, 190, 160, 210, 195, 230],
-    },
-    {
-      id: "devpulse",
-      domain: "devpulse.tools",
-      name: "DevPulse Tools",
-      monthlyVisitors: 12800,
-      monthlyRevenue: 1950,
-      // Consistent, gentle steady organic climb
-      sparkline: [22, 25, 28, 30, 36, 40, 44, 49, 53, 58, 64, 70, 78, 86],
-    },
-  ]);
+  const [websites, setWebsites] = useState<Website[]>([]);
+  const [meta, setMeta] = useState<{ count: number; maxWebsites: number; canAdd: boolean; plan: string } | null>(null);
 
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [newDomain, setNewDomain] = useState("");
-
-  // Simulate fast realistic skeleton loading
+  // Fetch real websites from API
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 700);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Auto-prompt add website if incoming domain is present
-  useEffect(() => {
-    if (incomingDomain && !websites.some((w) => w.domain.toLowerCase() === incomingDomain.toLowerCase())) {
-      setNewDomain(incomingDomain);
-      setIsAddOpen(true);
+    let mounted = true;
+    async function loadWebsites() {
+      try {
+        const res = await websitesApi.list();
+        if (mounted && res.success && res.websites) {
+          setWebsites(res.websites);
+          setMeta(res.meta);
+        }
+      } catch (err) {
+        console.error("Failed to load websites:", err);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
     }
-  }, [incomingDomain]);
-
-  const handleAddWebsite = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newDomain.trim()) return;
-
-    const cleaned = newDomain.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-    const generatedId = cleaned.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
-    const newSite: Website = {
-      id: generatedId,
-      domain: cleaned,
-      name: cleaned.split(".")[0].charAt(0).toUpperCase() + cleaned.split(".")[0].slice(1),
-      monthlyVisitors: 0,
-      monthlyRevenue: 0,
-      sparkline: [5, 8, 6, 10, 12, 15, 14, 18, 20, 22, 25, 28, 30, 35],
+    loadWebsites();
+    return () => {
+      mounted = false;
     };
-
-    setWebsites([newSite, ...websites]);
-    setNewDomain("");
-    setIsAddOpen(false);
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
-      
-      {/* Clean Header: Title + Add Website Button */}
+      {/* Clean Header: Title + Plan Quota + Add Website Button */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-white">
-          Websites
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Websites
+          </h1>
+          {meta && (
+            <span className="text-xs font-mono text-zinc-400 bg-[#262626] border border-white/[0.06] px-2.5 py-1 rounded-lg">
+              {meta.count} / {meta.maxWebsites === -1 ? "∞" : meta.maxWebsites} sites
+            </span>
+          )}
+        </div>
 
         <Button
           asChild
@@ -266,90 +208,124 @@ function WebsitesHub() {
         </Button>
       </div>
 
-      {/* Websites Grid with 1:1 Skeleton & Animated Reveal */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {isLoading ? (
-          <>
-            <WebsiteCardSkeleton />
-            <WebsiteCardSkeleton />
-            <WebsiteCardSkeleton />
-          </>
-        ) : (
-          websites.map((site) => (
-            <Link
-              key={site.id}
-              href={`/dashboard/${site.id}`}
-              className="group rounded-2xl bg-[#262626] border border-white/[0.08] hover:border-[#800E13]/60 hover:bg-[#2a2a2a] hover:scale-[1.018] hover:shadow-xl hover:shadow-black/40 transition-all duration-300 ease-out p-5 cursor-pointer animate-in fade-in h-[196px] flex flex-col justify-between"
-            >
-              
-              {/* Top Row: Direct Favicon + Title + Arrow */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <img
-                    src={`https://www.google.com/s2/favicons?domain=${site.domain}&sz=64`}
-                    alt={site.domain}
-                    className="w-6 h-6 object-contain shrink-0"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = "none";
-                    }}
-                  />
+      {/* Loading Skeleton */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <WebsiteCardSkeleton />
+          <WebsiteCardSkeleton />
+          <WebsiteCardSkeleton />
+        </div>
+      ) : websites.length === 0 ? (
+        /* Empty State */
+        <div className="rounded-2xl bg-[#262626] border border-dashed border-white/[0.1] p-12 text-center flex flex-col items-center justify-center space-y-4 max-w-xl mx-auto my-8">
+          <div className="w-14 h-14 rounded-2xl bg-[#800E13]/15 border border-[#800E13]/30 flex items-center justify-center text-[#800E13]">
+            <Globe className="w-7 h-7 text-rose-400" />
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="text-base font-bold text-white">
+              No websites registered yet
+            </h2>
+            <p className="text-xs text-zinc-400 max-w-md">
+              Add your first website domain to generate your lightweight tracking snippet and start seeing real-time traffic and revenue attribution.
+            </p>
+          </div>
+
+          <Button
+            asChild
+            className="bg-[#800E13] hover:bg-[#9e1218] text-white font-medium text-xs px-5 h-10 rounded-xl transition-all border border-[#800E13] shadow-md flex items-center gap-2 cursor-pointer mt-2"
+          >
+            <Link href="/dashboard/new">
+              <Plus className="h-4 w-4" />
+              Add Your First Website
+            </Link>
+          </Button>
+        </div>
+      ) : (
+        /* Websites Grid */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {websites.map((site) => {
+            const visitors = site.monthlyVisitors || 0;
+            const revenue = site.monthlyRevenue || 0;
+            const sparkline = site.sparkline && site.sparkline.length > 0 
+              ? site.sparkline 
+              : Array(14).fill(0);
+
+            return (
+              <Link
+                key={site.id}
+                href={`/dashboard/${site.id}`}
+                className="group rounded-2xl bg-[#262626] border border-white/[0.08] hover:border-[#800E13]/60 hover:bg-[#2a2a2a] hover:scale-[1.018] hover:shadow-xl hover:shadow-black/40 transition-all duration-300 ease-out p-5 cursor-pointer animate-in fade-in h-[196px] flex flex-col justify-between"
+              >
+                {/* Top Row: Direct Favicon + Title + Arrow */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src={`https://www.google.com/s2/favicons?domain=${site.domain}&sz=64`}
+                      alt={site.domain}
+                      className="w-6 h-6 object-contain shrink-0"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = "none";
+                      }}
+                    />
+                    <div>
+                      <h2 className="text-base font-bold text-white group-hover:text-rose-200 transition-colors leading-tight truncate max-w-[170px]">
+                        {site.name || site.domain}
+                      </h2>
+                      <span className="text-xs text-zinc-500 font-mono block mt-0.5 leading-none truncate max-w-[170px]">
+                        {site.domain}
+                      </span>
+                    </div>
+                  </div>
+
+                  <ArrowRight className="h-4 w-4 text-zinc-500 group-hover:text-rose-300 group-hover:translate-x-0.5 transition-all shrink-0" />
+                </div>
+
+                {/* Middle Row: Key Stats */}
+                <div className="flex items-baseline justify-between pt-1">
                   <div>
-                    <h2 className="text-base font-bold text-white group-hover:text-rose-200 transition-colors leading-tight">
-                      {site.name}
-                    </h2>
-                    <span className="text-xs text-zinc-500 font-mono block mt-0.5 leading-none">
-                      {site.domain}
+                    <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block leading-none mb-1.5">
+                      Visitors (30d)
+                    </span>
+                    <span className="text-xl font-bold font-mono text-white tracking-tight leading-none block">
+                      <AnimatedNumber value={visitors} />
+                    </span>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block leading-none mb-1.5">
+                      Revenue (30d)
+                    </span>
+                    <span className="text-xl font-bold font-mono text-rose-300 tracking-tight leading-none block">
+                      <AnimatedNumber value={revenue} prefix={getCurrencySymbol(site.currency)} />
                     </span>
                   </div>
                 </div>
 
-                <ArrowRight className="h-4 w-4 text-zinc-500 group-hover:text-rose-300 group-hover:translate-x-0.5 transition-all shrink-0" />
-              </div>
-
-              {/* Middle Row: Key Stats with Smooth Animated Ticker */}
-              <div className="flex items-baseline justify-between pt-1">
-                <div>
-                  <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block leading-none mb-1.5">
-                    Visitors (30d)
-                  </span>
-                  <span className="text-xl font-bold font-mono text-white tracking-tight leading-none block">
-                    <AnimatedNumber value={site.monthlyVisitors} />
-                  </span>
+                {/* Bottom Row: Embedded Animated Sparkline Chart */}
+                <div className="pt-1 border-t border-white/[0.04]">
+                  <SparklineChart data={sparkline} id={site.id} />
                 </div>
-
-                <div className="text-right">
-                  <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block leading-none mb-1.5">
-                    Revenue (30d)
-                  </span>
-                  <span className="text-xl font-bold font-mono text-rose-300 tracking-tight leading-none block">
-                    <AnimatedNumber value={site.monthlyRevenue} prefix="$" />
-                  </span>
-                </div>
-              </div>
-
-              {/* Bottom Row: Embedded Animated Sparkline Chart */}
-              <div className="pt-1 border-t border-white/[0.04]">
-                <SparklineChart data={site.sparkline} id={site.id} />
-              </div>
-
-            </Link>
-          ))
-        )}
-      </div>
-
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <WebsiteCardSkeleton />
-        <WebsiteCardSkeleton />
-        <WebsiteCardSkeleton />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <WebsiteCardSkeleton />
+          <WebsiteCardSkeleton />
+          <WebsiteCardSkeleton />
+        </div>
+      }
+    >
       <WebsitesHub />
     </Suspense>
   );

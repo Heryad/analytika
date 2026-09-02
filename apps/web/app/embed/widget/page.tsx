@@ -1,204 +1,247 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
+import { analyticsApi } from "@/lib/api";
 
 function WidgetView() {
   const searchParams = useSearchParams();
-  const site = searchParams.get("site") || "analytika.dev";
-  const type = searchParams.get("type") || "sparkline";
-  const theme = searchParams.get("theme") || "dark";
-  const metric = searchParams.get("metric") || "visitors";
-  const timeRange = searchParams.get("range") || "30d";
+  const siteParam = searchParams.get("id") || searchParams.get("site") || "analytika.dev";
+  const widgetType = (searchParams.get("type") as "sparkline" | "live-pill") || "sparkline";
+  const theme = (searchParams.get("theme") as "dark" | "light" | "transparent") || "dark";
+  const chartColor = searchParams.get("color") || "#800E13";
+  const metric = (searchParams.get("metric") as "visitors" | "pageviews" | "revenue") || "visitors";
+  const timeRange = (searchParams.get("range") as "24h" | "7d" | "30d") || "30d";
 
-  const isLight = theme === "light";
-  const isTransparent = theme === "transparent";
+  const [siteDomain, setSiteDomain] = useState(siteParam);
+  const [onlineCount, setOnlineCount] = useState<number>(0);
+  const [metricValue, setMetricValue] = useState<string>("");
+  const [sparkPath, setSparkPath] = useState<string>("M 0 35 L 200 35");
+
+  // Metric Labels
+  const metricLabel = useMemo(() => {
+    switch (metric) {
+      case "visitors":
+        return "Unique Visitors";
+      case "pageviews":
+        return "Page Views";
+      case "revenue":
+        return "Attributed MRR";
+      default:
+        return "Unique Visitors";
+    }
+  }, [metric]);
+
+  // Fetch live metrics when id is available
+  useEffect(() => {
+    if (!siteParam) return;
+
+    // Clean site name if domain or id
+    if (siteParam.includes(".")) {
+      setSiteDomain(siteParam);
+    }
+
+    if (widgetType === "live-pill") {
+      analyticsApi
+        .getLive(siteParam)
+        .then((res) => {
+          if (res.success && typeof res.onlineVisitors === "number") {
+            setOnlineCount(res.onlineVisitors);
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+
+    // Sparkline widget: fetch overview & timeseries
+    analyticsApi
+      .getOverview(siteParam, timeRange)
+      .then((res) => {
+        if (res.success && res.metrics) {
+          if (metric === "visitors") {
+            setMetricValue(res.metrics.visitors.toLocaleString());
+          } else if (metric === "pageviews") {
+            setMetricValue(res.metrics.pageviews.toLocaleString());
+          } else if (metric === "revenue") {
+            setMetricValue(`$${res.metrics.revenue.toLocaleString()}`);
+          }
+        }
+      })
+      .catch(() => {});
+
+    analyticsApi
+      .getTimeseries(siteParam, timeRange)
+      .then((res) => {
+        if (res.success && Array.isArray(res.timeseries) && res.timeseries.length > 2) {
+          const vals = res.timeseries.map((pt) => {
+            if (metric === "visitors") return pt.visitors;
+            if (metric === "pageviews") return pt.pageviews;
+            return pt.revenue;
+          });
+          const max = Math.max(...vals, 1);
+          const min = Math.min(...vals, 0);
+          const rangeVal = max - min || 1;
+
+          const points = vals.map((v, i) => {
+            const x = (i / (vals.length - 1)) * 200;
+            const y = 35 - ((v - min) / rangeVal) * 30;
+            return { x, y };
+          });
+
+          // Generate smoothed SVG spline
+          let d = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+          for (let i = 1; i < points.length; i++) {
+            const prev = points[i - 1];
+            const curr = points[i];
+            const cx = (prev.x + curr.x) / 2;
+            d += ` Q ${prev.x.toFixed(1)} ${prev.y.toFixed(1)} ${cx.toFixed(1)} ${((prev.y + curr.y) / 2).toFixed(1)}`;
+          }
+          const last = points[points.length - 1];
+          d += ` T ${last.x.toFixed(1)} ${last.y.toFixed(1)}`;
+          setSparkPath(d);
+        }
+      })
+      .catch(() => {});
+  }, [siteParam, widgetType, metric, timeRange]);
+
+  const displayCount = metricValue || (metric === "revenue" ? "$0" : "0");
+  const activePath = sparkPath || "M 0 35 L 200 35";
 
   // TYPE 1: LIVE VISITOR PILL
-  if (type === "live-pill") {
+  if (widgetType === "live-pill") {
     return (
-      <div className="flex items-center justify-center min-h-screen p-2 bg-transparent">
+      <div className="w-fit h-fit p-1 bg-transparent select-none">
         <a
-          href={`https://analytika.dev/share/${site}`}
+          href={`https://analytika.me/share/${siteParam}`}
           target="_blank"
-          rel="noreferrer"
-          className={`inline-flex items-center gap-2.5 px-4 py-2 rounded-full text-xs font-mono transition-all shadow-xl hover:scale-105 active:scale-95 ${
-            isLight
-              ? "bg-white border border-black/[0.08] text-zinc-900 shadow-md"
-              : isTransparent
-              ? "bg-white/[0.06] backdrop-blur-xl text-white border border-white/[0.12]"
-              : "bg-[#1E1E1E] border border-white/[0.08] text-white"
+          rel="noopener noreferrer"
+          className={`inline-flex items-center gap-3 px-4 py-2 rounded-full transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${
+            theme === "dark"
+              ? "bg-[#181818] border border-white/[0.08] text-white shadow-black/80"
+              : theme === "light"
+              ? "bg-white border border-black/[0.08] text-zinc-900 shadow-lg shadow-black/5"
+              : "bg-white/[0.08] backdrop-blur-xl text-white border border-white/[0.15] shadow-lg"
           }`}
         >
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-          </span>
-          <span className="font-extrabold text-sm text-white">14</span>
-          <span className={isLight ? "text-zinc-500 text-[11px]" : "text-zinc-400 text-[11px]"}>
-            Live Visitors
-          </span>
-          <span className="h-3 w-px bg-white/10" />
-          <div className="flex items-center gap-1 font-bold text-white tracking-tight text-[11px]">
-            <img src="/logo.svg" alt="Analytika" className="w-3.5 h-3.5 object-contain" />
-            <span>Analytika</span>
+          <div className="flex items-center gap-2">
+            <div className="relative flex items-center justify-center">
+              <span className="absolute inline-flex h-3 w-3 rounded-full bg-emerald-400 opacity-75 animate-ping" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
+            </div>
+            <span className={`font-mono font-bold text-xs ${theme === "light" ? "text-zinc-900" : "text-white"}`}>
+              {onlineCount}
+            </span>
+            <span className={`text-[11px] font-medium ${theme === "light" ? "text-zinc-500" : "text-zinc-400"}`}>
+              online now
+            </span>
+          </div>
+          <span className={theme === "light" ? "text-zinc-300" : "text-zinc-600"}>|</span>
+          <div className="flex items-center gap-1.5">
+            <img
+              src={`https://www.google.com/s2/favicons?domain=${siteDomain}&sz=32`}
+              alt=""
+              className="w-3.5 h-3.5 rounded-xs"
+            />
+            <span className={`font-mono text-[11px] font-medium truncate max-w-[120px] ${theme === "light" ? "text-zinc-800" : "text-zinc-300"}`}>
+              {siteDomain}
+            </span>
           </div>
         </a>
       </div>
     );
   }
 
-  // TYPE 2: OPEN PROOF CARD
-  if (type === "kpi-card") {
-    return (
-      <div className="flex items-center justify-center min-h-screen p-2 bg-transparent font-sans">
-        <div
-          className={`w-full max-w-[340px] p-4 rounded-2xl transition-all shadow-xl space-y-3 ${
-            isLight
-              ? "bg-white border border-black/[0.08] text-zinc-900 shadow-md"
-              : isTransparent
-              ? "bg-white/[0.06] backdrop-blur-xl text-white border border-white/[0.12]"
-              : "bg-[#1E1E1E] border border-white/[0.08] text-white"
-          }`}
-        >
-          <div className="flex items-center justify-between border-b pb-2.5 border-white/[0.06]">
-            <div className="flex items-center gap-1.5">
-              <img
-                src={`https://www.google.com/s2/favicons?domain=${site}&sz=64`}
-                alt=""
-                className="w-3.5 h-3.5 rounded-sm"
-              />
-              <span className="font-bold text-xs truncate max-w-[140px]">{site}</span>
-            </div>
-            <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1 font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Verified Live
-            </span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 text-center font-mono">
-            <div
-              className={`p-2 rounded-xl ${
-                isLight ? "bg-zinc-100" : "bg-[#141414] border border-white/[0.04]"
-              }`}
-            >
-              <div className="text-[9px] text-zinc-400 uppercase">Visitors</div>
-              <div className="text-xs font-bold mt-0.5">42.8k</div>
-            </div>
-            <div
-              className={`p-2 rounded-xl ${
-                isLight ? "bg-zinc-100" : "bg-[#141414] border border-white/[0.04]"
-              }`}
-            >
-              <div className="text-[9px] text-zinc-400 uppercase">Bounce</div>
-              <div className="text-xs font-bold mt-0.5">38.4%</div>
-            </div>
-            <div
-              className={`p-2 rounded-xl ${
-                isLight ? "bg-zinc-100" : "bg-[#141414] border border-white/[0.04]"
-              }`}
-            >
-              <div className="text-[9px] text-zinc-400 uppercase">Conv.</div>
-              <div className="text-xs font-bold mt-0.5">4.2%</div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-1 text-[10px] font-mono text-zinc-400">
-            <span>Open Metrics</span>
-            <a
-              href={`https://analytika.dev/share/${site}`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1 text-white font-semibold hover:underline"
-            >
-              <img src="/logo.svg" alt="Analytika" className="w-3.5 h-3.5 object-contain" />
-              <span>Analytika</span>
-            </a>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // TYPE 3: SNAPSHOT CARD (Default)
+  // TYPE 2: SPARKLINE SNAPSHOT CARD (Exact match to ShareWidgetModal)
   return (
-    <div className="flex items-center justify-center min-h-screen p-2 bg-transparent font-sans">
+    <div className="w-fit h-fit p-1 bg-transparent select-none font-sans">
       <div
-        className={`w-full max-w-[340px] p-4 rounded-2xl transition-all shadow-xl flex flex-col justify-between ${
-          isLight
-            ? "bg-white border border-black/[0.08] text-zinc-900 shadow-md"
-            : isTransparent
-            ? "bg-white/[0.06] backdrop-blur-xl text-white border border-white/[0.12]"
-            : "bg-[#1E1E1E] border border-white/[0.08] text-white shadow-2xl"
+        className={`w-[300px] p-4 rounded-2xl transition-all shadow-lg flex flex-col justify-between ${
+          theme === "dark"
+            ? "bg-[#181818] border border-white/[0.08] text-white shadow-black/80"
+            : theme === "light"
+            ? "bg-white border border-black/[0.08] text-zinc-900 shadow-md shadow-black/5"
+            : "bg-white/[0.06] backdrop-blur-xl text-white border border-white/[0.12] shadow-lg"
         }`}
       >
+        {/* Top Row: Domain Identity */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img
-              src={`https://www.google.com/s2/favicons?domain=${site}&sz=64`}
+              src={`https://www.google.com/s2/favicons?domain=${siteDomain}&sz=64`}
               alt=""
-              className="w-4 h-4 rounded-sm"
+              className="w-4 h-4 rounded-xs"
             />
-            <span className="font-bold text-xs truncate max-w-[140px]">{site}</span>
+            <span className="font-bold text-xs truncate max-w-[200px]">{siteDomain}</span>
           </div>
-          <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-            +24.8% ↑
-          </span>
         </div>
 
-        <div className="flex items-end justify-between my-2">
+        {/* Middle Row: Big Metric Number & Spline Chart with Selected Color */}
+        <div className="flex items-end justify-between my-2.5">
           <div>
             <div className="text-2xl font-extrabold font-mono tracking-tight leading-none">
-              {metric === "visitors" ? "42,850" : metric === "pageviews" ? "128,400" : "$12,480"}
+              {displayCount}
             </div>
             <div
               className={`text-[10px] font-mono mt-1 ${
-                isLight ? "text-zinc-500" : "text-zinc-400"
+                theme === "light" ? "text-zinc-500" : "text-zinc-400"
               }`}
             >
-              {metric === "visitors"
-                ? "Unique Visitors (30d)"
-                : metric === "pageviews"
-                ? "Page Views (30d)"
-                : "Attributed MRR"}
+              {metricLabel} ({timeRange})
             </div>
           </div>
 
-          <svg className="w-24 h-9 overflow-visible" viewBox="0 0 100 30">
-            <defs>
-              <linearGradient id="widgetGradEmbed" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#800E13" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#800E13" stopOpacity="0.0" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M 0 25 Q 20 28 40 16 T 70 12 T 90 6 L 100 4 L 100 30 L 0 30 Z"
-              fill="url(#widgetGradEmbed)"
-            />
-            <path
-              d="M 0 25 Q 20 28 40 16 T 70 12 T 90 6 L 100 4"
-              fill="none"
-              stroke="#800E13"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            />
-          </svg>
+          {/* Spline Chart */}
+          <div className="w-24 h-9 relative">
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 200 40">
+              <defs>
+                <linearGradient id="widgetSparkGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={chartColor} stopOpacity="0.4" />
+                  <stop offset="100%" stopColor={chartColor} stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+              {/* Area fill */}
+              <path d={`${activePath} L 200 40 L 0 40 Z`} fill="url(#widgetSparkGrad)" />
+              {/* Spline Stroke */}
+              <path
+                d={activePath}
+                fill="none"
+                stroke={chartColor}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+              {/* Glowing End Dot */}
+              <circle cx="200" cy="4" r="3.5" fill={chartColor} />
+            </svg>
+          </div>
         </div>
 
+        {/* Bottom Row: Analytika Brand Link */}
         <div
-          className={`flex items-center justify-between pt-2 border-t text-[10px] font-mono ${
-            isLight ? "border-zinc-100 text-zinc-500" : "border-white/[0.06] text-zinc-400"
+          className={`pt-2 border-t flex items-center justify-between ${
+            theme === "light" ? "border-black/[0.08]" : "border-white/[0.08]"
           }`}
         >
-          <span className="text-[9px] text-zinc-500">Live Traffic</span>
           <a
-            href={`https://analytika.dev/share/${site}`}
+            href="https://analytika.app"
             target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1 font-semibold text-zinc-300 hover:underline"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 transition-opacity hover:opacity-80 cursor-pointer"
           >
-            <img src="/logo.svg" alt="Analytika" className="w-3.5 h-3.5 object-contain" />
-            <span>Analytika</span>
+            <Image
+              src="/logo.svg"
+              alt="Analytika Logo"
+              width={14}
+              height={14}
+              className="w-3.5 h-3.5 object-contain"
+            />
+            <span
+              className={`text-[11px] font-bold tracking-tight ${
+                theme === "light" ? "text-zinc-900" : "text-white"
+              }`}
+            >
+              Analytika
+            </span>
           </a>
         </div>
       </div>
@@ -208,7 +251,13 @@ function WidgetView() {
 
 export default function StandaloneWidgetPage() {
   return (
-    <Suspense fallback={<div className="text-zinc-500 text-xs font-mono p-4">Loading widget...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen p-4 bg-transparent text-zinc-500 text-xs font-mono">
+          Loading widget...
+        </div>
+      }
+    >
       <WidgetView />
     </Suspense>
   );

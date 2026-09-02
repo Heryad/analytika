@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Sector } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from "recharts";
 import { Globe } from "lucide-react";
 
 interface ChannelData {
   name: string;
-  views: number;
-  percentage: number;
+  views?: number;
+  visitors?: number;
+  percentage?: number;
   domain?: string | null;
 }
 
@@ -16,14 +17,19 @@ interface ChannelPieChartProps {
 }
 
 const COLOR_MAP: Record<string, string> = {
+  "Organic Search": "#4285F4",
   Google: "#4285F4",
-  Facebook: "#1877F2",
-  Medium: "#FFFFFF",
-  Direct: "#71717A",
+  Social: "#1DA1F2",
   Twitter: "#1DA1F2",
+  Facebook: "#1877F2",
+  Direct: "#71717A",
+  Referral: "#10B981",
+  Email: "#F59E0B",
+  Paid: "#EC4899",
+  Medium: "#FFFFFF",
   LinkedIn: "#0A66C2",
   Reddit: "#FF4500",
-}
+};
 
 const FALLBACK_COLORS = [
   "#800E13", "#A4161A", "#BA1826", "#E5383B",
@@ -49,7 +55,7 @@ const renderActiveShape = (props: any) => {
   );
 };
 
-export function ChannelPieChart({ data }: ChannelPieChartProps) {
+export function ChannelPieChart({ data = [] }: ChannelPieChartProps) {
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
 
   const onPieEnter = (_: any, index: number) => {
@@ -60,15 +66,32 @@ export function ChannelPieChart({ data }: ChannelPieChartProps) {
     setActiveIndex(undefined);
   };
 
-  const totalViews = data.reduce((acc, curr) => acc + curr.views, 0);
-  const activeData = activeIndex !== undefined ? data[activeIndex] : null;
+  const formattedData = data.map((entry) => {
+    const views = Number(entry.views ?? entry.visitors ?? (entry as any).pageviews ?? 0);
+    return {
+      ...entry,
+      views,
+    };
+  });
+
+  const totalViews = formattedData.reduce((acc, curr) => acc + curr.views, 0);
+  const activeData = activeIndex !== undefined ? formattedData[activeIndex] : null;
+
+  if (formattedData.length === 0 || totalViews === 0) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500 select-none">
+        <Globe className="w-7 h-7 mb-2 opacity-30 text-zinc-400" />
+        <p className="text-xs font-mono">No channel traffic recorded</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full h-full flex items-stretch justify-between min-h-0">
+    <div className="w-full h-full flex items-stretch justify-between min-h-0 select-none">
       
       {/* Pie Chart Area */}
       <div 
-        className="relative w-full md:w-1/2 flex flex-col items-center justify-center"
+        className="relative w-full md:w-1/2 flex flex-col items-center justify-center min-h-[220px]"
         onMouseLeave={onPieLeave}
       >
         
@@ -78,18 +101,18 @@ export function ChannelPieChart({ data }: ChannelPieChartProps) {
             {!activeData ? (
               <div className="text-zinc-500 text-xs font-medium mb-1 uppercase tracking-wider">Total Views</div>
             ) : activeData.domain ? (
-              <img src={`https://logo.clearbit.com/${activeData.domain}`} alt={activeData.name} className="w-8 h-8 object-contain mb-1 drop-shadow-md" onError={(e) => { e.currentTarget.src = `https://www.google.com/s2/favicons?domain=${activeData.domain}&sz=128` }} />
+              <img src={`https://www.google.com/s2/favicons?domain=${activeData.domain}&sz=128`} alt={activeData.name} className="w-8 h-8 object-contain mb-1 drop-shadow-md rounded-sm" />
             ) : (
               <Globe className="w-7 h-7 text-zinc-400 mb-1 drop-shadow-md" />
             )}
             
             <div className="text-white font-mono font-bold text-xl leading-none my-1 tracking-tight">
-              {activeData ? activeData.views.toLocaleString() : totalViews.toLocaleString()}
+              {(activeData ? activeData.views : totalViews).toLocaleString()}
             </div>
             
             {activeData && (
               <div className="text-zinc-400 text-[11px] font-medium max-w-[120px] truncate text-center">
-                {activeData.name} <span className="text-zinc-500 font-mono ml-0.5">{activeData.percentage}%</span>
+                {activeData.name} <span className="text-zinc-500 font-mono ml-0.5">{activeData.percentage ?? Math.round((activeData.views / (totalViews || 1)) * 100)}%</span>
               </div>
             )}
           </div>
@@ -99,7 +122,7 @@ export function ChannelPieChart({ data }: ChannelPieChartProps) {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={data}
+                data={formattedData}
                 cx="50%"
                 cy="50%"
                 innerRadius={80}
@@ -111,7 +134,7 @@ export function ChannelPieChart({ data }: ChannelPieChartProps) {
                 isAnimationActive={false}
                 {...({ activeIndex, activeShape: renderActiveShape } as any)}
               >
-                {data.map((entry, index) => {
+                {formattedData.map((entry, index) => {
                   const color = COLOR_MAP[entry.name] || FALLBACK_COLORS[index % FALLBACK_COLORS.length];
                   return (
                     <Cell 
@@ -131,13 +154,14 @@ export function ChannelPieChart({ data }: ChannelPieChartProps) {
         </div>
       </div>
 
-      {/* Custom Legend with Icons (Hidden on mobile) */}
-      <div className="hidden md:flex w-1/2 h-full flex-col pl-6 pr-2">
-        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-1.5 pr-2">
-          {data.map((entry, index) => {
+      {/* Custom Legend with Icons & Scrollbar (Hidden on mobile) */}
+      <div className="hidden md:flex w-1/2 h-full flex-col pl-6 pr-2 min-h-0 overflow-hidden">
+        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-1.5 pr-2 max-h-[310px]">
+          {formattedData.map((entry, index) => {
+            const percentage = typeof entry.percentage === "number" ? entry.percentage : Math.round((entry.views / (totalViews || 1)) * 100);
             return (
               <div 
-                key={entry.name}
+                key={entry.name || index}
                 className="flex items-center justify-between py-1.5 px-2 rounded-lg transition-all duration-200 border border-transparent hover:bg-white/[0.02]"
               >
                 <div className="flex items-center gap-2.5">
@@ -152,7 +176,7 @@ export function ChannelPieChart({ data }: ChannelPieChartProps) {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-[13px] font-bold text-white font-mono">{entry.views.toLocaleString()}</span>
-                  <span className="text-[11px] text-zinc-500 w-6 text-right">{entry.percentage}%</span>
+                  <span className="text-[11px] text-zinc-500 w-6 text-right">{percentage}%</span>
                 </div>
               </div>
             );

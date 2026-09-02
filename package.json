@@ -8,9 +8,10 @@
   "scripts": {
     "dev:api": "bun --watch apps/api/src/index.ts",
     "dev:web": "bun run --cwd apps/web dev",
+    "dev:playground": "bun run --cwd apps/playground dev",
     "build:web": "bun run --cwd apps/web build",
-    "build:sdk": "bun run --cwd packages/sdk build",
-    "build": "bun run --cwd packages/sdk build",
+    "build:sdk": "bun run --cwd packages/tracker build",
+    "build": "bun run --cwd packages/tracker build",
     "db:generate": "bun run --cwd apps/api db:generate",
     "db:push": "bun run --cwd apps/api db:push",
     "db:migrate": "bun run --cwd apps/api db:migrate",

@@ -2,6 +2,7 @@
 node_modules/
 .bun/
 
+
 # Build artifacts
 dist/
 build/
