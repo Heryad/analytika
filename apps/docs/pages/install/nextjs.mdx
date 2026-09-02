@@ -1,0 +1,51 @@
+# Next.js Integration
+
+Adding Analytika to your Next.js application is extremely simple. We officially support both the **App Router** and **Pages Router**.
+
+## App Router (`app/`)
+
+If you are using the modern App Router, we recommend injecting the script in your `app/layout.tsx` file using the `next/script` component.
+
+```tsx
+import Script from 'next/script'
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        <Script 
+          defer 
+          src="https://analytika.me/a.js" 
+          data-website-id="YOUR-WEBSITE-ID" 
+          strategy="afterInteractive" 
+        />
+      </head>
+      <body>
+        {children}
+      </body>
+    </html>
+  )
+}
+```
+
+## Pages Router (`pages/`)
+
+If you are using the older Pages Router, add the script to your `pages/_document.tsx` file.
+
+```tsx
+import { Html, Head, Main, NextScript } from 'next/document'
+
+export default function Document() {
+  return (
+    <Html lang="en">
+      <Head>
+        <script defer src="https://analytika.me/a.js" data-website-id="YOUR-WEBSITE-ID"></script>
+      </Head>
+      <body>
+        <Main />
+        <NextScript />
+      </body>
+    </Html>
+  )
+}
+```

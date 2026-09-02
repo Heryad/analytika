@@ -1,0 +1,23 @@
+# Exclude Visits
+
+When you are actively developing your website, you probably don't want your own pageviews polluting your analytics data. Analytika provides several ways to exclude your own visits.
+
+## 1. Localhost Exclusion (Default)
+
+By default, the Analytika tracking script ignores any traffic coming from `localhost` or `127.0.0.1`. You do not need to configure anything to prevent local development traffic from appearing on your dashboard.
+
+## 2. Using LocalStorage
+
+If you want to exclude your visits on your live production site, you can set a flag in your browser's local storage.
+
+Open your browser's Developer Tools (F12) while on your website, go to the Console, and run:
+
+```javascript
+localStorage.setItem('analytika_ignore', 'true');
+```
+
+As long as this flag is present in your browser, the tracking script will immediately abort and will not send any data to the Analytika edge servers.
+
+## 3. IP Blocklisting
+
+If you have a static office IP address and want to exclude your entire team, you can add your IP address to the blocklist in your Analytika dashboard under **Settings > Filtering**.

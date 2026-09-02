@@ -1,0 +1,35 @@
+# NPM SDK
+
+For advanced usage (like SPAs, custom React setups, or server-side node.js), you can install the official Analytika NPM package.
+
+```bash
+npm install @analytika/tracker
+```
+
+## Basic Usage
+
+Initialize the tracker at the root of your application.
+
+```javascript
+import { initAnalytics, trackEvent } from '@analytika/tracker';
+
+initAnalytics({
+  websiteId: 'YOUR-WEBSITE-ID',
+  hostUrl: 'https://analytika.me' // Optional: Used if you proxy the script
+});
+```
+
+## Tracking Custom Events
+
+Once initialized, you can use the SDK to trigger custom goals and events anywhere in your application with full TypeScript support.
+
+```typescript
+import { trackEvent } from '@analytika/tracker';
+
+function handleCheckout() {
+  trackEvent('Checkout Started', {
+    plan: 'Pro',
+    price: 49
+  });
+}
+```

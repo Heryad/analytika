@@ -1,0 +1,32 @@
+# Track Custom Goals
+
+Goals (or Custom Events) allow you to track specific user actions on your website, like clicking a "Sign Up" button, submitting a form, or downloading a PDF.
+
+## 1. Define a Goal
+
+In your Analytika dashboard, navigate to **Settings > Goals** and click **Create Goal**.
+Give your goal a name, for example: `Signup Completed`.
+
+## 2. Trigger the Goal
+
+Use the `window.analytika()` browser global to trigger the goal when the user performs the action.
+
+```javascript
+// Example: Tracking a button click
+document.getElementById('signup-btn').addEventListener('click', () => {
+  window.analytika('Signup Completed');
+});
+```
+
+### Passing Metadata
+
+You can also pass custom metadata (properties) along with your goal to track things like the plan selected or the user's role.
+
+```javascript
+window.analytika('Signup Completed', {
+  plan: 'Pro',
+  billing: 'Annual'
+});
+```
+
+You can later filter your dashboard by these specific metadata properties!

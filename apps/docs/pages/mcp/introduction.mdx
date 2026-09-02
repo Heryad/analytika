@@ -1,0 +1,36 @@
+# Model Context Protocol (MCP)
+
+Analytika is the world's first web analytics platform to natively support the **Model Context Protocol (MCP)**. 
+
+MCP is an open standard that enables AI assistants (like Claude Desktop, Cursor, and Windsurf) to securely read your real-time analytics data and perform tasks on your behalf.
+
+## Getting Started
+
+To give an AI assistant access to your Analytika workspace, you configure it as an MCP server using your project's API key.
+
+### Configuration Example (Claude Desktop)
+
+Open your `claude_desktop_config.json` and add the Analytika server:
+
+```json
+{
+  "mcpServers": {
+    "analytika": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sse",
+        "--url",
+        "https://api.analytika.me/api/v1/mcp",
+        "--header",
+        "Authorization: Bearer YOUR_API_KEY"
+      ]
+    }
+  }
+}
+```
+
+Once configured, you can simply ask Claude: 
+*"How many people are on my website right now?"* 
+or 
+*"Create a markdown table of my top 10 referrers this week."*

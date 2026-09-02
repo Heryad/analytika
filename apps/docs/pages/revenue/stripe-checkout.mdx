@@ -1,0 +1,32 @@
+# Stripe Integration
+
+Connect your Stripe account to Analytika by entering your Stripe API key. Analytika will automatically pull your revenue data and attribute it to the traffic sources that drove each conversion.
+
+## 1. Get your Stripe API Key
+
+1. Go to the [Stripe Dashboard](https://dashboard.stripe.com/apikeys).
+2. Copy your **Secret Key** (starts with `sk_live_...`) or a restricted key with read access to `Charges` and `Customers`.
+
+## 2. Connect in Analytika
+
+1. Open your Analytika dashboard and go to **Settings > Revenue Attribution**.
+2. Select **Stripe** from the provider list.
+3. Paste your Stripe API key and click **Connect Stripe**.
+
+Analytika will immediately verify the key against the Stripe API. Once confirmed, revenue data will begin appearing in your dashboard automatically — no webhooks or code changes required.
+
+## Manual Revenue Events
+
+If you prefer to track revenue manually (e.g., for custom checkout flows), use `trackEvent` with an `event_value`:
+
+```javascript
+window.analytika('purchase', { event_value: 49, event_currency: 'USD' });
+```
+
+Or with the NPM SDK:
+
+```javascript
+import { trackEvent } from '@analytika/tracker';
+
+trackEvent('purchase', { event_value: 49, event_currency: 'USD' });
+```

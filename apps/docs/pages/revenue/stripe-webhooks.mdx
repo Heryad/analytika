@@ -1,0 +1,43 @@
+# Revenue Attribution
+
+Analytika supports two methods to attribute revenue to your traffic sources:
+
+## Method 1: API Key Connection (Automatic)
+
+Connect your payment provider directly. Analytika verifies your API key and automatically pulls revenue data — **no webhooks, no code changes**.
+
+Supported providers:
+- **Stripe** — Secret key or restricted key with read access.
+- **Polar** — Organization Access Token.
+- **Dodo Payments** — Live or test API key.
+- **Paddle** — API Secret Key (live or sandbox).
+- **Lemon Squeezy** — API token + optional Store ID.
+
+Go to **Settings > Revenue Attribution** in your Analytika dashboard to connect.
+
+## Method 2: Manual Event Tracking
+
+For custom checkout flows where you want to send revenue events directly from your code:
+
+### Browser Script (Global)
+
+```javascript
+// Fire a revenue event with event_name and event_value
+window.analytika('purchase', {
+  event_value: 49,
+  event_currency: 'USD'
+});
+```
+
+### NPM SDK
+
+```javascript
+import { trackEvent } from '@analytika/tracker';
+
+trackEvent('purchase', {
+  event_value: 49,
+  event_currency: 'USD'
+});
+```
+
+The `event_name` can be anything you want (e.g., `purchase`, `subscription_started`, `upgrade`). The `event_value` is the numeric revenue amount. These events will be instantly attributed to the traffic source that originally brought the user to your site.

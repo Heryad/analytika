@@ -1,0 +1,26 @@
+# Use Tracking Parameters
+
+Get better analytics by explicitly tagging your inbound links using UTM parameters or custom referral tags.
+
+## Standard UTM Parameters
+
+Analytika automatically tracks standard UTM parameters out of the box. No configuration is required.
+
+- `utm_source` (e.g. `twitter`, `newsletter`)
+- `utm_medium` (e.g. `social`, `email`)
+- `utm_campaign` (e.g. `summer_sale_2026`)
+- `utm_term` (e.g. `analytics+software`)
+- `utm_content` (e.g. `header_link`)
+
+### Example
+
+When a user visits `https://analytika.me/?utm_source=twitter&utm_medium=social&utm_campaign=launch`, Analytika automatically categorizes this visit under the "Launch" campaign from the "Twitter" source.
+
+## Ref Parameters (Referrals)
+
+If you don't want to use verbose UTM tags, you can use a simple `ref` or `source` tag:
+
+- `https://analytika.me/?ref=producthunt`
+- `https://analytika.me/?source=indiehackers`
+
+Analytika treats these exactly like a `utm_source`.

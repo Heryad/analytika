@@ -1,0 +1,32 @@
+# LemonSqueezy Integration
+
+Connect your LemonSqueezy account to Analytika by entering your API token. Analytika will automatically pull your revenue data and attribute it to the traffic sources that drove each sale.
+
+## 1. Get your LemonSqueezy API Token
+
+1. Go to your [LemonSqueezy Dashboard](https://app.lemonsqueezy.com/settings/api) and create a new API key.
+2. Optionally, note your **Store ID** from your store settings.
+
+## 2. Connect in Analytika
+
+1. Open your Analytika dashboard and go to **Settings > Revenue Attribution**.
+2. Select **Lemon Squeezy** from the provider list.
+3. Paste your API token (and Store ID if applicable) and click **Connect Lemon Squeezy**.
+
+Analytika verifies the token live against the LemonSqueezy API. Once connected, revenue attribution runs automatically — no webhooks required.
+
+## Manual Revenue Events
+
+For custom checkout flows, you can also fire revenue events manually:
+
+```javascript
+window.analytika('purchase', { event_value: 29, event_currency: 'USD' });
+```
+
+Or with the NPM SDK:
+
+```javascript
+import { trackEvent } from '@analytika/tracker';
+
+trackEvent('purchase', { event_value: 29, event_currency: 'USD' });
+```

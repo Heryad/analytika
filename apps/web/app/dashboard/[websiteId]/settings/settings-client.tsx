@@ -62,12 +62,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs";
 
 // Custom Toggle Switch Component matching app aesthetics
 function Switch({ checked, onCheckedChange }: { checked: boolean; onCheckedChange: (val: boolean) => void }) {
@@ -77,14 +71,12 @@ function Switch({ checked, onCheckedChange }: { checked: boolean; onCheckedChang
       role="switch"
       aria-checked={checked}
       onClick={() => onCheckedChange(!checked)}
-      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-        checked ? "bg-[#800E13]" : "bg-white/[0.12]"
-      }`}
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${checked ? "bg-[#800E13]" : "bg-white/[0.12]"
+        }`}
     >
       <span
-        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
-          checked ? "translate-x-4" : "translate-x-0"
-        }`}
+        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${checked ? "translate-x-4" : "translate-x-0"
+          }`}
       />
     </button>
   );
@@ -336,7 +328,7 @@ export function WebsiteSettingsClient({
           setIgnoreMyVisits(true);
         }
       }
-    } catch {}
+    } catch { }
   }, []);
 
   // Danger Zone State
@@ -406,11 +398,11 @@ export function WebsiteSettingsClient({
                 isConnecting: false,
                 connectedAt: item.connectedAt
                   ? new Date(item.connectedAt).toLocaleDateString([], {
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
                   : "Connected",
                 apiKeyMasked: item.apiKeyMasked || undefined,
               };
@@ -1005,15 +997,14 @@ export function WebsiteSettingsClient({
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
-                isActive
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${isActive
                   ? tab.danger
                     ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
                     : "bg-[#262626] text-white border border-white/[0.08]"
                   : tab.danger
-                  ? "text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-300"
-                  : "text-zinc-400 hover:text-white hover:bg-[#262626]/50"
-              }`}
+                    ? "text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-300"
+                    : "text-zinc-400 hover:text-white hover:bg-[#262626]/50"
+                }`}
             >
               <Icon className={`h-3.5 w-3.5 ${tab.danger ? "text-rose-400" : "text-zinc-400"}`} />
               <span>{tab.label}</span>
@@ -1133,8 +1124,8 @@ export function WebsiteSettingsClient({
                         {revenueModel === "mrr"
                           ? "Monthly Recurring (MRR)"
                           : revenueModel === "arr"
-                          ? "Annual Recurring (ARR)"
-                          : "Total Revenue"}
+                            ? "Annual Recurring (ARR)"
+                            : "Total Revenue"}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
@@ -1252,11 +1243,10 @@ export function WebsiteSettingsClient({
                   key={f.id}
                   type="button"
                   onClick={() => setSnippetTab(f.id as any)}
-                  className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-medium transition-all cursor-pointer text-center ${
-                    snippetTab === f.id
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-medium transition-all cursor-pointer text-center ${snippetTab === f.id
                       ? "bg-[#262626] text-white shadow-sm border border-white/[0.08]"
                       : "text-zinc-400 hover:text-zinc-200"
-                  }`}
+                    }`}
                 >
                   {f.label}
                 </button>
@@ -1274,9 +1264,8 @@ export function WebsiteSettingsClient({
                         key={pm}
                         type="button"
                         onClick={() => setPkgManager(pm)}
-                        className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors cursor-pointer ${
-                          pkgManager === pm ? "bg-[#800E13] text-white" : "text-zinc-500 hover:text-zinc-300"
-                        }`}
+                        className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors cursor-pointer ${pkgManager === pm ? "bg-[#800E13] text-white" : "text-zinc-500 hover:text-zinc-300"
+                          }`}
                       >
                         {pm}
                       </button>
@@ -1300,10 +1289,10 @@ export function WebsiteSettingsClient({
                         pkgManager === "npm"
                           ? "npm install @analytika/tracker"
                           : pkgManager === "pnpm"
-                          ? "pnpm add @analytika/tracker"
-                          : pkgManager === "bun"
-                          ? "bun add @analytika/tracker"
-                          : "yarn add @analytika/tracker",
+                            ? "pnpm add @analytika/tracker"
+                            : pkgManager === "bun"
+                              ? "bun add @analytika/tracker"
+                              : "yarn add @analytika/tracker",
                         "snippet"
                       )
                     }
@@ -1338,10 +1327,10 @@ export function WebsiteSettingsClient({
                       snippetTab === "html"
                         ? `<script defer src="${trackerHost}/a.js" data-website-id="${websiteId}"></script>`
                         : snippetTab === "next"
-                        ? `import Script from "next/script";\n\nexport default function RootLayout({ children }: { children: React.ReactNode }) {\n  return (\n    <html lang="en">\n      <head>\n        <Script\n          defer\n          src="${trackerHost}/a.js"\n          data-website-id="${websiteId}"\n          strategy="afterInteractive"\n        />\n      </head>\n      <body>{children}</body>\n    </html>\n  );\n}`
-                        : snippetTab === "npm"
-                        ? `import { initAnalytics, trackEvent } from "@analytika/tracker";\n\n// 1. Initialize once in your app\ninitAnalytics({\n  websiteId: "${websiteId}",\n});\n\n// 2. Track custom events\ntrackEvent("Sign Up Clicked", { plan: "pro" });`
-                        : `import { useEffect } from "react";\nimport { initAnalytics } from "@analytika/tracker";\n\nexport default function App() {\n  useEffect(() => {\n    initAnalytics({ websiteId: "${websiteId}" });\n  }, []);\n\n  return <div>My App</div>;\n}`;
+                          ? `import Script from "next/script";\n\nexport default function RootLayout({ children }: { children: React.ReactNode }) {\n  return (\n    <html lang="en">\n      <head>\n        <Script\n          defer\n          src="${trackerHost}/a.js"\n          data-website-id="${websiteId}"\n          strategy="afterInteractive"\n        />\n      </head>\n      <body>{children}</body>\n    </html>\n  );\n}`
+                          : snippetTab === "npm"
+                            ? `import { initAnalytics, trackEvent } from "@analytika/tracker";\n\n// 1. Initialize once in your app\ninitAnalytics({\n  websiteId: "${websiteId}",\n});\n\n// 2. Track custom events\ntrackEvent("Sign Up Clicked", { plan: "pro" });`
+                            : `import { useEffect } from "react";\nimport { initAnalytics } from "@analytika/tracker";\n\nexport default function App() {\n  useEffect(() => {\n    initAnalytics({ websiteId: "${websiteId}" });\n  }, []);\n\n  return <div>My App</div>;\n}`;
                     copyToClipboard(codeToCopy, "snippet");
                   }}
                   className="h-7 text-xs text-zinc-300 hover:text-white hover:bg-white/[0.08] px-2.5 cursor-pointer"
@@ -1404,7 +1393,7 @@ export function WebsiteSettingsClient({
                     {"  "}websiteId: <span className="text-emerald-300">&quot;{websiteId}&quot;</span>,{"\n"}
                     {"});\n\n"}
                     <span className="text-zinc-500">// 2. Track custom events</span>{"\n"}
-                    <span className="text-amber-300">trackEvent</span>(<span className="text-emerald-300">&quot;Sign Up Clicked&quot;</span>, {"{ "}plan: <span className="text-emerald-300">&quot;pro&quot;</span>{" }" });
+                    <span className="text-amber-300">trackEvent</span>(<span className="text-emerald-300">&quot;Sign Up Clicked&quot;</span>, {"{ "}plan: <span className="text-emerald-300">&quot;pro&quot;</span>{" }"});
                   </>
                 )}
 
@@ -1510,9 +1499,8 @@ export function WebsiteSettingsClient({
                 <Button
                   onClick={handleVerifyProxy}
                   variant="outline"
-                  className={`border-white/[0.08] hover:bg-white/[0.04] text-xs shrink-0 ${
-                    proxyVerified ? "text-emerald-400 border-emerald-500/30" : "text-zinc-200"
-                  }`}
+                  className={`border-white/[0.08] hover:bg-white/[0.04] text-xs shrink-0 ${proxyVerified ? "text-emerald-400 border-emerald-500/30" : "text-zinc-200"
+                    }`}
                 >
                   <RefreshCcw className={`w-3.5 h-3.5 mr-1.5 ${isVerifyingProxy ? "animate-spin text-rose-400" : ""}`} />
                   {isVerifyingProxy ? "Verifying..." : proxyVerified ? "Re-verify" : "Verify DNS"}
@@ -1836,9 +1824,8 @@ export function WebsiteSettingsClient({
                       className="bg-[#1F1F1F] hover:bg-[#252525] border border-white/[0.1] text-zinc-200 text-xs h-8 cursor-pointer"
                     >
                       <RefreshCcw
-                        className={`w-3.5 h-3.5 mr-1.5 ${
-                          connectionState[paymentPlatform].isConnecting ? "animate-spin text-rose-400" : ""
-                        }`}
+                        className={`w-3.5 h-3.5 mr-1.5 ${connectionState[paymentPlatform].isConnecting ? "animate-spin text-rose-400" : ""
+                          }`}
                       />
                       Re-verify
                     </Button>
@@ -1852,23 +1839,21 @@ export function WebsiteSettingsClient({
                     className="bg-[#800E13] hover:bg-[#9e1218] text-white text-xs h-8 px-4 cursor-pointer"
                   >
                     <RefreshCcw
-                      className={`w-3.5 h-3.5 mr-1.5 ${
-                        connectionState[paymentPlatform].isConnecting ? "animate-spin" : ""
-                      }`}
+                      className={`w-3.5 h-3.5 mr-1.5 ${connectionState[paymentPlatform].isConnecting ? "animate-spin" : ""
+                        }`}
                     />
                     {connectionState[paymentPlatform].isConnecting
                       ? "Verifying API..."
-                      : `Connect ${
-                          paymentPlatform === "stripe"
-                            ? "Stripe"
-                            : paymentPlatform === "polar"
-                            ? "Polar"
-                            : paymentPlatform === "dodo"
+                      : `Connect ${paymentPlatform === "stripe"
+                        ? "Stripe"
+                        : paymentPlatform === "polar"
+                          ? "Polar"
+                          : paymentPlatform === "dodo"
                             ? "Dodo"
                             : paymentPlatform === "paddle"
-                            ? "Paddle"
-                            : "Lemon Squeezy"
-                        }`}
+                              ? "Paddle"
+                              : "Lemon Squeezy"
+                      }`}
                   </Button>
                 )}
               </div>
@@ -2053,11 +2038,10 @@ export function WebsiteSettingsClient({
                           key={ic.id}
                           type="button"
                           onClick={() => setModalIcon(ic.id)}
-                          className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 text-xs ${
-                            isSelected
+                          className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 text-xs ${isSelected
                               ? "bg-[#800E13]/20 border-[#800E13] text-white"
                               : "bg-[#141414] border-white/[0.06] text-zinc-400 hover:text-zinc-200"
-                          }`}
+                            }`}
                           title={ic.label}
                         >
                           <Ic className="w-3.5 h-3.5" />
@@ -2163,22 +2147,20 @@ export function WebsiteSettingsClient({
                       <button
                         type="button"
                         onClick={() => setModalPreviewTab("edit")}
-                        className={`px-2.5 py-1 text-xs rounded-md transition-all cursor-pointer ${
-                          modalPreviewTab === "edit"
+                        className={`px-2.5 py-1 text-xs rounded-md transition-all cursor-pointer ${modalPreviewTab === "edit"
                             ? "bg-[#262626] text-white shadow-sm font-medium"
                             : "text-zinc-400 hover:text-zinc-200"
-                        }`}
+                          }`}
                       >
                         Template Body
                       </button>
                       <button
                         type="button"
                         onClick={() => setModalPreviewTab("preview")}
-                        className={`px-2.5 py-1 text-xs rounded-md transition-all cursor-pointer flex items-center gap-1 ${
-                          modalPreviewTab === "preview"
+                        className={`px-2.5 py-1 text-xs rounded-md transition-all cursor-pointer flex items-center gap-1 ${modalPreviewTab === "preview"
                             ? "bg-[#262626] text-white shadow-sm font-medium"
                             : "text-zinc-400 hover:text-zinc-200"
-                        }`}
+                          }`}
                       >
                         <Mail className="w-3 h-3 text-rose-400" />
                         Gmail Preview
@@ -2253,8 +2235,8 @@ export function WebsiteSettingsClient({
                   {isSendingTest
                     ? "Dispatching..."
                     : testSentSuccess
-                    ? "✓ Test Email Sent!"
-                    : "Send Test Email"}
+                      ? "✓ Test Email Sent!"
+                      : "Send Test Email"}
                 </Button>
 
                 <div className="flex items-center gap-2">
@@ -2280,8 +2262,8 @@ export function WebsiteSettingsClient({
                         ? "Updating Alert..."
                         : "Update Alert"
                       : isSavingAlert
-                      ? "Saving Alert..."
-                      : "Save Alert"}
+                        ? "Saving Alert..."
+                        : "Save Alert"}
                   </Button>
                 </div>
               </div>

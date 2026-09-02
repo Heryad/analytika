@@ -1,0 +1,31 @@
+# MCP Tool Reference
+
+When you connect Analytika as an MCP server to an AI assistant, the following tools are exposed automatically. The AI will select and call them based on your prompts.
+
+## `list_websites`
+Lists all websites you have tracked in Analytika, including their IDs, domains, and settings. Useful for querying a specific site.
+
+## `get_realtime_visitors`
+Returns the exact count and active page URLs of visitors online in the last 5 minutes.
+
+**Example prompt**: *"How many people are on my site right now?"*
+
+## `get_overview_metrics`
+Returns high-level summary metrics: Unique Visitors, Pageviews, Revenue/MRR, Bounce Rate, and Avg. Session Duration over a chosen timeframe (`Today`, `Last 24h`, `7 Days`, `30 Days`, `YTD`).
+
+**Example prompt**: *"Show me last week's summary stats."*
+
+## `get_traffic_sources`
+Returns the top acquisition channels, referring websites, search engines, and UTM marketing campaigns sorted by volume and conversions.
+
+**Example prompt**: *"Where is my traffic coming from this month?"*
+
+## `get_revenue_attribution`
+Returns a revenue attribution breakdown showing which marketing channels, referrers, and landing pages generated paying customers.
+
+**Example prompt**: *"Which traffic source drove the most revenue this week?"*
+
+## `get_social_radar`
+Returns discovered social mentions across X (Twitter) and Reddit for your domain, including community discussions and attributed referral traffic.
+
+**Example prompt**: *"Who is talking about my product on Twitter right now?"*

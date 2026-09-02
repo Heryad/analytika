@@ -1,0 +1,37 @@
+# Connect Payment Providers
+
+Analytika supports direct API key integrations with major payment providers. Once connected, revenue is automatically pulled and attributed to the exact traffic sources that drove each conversion. No webhooks or code changes are required.
+
+## Supported Providers
+
+- **Stripe** — Secret key or restricted key with read access.
+- **Polar** — Organization Access Token.
+- **Dodo Payments** — Live or test API key.
+- **Paddle** — API Secret Key (live or sandbox).
+- **Lemon Squeezy** — API token + optional Store ID.
+
+## How to Connect
+
+1. Open your Analytika dashboard and go to **Settings > Revenue Attribution**.
+2. Select your payment provider.
+3. Paste your API key (and Store ID if using LemonSqueezy).
+4. Click **Connect**. Analytika verifies your credentials live against the provider's API.
+
+Once connected, revenue data will automatically appear in your dashboard attributed to the traffic source that drove each sale.
+
+## Manual Revenue Tracking
+
+If you prefer to track revenue from your own code (e.g., on a success page), use the browser global or NPM SDK:
+
+```javascript
+// Browser global (after script is loaded)
+window.analytika('purchase', { event_value: 49, event_currency: 'USD' });
+```
+
+```javascript
+// NPM SDK
+import { trackEvent } from '@analytika/tracker';
+trackEvent('purchase', { event_value: 49, event_currency: 'USD' });
+```
+
+The `event_name` can be any string (`purchase`, `subscription_started`, `upgrade`, etc.). The `event_value` is the numeric revenue amount.

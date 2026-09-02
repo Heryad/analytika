@@ -1,0 +1,23 @@
+# GDPR & Cookieless Tracking
+
+Analytika is engineered from the ground up to be compliant with strict global privacy laws, including the **GDPR (Europe)**, **CCPA (California)**, and **PECR (UK)**.
+
+## How it works
+
+Traditional analytics platforms (like Google Analytics) use cookies or local storage to drop a persistent identifier on the user's browser. This requires you to show an annoying cookie consent banner.
+
+Analytika **does not** use cookies, local storage, or session storage. 
+
+### Ephemeral Hashes
+
+Instead of persistent identifiers, Analytika generates an ephemeral daily hash based on the visitor's incoming IP address and User-Agent string. 
+
+```javascript
+const dailyHash = sha256(IP + UserAgent + DailySalt);
+```
+
+Because the `DailySalt` rotates at midnight UTC, it is mathematically impossible to link a user's activity across different days, and it is impossible to reverse-engineer the hash to find their IP address.
+
+### Conclusion
+
+Because no personal data is stored and no persistent identifiers are placed on the user's device, **you do not need a cookie banner** when using Analytika.
