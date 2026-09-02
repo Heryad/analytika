@@ -110,6 +110,11 @@ export function Footer() {
               </p>
               <ul className="space-y-2.5 text-xs text-zinc-400">
                 <li>
+                  <a href="https://docs.analytika.me" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                    Documentation
+                  </a>
+                </li>
+                <li>
                   <Link href="#how-it-works" className="hover:text-white transition-colors">
                     How It Works
                   </Link>

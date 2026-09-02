@@ -12,7 +12,7 @@ export function FAQ() {
   const faqs = [
     {
       q: "Why is Analytika better than Google Analytics (GA4)?",
-      a: "GA4 is notoriously complex, slow (over 45KB payload), and requires intrusive cookie consent banners to comply with GDPR. Analytika is under 2.5KB, 100% cookieless, sub-second fast with ClickHouse, and directly ties your traffic to actual dollars made.",
+      a: "GA4 is notoriously complex, slow (over 45KB payload), and requires intrusive cookie consent banners to comply with GDPR. Analytika is under 2.5KB, 100% cookieless, sub-second fast, and directly ties your traffic to actual dollars made.",
     },
     {
       q: "Do I need to show a cookie consent banner?",

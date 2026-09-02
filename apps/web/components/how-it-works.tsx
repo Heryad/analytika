@@ -53,20 +53,20 @@ export function HowItWorks() {
 
   const rawScript = `<script 
   defer 
-  data-api-key="ana_live_9a8f2c3d4e5f6g7h" 
-  src="http://172.105.92.7:3000/script.js">
+  src="https://analytika.me/a.js"
+  data-website-id="YOUR-WEBSITE-ID">
 </script>`;
 
   const rawNpm = `// 1. Install client package
-npm install @analytika/sdk
+npm install @analytika/tracker
 
 // 2. Initialize in your App or Layout
-import { init, track } from "@analytika/sdk";
+import { initAnalytics, trackEvent } from "@analytika/tracker";
 
-init("ana_live_9a8f2c3d4e5f6g7h");
+initAnalytics({ websiteId: "YOUR-WEBSITE-ID" });
 
-// 3. Optional custom revenue goal tracking
-track("plan_purchased", { plan: "pro", revenue: 49.00 });`;
+// 3. Optional custom event tracking
+trackEvent("plan_purchased", { event_value: 49.00 });`;
 
   const copyToClipboard = (text: string, type: "script" | "npm") => {
     navigator.clipboard.writeText(text);
@@ -138,7 +138,7 @@ track("plan_purchased", { plan: "pro", revenue: 49.00 });`;
                 </div>
                 <div className="text-zinc-500">&lt;<span className="text-rose-400">script</span> <span className="text-amber-300">defer</span></div>
                 <div className="pl-1.5 text-zinc-400"><span className="text-amber-300">data-api-key</span>=<span className="text-emerald-400">&quot;ana_live_...&quot;</span></div>
-                <div className="pl-1.5 text-zinc-400"><span className="text-amber-300">src</span>=<span className="text-emerald-400">&quot;.../script.js&quot;</span>&gt;</div>
+                <div className="pl-1.5 text-zinc-400"><span className="text-amber-300">src</span>=<span className="text-emerald-400">&quot;.../a.js&quot;</span>&gt;</div>
                 <div className="text-zinc-500">&lt;/<span className="text-rose-400">script</span>&gt;</div>
               </div>
             </div>
@@ -276,14 +276,14 @@ track("plan_purchased", { plan: "pro", revenue: 49.00 });`;
                     <span className="text-amber-300">defer</span>
                   </div>
                   <div className="pl-3 sm:pl-4">
-                    <span className="text-amber-300">data-api-key</span>
-                    <span className="text-zinc-500">=</span>
-                    <span className="text-emerald-400">&quot;ana_live_9a8f2c3d4e5f6g7h&quot;</span>
-                  </div>
-                  <div className="pl-3 sm:pl-4">
                     <span className="text-amber-300">src</span>
                     <span className="text-zinc-500">=</span>
-                    <span className="text-emerald-400">&quot;http://172.105.92.7:3000/script.js&quot;</span>
+                    <span className="text-emerald-400">&quot;https://analytika.me/a.js&quot;</span>
+                  </div>
+                  <div className="pl-3 sm:pl-4">
+                    <span className="text-amber-300">data-website-id</span>
+                    <span className="text-zinc-500">=</span>
+                    <span className="text-emerald-400">&quot;YOUR-WEBSITE-ID&quot;</span>
                     <span className="text-zinc-500">&gt;</span>
                   </div>
                   <div>
@@ -344,21 +344,21 @@ track("plan_purchased", { plan: "pro", revenue: 49.00 });`;
                 <div className="flex-1 text-zinc-200 min-w-0 whitespace-pre">
                   <div className="text-zinc-500 italic">// 1. Install client package</div>
                   <div className="text-zinc-300">
-                    <span className="text-rose-400">npm</span> install @analytika/sdk
+                    <span className="text-rose-400">npm</span> install @analytika/tracker
                   </div>
                   <div className="h-2 sm:h-3"></div>
                   <div className="text-zinc-500 italic">// 2. Initialize in your App or Layout</div>
                   <div>
-                    <span className="text-purple-400">import</span> &#123; <span className="text-rose-300">init</span>, <span className="text-rose-300">track</span> &#125; <span className="text-purple-400">from</span> <span className="text-emerald-400">&quot;@analytika/sdk&quot;</span>;
+                    <span className="text-purple-400">import</span> &#123; <span className="text-rose-300">initAnalytics</span>, <span className="text-rose-300">trackEvent</span> &#125; <span className="text-purple-400">from</span> <span className="text-emerald-400">&quot;@analytika/tracker&quot;</span>;
                   </div>
                   <div className="h-2 sm:h-3"></div>
                   <div>
-                    <span className="text-rose-400 font-semibold">init</span>(<span className="text-emerald-400">&quot;ana_live_9a8f2c3d4e5f6g7h&quot;</span>);
+                    <span className="text-rose-400 font-semibold">initAnalytics</span>(&#123; <span className="text-amber-300">websiteId</span>: <span className="text-emerald-400">&quot;YOUR-WEBSITE-ID&quot;</span> &#125;);
                   </div>
                   <div className="h-2 sm:h-3"></div>
-                  <div className="text-zinc-500 italic">// 3. Optional custom revenue goal tracking</div>
+                  <div className="text-zinc-500 italic">// 3. Optional custom event tracking</div>
                   <div>
-                    <span className="text-rose-400 font-semibold">track</span>(<span className="text-emerald-400">&quot;plan_purchased&quot;</span>, &#123; <span className="text-amber-300">plan</span>: <span className="text-emerald-400">&quot;pro&quot;</span>, <span className="text-amber-300">revenue</span>: <span className="text-rose-300 font-semibold">49.00</span> &#125;);
+                    <span className="text-rose-400 font-semibold">trackEvent</span>(<span className="text-emerald-400">&quot;plan_purchased&quot;</span>, &#123; <span className="text-amber-300">event_value</span>: <span className="text-rose-300 font-semibold">49.00</span> &#125;);
                   </div>
                 </div>
               </div>

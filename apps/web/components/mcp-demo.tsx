@@ -153,7 +153,7 @@ export function McpDemo() {
             Turn Your AI IDE into an Analytics Copilot
           </h2>
           <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
-            Bridge ClickHouse telemetry straight into your coding environment. Inspect traffic surges, uncover profitable referral loops, and diagnose conversion funnels directly from your AI prompt.
+            Bridge your real-time analytics straight into your coding environment. Inspect traffic surges, uncover profitable referral loops, and diagnose conversion funnels directly from your AI prompt.
           </p>
         </div>
 

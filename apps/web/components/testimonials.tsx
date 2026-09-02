@@ -19,7 +19,7 @@ export function Testimonials() {
         name: "Elena Rostova",
         saas: "promptlayer.dev",
         domain: "promptlayer.dev",
-        quote: "The ClickHouse engine makes analytics lightning fast. Zero tracking cookies means zero consent banners—our EU signups increased by 18% immediately.",
+        quote: "Analytika is insanely fast. Zero tracking cookies means zero consent banners—our EU signups increased by 18% immediately.",
       },
       {
         name: "Marcus Vance",

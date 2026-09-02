@@ -42,7 +42,7 @@ export function Features() {
       highlights: [
         "HTML data-goal auto-capture",
         "SPA route transition tracking",
-        "Type-safe @analytika/sdk",
+        "Type-safe @analytika/tracker",
       ],
     },
     {
@@ -60,7 +60,7 @@ export function Features() {
       icon: Filter,
       badge: "Funnels",
       title: "Conversion Funnel Visualizer",
-      desc: "Analyze customer journey drop-offs in sub-seconds using ClickHouse's high-speed windowFunnel aggregation engine.",
+      desc: "Analyze customer journey drop-offs in sub-seconds using Analytika's high-speed funnel aggregation engine.",
       highlights: [
         "Step-by-step drop-off analysis",
         "Custom multi-event funnels",

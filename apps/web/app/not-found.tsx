@@ -16,7 +16,7 @@ const FUNNY_MESSAGES = [
   "Keep the visitor alive!",
   "1 visitor saved from the quantum void!",
   "Nice catch! Traffic bounce deflected.",
-  "Combo! ClickHouse table happily ingesting.",
+  "Combo! Analytics engine happily ingesting.",
   "Look at those paddle reflexes!",
   "Session duration increasing: +30s",
   "UTM Source: retro_arcade | Campaign: 404_hero",

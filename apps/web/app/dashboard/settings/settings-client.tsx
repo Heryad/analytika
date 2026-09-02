@@ -1084,7 +1084,7 @@ export function SettingsClient({
                     </div>
                     {(plans?.solo.features || [
                       "Up to 3 Websites",
-                      "Real-time ClickHouse OLAP Analytics",
+                      "Real-time High-Speed Analytics Engine",
                       "Custom Proxy Subdomain (CNAME / SSL)",
                       "Stripe & Polar MRR Attribution",
                       "Model Context Protocol (MCP) AI Server",
