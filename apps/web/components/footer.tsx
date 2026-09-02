@@ -29,7 +29,7 @@ export function Footer() {
             </div>
 
             <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-sm">
-              High-performance, cookieless web analytics engineered on ClickHouse. Track revenue, identify profitable channels, and query stats with MCP AI.
+              High-performance, cookieless web analytics. Track revenue, identify profitable channels, and query stats with MCP AI.
             </p>
 
             {/* Founder Profile Card */}
@@ -110,18 +110,18 @@ export function Footer() {
               </p>
               <ul className="space-y-2.5 text-xs text-zinc-400">
                 <li>
-                  <span className="hover:text-white transition-colors cursor-pointer">
-                    Documentation
-                  </span>
-                </li>
-                <li>
-                  <span className="hover:text-white transition-colors cursor-pointer">
-                    @analytika/sdk
-                  </span>
+                  <Link href="#how-it-works" className="hover:text-white transition-colors">
+                    How It Works
+                  </Link>
                 </li>
                 <li>
                   <Link href="#mcp" className="hover:text-white transition-colors">
                     Model Context Protocol
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#features" className="hover:text-white transition-colors">
+                    Cookieless Tracking
                   </Link>
                 </li>
               </ul>
@@ -134,14 +134,14 @@ export function Footer() {
               </p>
               <ul className="space-y-2.5 text-xs text-zinc-400">
                 <li>
-                  <span className="hover:text-white transition-colors cursor-pointer">
+                  <Link href="/privacy" className="hover:text-white transition-colors">
                     Privacy Policy
-                  </span>
+                  </Link>
                 </li>
                 <li>
-                  <span className="hover:text-white transition-colors cursor-pointer">
+                  <Link href="/terms" className="hover:text-white transition-colors">
                     Terms of Service
-                  </span>
+                  </Link>
                 </li>
               </ul>
             </div>

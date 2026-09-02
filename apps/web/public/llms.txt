@@ -1,0 +1,20 @@
+# Analytika
+
+> Revenue-First, Cookieless Web Analytics with Live Social Mention Radar (𝕏 & Reddit) and Remote Model Context Protocol (MCP) Server.
+
+## Overview
+Analytika is a modern, privacy-compliant web analytics platform designed for founders, indie hackers, and SaaS growth teams. Unlike traditional pageview trackers, Analytika correlates every visitor with direct revenue attribution, marketing campaigns, and live community discussions.
+
+## Key Capabilities
+- **Cookieless & Privacy-First**: 100% GDPR, CCPA, and PECR compliant with zero tracking cookies or personal data stored.
+- **Ultra-Fast Real-Time Telemetry**: Sub-50ms analytical queries across millions of events.
+- **Revenue Attribution**: Connect Stripe, Polar.sh, Lemon Squeezy, Paddle, or Dodo Payments to track which channels generate paying customers.
+- **Live Social Mention Radar**: Discovers domain mentions across 𝕏 (Twitter) and Reddit, attributing referral traffic directly to specific community posts.
+- **Remote Model Context Protocol (MCP)**: Native JSON-RPC 2.0 endpoint at `https://api.analytika.me/api/v1/mcp` allowing Claude.ai, ChatGPT, and Cursor to query live dashboard telemetry.
+- **Custom Proxy Domains**: Serve tracking scripts from `stats.yourdomain.com` with 1-click CNAME verification to bypass ad-blockers.
+
+## Links & Documentation
+- **Website**: https://analytika.me
+- **Dashboard**: https://analytika.me/dashboard
+- **MCP Server Endpoint**: https://api.analytika.me/api/v1/mcp
+- **Authentication**: Bearer API Key (`ana_mcp_live_...`)

@@ -9,10 +9,75 @@ const inter = Inter({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+import { JsonLd } from "@/components/seo/structured-data";
+
 export const metadata: Metadata = {
-  title: "Analytika - Revenue-First Web Analytics",
+  metadataBase: new URL("https://analytika.me"),
+  title: {
+    default: "Analytika — Revenue-First Web Analytics & Social Mention Radar",
+    template: "%s | Analytika",
+  },
   description:
-    "Discover which marketing channels, posts, and campaigns actually bring paying customers so you can scale what works.",
+    "Cookieless, privacy-friendly web analytics with real-time revenue attribution, live social mention radar (𝕏 & Reddit), and Remote MCP Server for AI assistants.",
+  applicationName: "Analytika",
+  keywords: [
+    "web analytics",
+    "cookieless analytics",
+    "revenue attribution",
+    "social radar",
+    "model context protocol",
+    "mcp server",
+    "privacy analytics",
+    "saas analytics",
+    "clickhouse telemetry",
+  ],
+  authors: [{ name: "Analytika Team", url: "https://analytika.me" }],
+  creator: "Analytika",
+  publisher: "Analytika",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://analytika.me",
+    siteName: "Analytika",
+    title: "Analytika — Revenue-First Web Analytics & Social Mention Radar",
+    description:
+      "Discover which marketing channels, social mentions, and campaigns actually bring paying customers so you can scale what works.",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Analytika Dashboard Preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Analytika — Revenue-First Web Analytics",
+    description:
+      "Discover which marketing channels and social mentions bring paying customers.",
+    creator: "@analytika_me",
+    images: ["/og.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: "https://analytika.me",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -42,7 +107,8 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={initialClass} data-scroll-behavior="smooth" suppressHydrationWarning>
-      <head>
+      <body className={`${inter.variable} font-sans bg-[#1F1F1F] text-zinc-100 min-h-screen antialiased selection:bg-[#800E13]/40 selection:text-rose-200`}>
+        <JsonLd />
         <Script
           id="theme-initializer"
           strategy="beforeInteractive"
@@ -64,8 +130,6 @@ export default async function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className={`${inter.variable} font-sans bg-[#1F1F1F] text-zinc-100 min-h-screen antialiased selection:bg-[#800E13]/40 selection:text-rose-200`}>
         <AuthProvider>
           {children}
         </AuthProvider>
