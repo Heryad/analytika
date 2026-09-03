@@ -463,6 +463,19 @@ export function SettingsClient({
 
         <button
           type="button"
+          onClick={() => setActiveTab("mcp")}
+          className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === "mcp"
+              ? "bg-[#262626] text-white border border-white/[0.08]"
+              : "text-zinc-400 hover:text-white hover:bg-[#262626]/50"
+          }`}
+        >
+          <Bot className="h-3.5 w-3.5 text-zinc-400" />
+          MCP
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab("billing")}
           className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
             activeTab === "billing"
@@ -676,7 +689,7 @@ export function SettingsClient({
                 Remote MCP Server (Model Context Protocol)
               </h2>
               <p className="text-[11px] text-zinc-400 mt-0.5">
-                Connect Claude.ai, ChatGPT, Cursor, or AI agents directly to your live analytics via HTTPS.
+                Paste this URL into Claude, ChatGPT, or Cursor. Those apps sign in with OAuth — you do not paste a token.
               </p>
             </div>
 
@@ -688,13 +701,13 @@ export function SettingsClient({
                 <Input
                   type="text"
                   readOnly
-                  value="https://api.analytika.me/api/v1/mcp"
+                  value="https://api.analytika.me/mcp"
                   className="h-9 bg-[#1F1F1F] border-white/[0.08] text-zinc-300 font-mono text-xs rounded-xl"
                 />
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => handleCopy("https://api.analytika.me/api/v1/mcp", "endpoint")}
+                  onClick={() => handleCopy("https://api.analytika.me/mcp", "endpoint")}
                   className="border-white/[0.08] hover:bg-[#2d2d2d] text-zinc-300 h-9 px-3 rounded-xl shrink-0 cursor-pointer"
                 >
                   {copiedField === "endpoint" ? (
@@ -709,7 +722,7 @@ export function SettingsClient({
             <div className="space-y-1 text-left">
               <div className="flex items-center justify-between">
                 <label className="text-xs text-zinc-400">
-                  Personal Access Token (Bearer Auth)
+                  Personal Access Token (optional, for Cursor / local clients)
                 </label>
                 <button
                   type="button"
@@ -797,13 +810,13 @@ export function SettingsClient({
             {/* Guide: Claude.ai Custom Connector */}
             {mcpClientTab === "claude" && (
               <div className="space-y-3 text-xs text-zinc-300 bg-[#1F1F1F] p-3.5 rounded-xl border border-white/[0.04]">
-                <div className="font-semibold text-white">Adding to Claude.ai (Custom Connectors):</div>
+                <div className="font-semibold text-white">Adding to Claude (Custom Connectors):</div>
                 <ol className="list-decimal list-inside space-y-1.5 text-zinc-400 font-mono text-[11px]">
-                  <li>Open <strong>Claude.ai &rarr; Settings &rarr; Connectors</strong> and click <strong>Add custom connector</strong>.</li>
+                  <li>Open <strong>Claude &rarr; Settings &rarr; Connectors</strong> and click <strong>Add custom connector</strong>.</li>
                   <li>Set Name to: <strong className="text-white font-mono">Analytika</strong></li>
-                  <li>Set MCP Server URL to: <strong className="text-rose-300 font-mono">https://api.analytika.me/api/v1/mcp</strong></li>
-                  <li>Set Authentication to: <strong className="text-white font-mono">Bearer Token</strong> and paste your Personal Access Token.</li>
-                  <li>Click <strong>Connect</strong>. You can now ask Claude about your traffic, revenue, and mentions!</li>
+                  <li>Set MCP Server URL to: <strong className="text-rose-300 font-mono">https://api.analytika.me/mcp</strong></li>
+                  <li>Leave authentication empty — Claude will open Analytika and ask you to Allow access.</li>
+                  <li>Sign in if needed, click <strong>Allow access</strong>, then ask Claude about your traffic or revenue.</li>
                 </ol>
               </div>
             )}
@@ -811,12 +824,12 @@ export function SettingsClient({
             {/* Guide: OpenAI / ChatGPT */}
             {mcpClientTab === "openai" && (
               <div className="space-y-3 text-xs text-zinc-300 bg-[#1F1F1F] p-3.5 rounded-xl border border-white/[0.04]">
-                <div className="font-semibold text-white">Adding to OpenAI / ChatGPT Custom Actions:</div>
+                <div className="font-semibold text-white">Adding to ChatGPT (Developer Mode / Connectors):</div>
                 <ol className="list-decimal list-inside space-y-1.5 text-zinc-400 font-mono text-[11px]">
-                  <li>In your Custom GPT / Action settings, enter the MCP Server URL: <strong className="text-rose-300 font-mono">https://api.analytika.me/api/v1/mcp</strong></li>
-                  <li>Select Authentication: <strong className="text-white font-mono">Bearer</strong></li>
-                  <li>Paste your Personal Access Token into the token field.</li>
-                  <li>ChatGPT will automatically discover your tools and query your live telemetry.</li>
+                  <li>In ChatGPT, open <strong>Settings &rarr; Connectors</strong> (enable Developer Mode if asked).</li>
+                  <li>Create a connector and paste: <strong className="text-rose-300 font-mono">https://api.analytika.me/mcp</strong></li>
+                  <li>Choose <strong className="text-white font-mono">OAuth</strong>. Do not paste an API key.</li>
+                  <li>ChatGPT opens Analytika — click <strong>Allow access</strong>. Tools are discovered automatically.</li>
                 </ol>
               </div>
             )}
@@ -835,10 +848,7 @@ export function SettingsClient({
                           {
                             mcpServers: {
                               analytika: {
-                                url: "https://api.analytika.me/api/v1/mcp",
-                                headers: {
-                                  Authorization: `Bearer ${mcpToken || "YOUR_MCP_TOKEN"}`,
-                                },
+                                url: "https://api.analytika.me/mcp",
                               },
                             },
                           },
@@ -863,10 +873,7 @@ export function SettingsClient({
                       {
                         mcpServers: {
                           analytika: {
-                            url: "https://api.analytika.me/api/v1/mcp",
-                            headers: {
-                              Authorization: `Bearer ${mcpToken || "YOUR_MCP_TOKEN"}`,
-                            },
+                            url: "https://api.analytika.me/mcp",
                           },
                         },
                       },

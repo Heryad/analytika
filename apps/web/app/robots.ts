@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: ["/", "/share/", "/a.js", "/script.js", "/llms.txt", "/llms-full.txt"],
-        disallow: ["/dashboard/", "/api/", "/auth/callback", "/embed/"],
+        disallow: ["/dashboard/", "/api/", "/auth/callback", "/embed/", "/oauth/"],
       },
       // AI Crawlers & LLM Search Engines
       {

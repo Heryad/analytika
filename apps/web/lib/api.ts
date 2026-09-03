@@ -835,6 +835,30 @@ export interface BillingSubscription {
   };
 }
 
+export const oauthApi = {
+  async getRequest(id: string) {
+    return apiFetch<{
+      request: {
+        id: string;
+        clientName: string;
+        clientUri: string | null;
+        logoUri: string | null;
+        redirectUri: string;
+        scope: string;
+        resource: string | null;
+      };
+      user: { email: string; name: string | null };
+    }>(`/oauth/requests/${encodeURIComponent(id)}`);
+  },
+
+  async consent(requestId: string, allow: boolean) {
+    return apiFetch<{ redirectUrl: string }>("/oauth/consent", {
+      method: "POST",
+      body: JSON.stringify({ requestId, allow }),
+    });
+  },
+};
+
 export const billingApi = {
   async getStatus() {
     return apiFetch<{ success: boolean; subscription: BillingSubscription }>(

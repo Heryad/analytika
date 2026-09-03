@@ -14,9 +14,13 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 2. Redirect logged-in users away from /auth/login to /dashboard
+  // 2. Redirect logged-in users away from /auth/login
   if (pathname === "/auth/login") {
     if (token) {
+      const redirectPath = request.nextUrl.searchParams.get("redirect");
+      if (redirectPath && redirectPath.startsWith("/") && !redirectPath.startsWith("//")) {
+        return NextResponse.redirect(new URL(redirectPath, request.url));
+      }
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }

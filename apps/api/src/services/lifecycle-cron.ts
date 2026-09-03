@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { users, websites } from "@/db/schema";
-import { eq, and, isNull, lte, or, sql } from "drizzle-orm";
+import { users, websites, oauthAuthorizationRequests, oauthAuthorizationCodes, oauthAccessTokens } from "@/db/schema";
+import { eq, and, isNull, lte, lt, or, sql } from "drizzle-orm";
 import { clickhouse } from "@/db/clickhouse";
 import { env } from "@/config/env";
 import { logger } from "@/lib/logger";
@@ -152,11 +152,55 @@ async function processQuotaNotices(): Promise<number> {
 }
 
 /**
+ * 3. Sweep expired / consumed OAuth rows
+ *    - Expired authorization requests (user closed the consent tab)
+ *    - Consumed authorization codes (already exchanged for tokens)
+ *    - Revoked or expired access tokens older than 7 days
+ */
+async function sweepExpiredOAuthRows(): Promise<void> {
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  try {
+    // Delete expired pending authorization requests
+    await db
+      .delete(oauthAuthorizationRequests)
+      .where(lt(oauthAuthorizationRequests.expiresAt, now));
+
+    // Delete consumed authorization codes
+    await db
+      .delete(oauthAuthorizationCodes)
+      .where(sql`${oauthAuthorizationCodes.consumedAt} IS NOT NULL`);
+
+    // Delete expired (and not just consumed) authorization codes older than 1 day
+    await db
+      .delete(oauthAuthorizationCodes)
+      .where(lt(oauthAuthorizationCodes.expiresAt, now));
+
+    // Delete revoked or fully-expired access tokens older than 7 days
+    await db
+      .delete(oauthAccessTokens)
+      .where(
+        and(
+          lt(oauthAccessTokens.createdAt, sevenDaysAgo),
+          or(
+            sql`${oauthAccessTokens.revokedAt} IS NOT NULL`,
+            lt(oauthAccessTokens.expiresAt, now)
+          )
+        )
+      );
+  } catch (err: any) {
+    logger.warn("OAuth row sweep error:", err?.message || err);
+  }
+}
+
+/**
  * Main Lifecycle Background Job Runner
  */
 export async function runLifecycleChecks(): Promise<{ reminders: number; notices: number }> {
   const reminders = await processTrialReminders();
   const notices = await processQuotaNotices();
+  await sweepExpiredOAuthRows();
   return { reminders, notices };
 }
 

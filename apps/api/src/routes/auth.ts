@@ -542,7 +542,7 @@ export const authRoutes = new Elysia({ prefix: "/api/v1/auth" })
   /**
    * 6. Google OAuth - Redirect to Consent Screen
    */
-  .get("/oauth/google", ({ redirect }) => {
+  .get("/oauth/google", ({ redirect, query }) => {
     const redirectUri = `${env.API_URL}/api/v1/auth/oauth/google/callback`;
     const googleAuthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     googleAuthUrl.searchParams.set("client_id", env.GOOGLE_CLIENT_ID);
@@ -551,6 +551,14 @@ export const authRoutes = new Elysia({ prefix: "/api/v1/auth" })
     googleAuthUrl.searchParams.set("scope", "openid email profile");
     googleAuthUrl.searchParams.set("access_type", "offline");
     googleAuthUrl.searchParams.set("prompt", "select_account");
+
+    const returnTo = typeof (query as any)?.return_to === "string" ? (query as any).return_to : "";
+    if (returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+      googleAuthUrl.searchParams.set(
+        "state",
+        Buffer.from(JSON.stringify({ return_to: returnTo }), "utf8").toString("base64url")
+      );
+    }
 
     return redirect(googleAuthUrl.toString());
   })
@@ -561,9 +569,21 @@ export const authRoutes = new Elysia({ prefix: "/api/v1/auth" })
   .get(
     "/oauth/google/callback",
     async ({ query, redirect, headers }) => {
-      const { code } = query;
+      const { code, state } = query as { code?: string; state?: string };
       if (!code) {
         return redirect(`${env.FRONTEND_URL}/auth/login?error=Google authentication was cancelled.`);
+      }
+
+      let returnTo = "";
+      if (state) {
+        try {
+          const parsed = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
+          if (typeof parsed?.return_to === "string" && parsed.return_to.startsWith("/") && !parsed.return_to.startsWith("//")) {
+            returnTo = parsed.return_to;
+          }
+        } catch {
+          // ignore malformed Google state
+        }
       }
 
       try {
@@ -714,8 +734,10 @@ export const authRoutes = new Elysia({ prefix: "/api/v1/auth" })
 
         logger.success(`Google OAuth login successful for: ${userRecord.email}`);
 
-        // Redirect to Frontend Callback
-        return redirect(`${env.FRONTEND_URL}/auth/callback?token=${sessionToken}`);
+        const callbackUrl = new URL(`${env.FRONTEND_URL}/auth/callback`);
+        callbackUrl.searchParams.set("token", sessionToken);
+        if (returnTo) callbackUrl.searchParams.set("return_to", returnTo);
+        return redirect(callbackUrl.toString());
       } catch (error: any) {
         logger.error("Error during Google OAuth callback:", error);
         return redirect(`${env.FRONTEND_URL}/auth/login?error=Google authentication failed.`);

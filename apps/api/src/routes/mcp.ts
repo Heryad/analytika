@@ -1,10 +1,11 @@
 import { Elysia, t } from "elysia";
 import { db } from "@/db";
-import { users, websites } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { websites } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { clickhouse } from "@/db/clickhouse";
 import { logger } from "@/lib/logger";
 import { getSocialRadarMetrics } from "@/services/social-radar";
+import { authenticateMcpBearer, mcpPathFromRequestUrl, wwwAuthenticateHeader } from "@/lib/oauth";
 
 /**
  * Resolves standard date boundaries for queries
@@ -149,72 +150,90 @@ const MCP_TOOLS = [
   },
 ];
 
+const SUPPORTED_PROTOCOL_VERSIONS = ["2025-11-25", "2025-03-26", "2024-11-05"];
+
+function applyUnauthorized(set: any, requestUrl: string, error?: string) {
+  const path = mcpPathFromRequestUrl(requestUrl);
+  set.status = 401;
+  set.headers["WWW-Authenticate"] = wwwAuthenticateHeader(path, error);
+  set.headers["Access-Control-Expose-Headers"] = "WWW-Authenticate, MCP-Session-Id";
+  set.headers["Cache-Control"] = "no-store";
+}
+
+async function resolveMcpUser(headers: Record<string, string | undefined>, set: any, requestUrl: string) {
+  const authHeader = headers["authorization"] || "";
+  let token = "";
+  if (authHeader.startsWith("Bearer ")) {
+    token = authHeader.substring(7).trim();
+  } else if (authHeader && !authHeader.toLowerCase().startsWith("basic ")) {
+    token = authHeader.trim();
+  }
+
+  if (!token) {
+    applyUnauthorized(set, requestUrl);
+    return null;
+  }
+
+  const user = await authenticateMcpBearer(token);
+  if (!user) {
+    applyUnauthorized(set, requestUrl, "invalid_token");
+    return null;
+  }
+
+  return user;
+}
+
 /**
  * Remote Model Context Protocol (MCP) Server Handler
- * Accepts standard JSON-RPC 2.0 requests from Claude.ai, OpenAI, Cursor, and Antigravity
+ * Streamable HTTP + OAuth 2.1 for Claude, ChatGPT, Cursor
  */
 const mcpHandler = new Elysia()
   /**
-   * Health & Discovery (GET)
+   * Unauthenticated GET is the OAuth discovery probe (must be HTTP 401, not 200).
+   * Authenticated GET: this server does not expose a standalone SSE stream.
    */
-  .get("/", async ({ headers, set }) => {
+  .get("/", async ({ headers, set, request }) => {
+    const user = await resolveMcpUser(headers, set, request.url);
+    if (!user) {
+      return {
+        error: "unauthorized",
+        error_description: "Authorization required. Connect with OAuth or an Analytika MCP token.",
+      };
+    }
+
+    set.status = 405;
     return {
-      status: "online",
-      server: "Analytika Remote MCP Server",
-      protocol: "model-context-protocol",
-      version: "1.0.0",
-      authentication: "Bearer <mcpApiKey>",
-      toolsAvailable: MCP_TOOLS.length,
+      error: "method_not_allowed",
+      error_description: "This MCP server uses Streamable HTTP POST. SSE GET is not offered.",
     };
+  })
+
+  .delete("/", ({ set }) => {
+    set.status = 405;
+    return { error: "method_not_allowed" };
   })
 
   /**
    * Main MCP JSON-RPC Handler (POST)
    */
-  .post("/", async ({ body, headers, set }) => {
-    // 1. Authenticate Bearer Token
-    const authHeader = headers["authorization"] || "";
-    let token = "";
-    if (authHeader.startsWith("Bearer ")) {
-      token = authHeader.substring(7).trim();
-    } else if (authHeader) {
-      token = authHeader.trim();
-    }
-
-    if (!token) {
-      set.status = 401;
-      return {
-        jsonrpc: "2.0",
-        error: {
-          code: -32000,
-          message: "Unauthorized. Missing 'Authorization: Bearer <mcpApiKey>' header.",
-        },
-        id: (body as any)?.id || null,
-      };
-    }
-
-    // Lookup user by mcpApiKey
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.mcpApiKey, token))
-      .limit(1);
-
+  .post("/", async ({ body, headers, set, request }) => {
+    const user = await resolveMcpUser(headers, set, request.url);
     if (!user) {
-      set.status = 401;
       return {
-        jsonrpc: "2.0",
-        error: {
-          code: -32000,
-          message: "Unauthorized. Invalid Analytika MCP Bearer Token.",
-        },
-        id: (body as any)?.id || null,
+        error: "invalid_token",
+        error_description: "Missing or invalid access token.",
       };
     }
 
     const payload = body as any;
     const method = payload?.method || "";
-    const id = payload?.id ?? 1;
+    const id = payload?.id;
+    const isNotification = typeof method === "string" && method.length > 0 && !("id" in (payload || {}));
+
+    if (isNotification || method.startsWith("notifications/")) {
+      set.status = 202;
+      return;
+    }
 
     // Helper: resolve target website for user
     const resolveWebsite = async (siteId?: string) => {
@@ -233,18 +252,27 @@ const mcpHandler = new Elysia()
     try {
       // Method: initialize
       if (method === "initialize") {
+        const requested = String(payload?.params?.protocolVersion || "");
+        const protocolVersion = SUPPORTED_PROTOCOL_VERSIONS.includes(requested)
+          ? requested
+          : "2025-03-26";
         return {
           jsonrpc: "2.0",
-          id,
+          id: id ?? 1,
           result: {
-            protocolVersion: "2024-11-05",
+            protocolVersion,
             serverInfo: {
-              name: "analytika-mcp",
+              name: "analytika",
+              title: "Analytika Analytics",
               version: "1.0.0",
             },
             capabilities: {
-              tools: {},
+              tools: {
+                listChanged: false,
+              },
             },
+            instructions:
+              "You are connected to Analytika. Use list_websites first, then query live visitors, overview metrics, traffic sources, revenue, pages, or social radar for a website.",
           },
         };
       }
@@ -326,12 +354,12 @@ const mcpHandler = new Elysia()
           const liveQuery = `
             SELECT
               uniqExact(visitor_id) AS online_visitors,
-              path,
+              pathname AS path,
               count() AS pageviews
-            FROM analytika.events
+            FROM events
             WHERE website_id = {siteId: String}
               AND timestamp >= now() - INTERVAL 5 MINUTE
-            GROUP BY path
+            GROUP BY pathname
             ORDER BY pageviews DESC
             LIMIT 10
           `;
@@ -394,7 +422,7 @@ const mcpHandler = new Elysia()
               uniqExact(session_id) AS sessions,
               countIf(event_name = 'purchase') AS purchases,
               sum(event_value) AS revenue
-            FROM analytika.events
+            FROM events
             WHERE website_id = {siteId: String}
               AND timestamp >= {from: String}
               AND timestamp <= {to: String}
@@ -458,7 +486,8 @@ const mcpHandler = new Elysia()
           }
 
           const timeRange = args.timeRange || "30 Days";
-          const limit = Math.min(Number(args.limit || 10), 50);
+          const parsed = parseInt(args.limit, 10);
+          const limit = Number.isFinite(parsed) ? Math.min(parsed, 50) : 10;
           const { from, to } = resolveTimeRangeDates(timeRange);
 
           const query = `
@@ -470,7 +499,7 @@ const mcpHandler = new Elysia()
               count() AS pageviews,
               countIf(event_name = 'purchase') AS conversions,
               sum(event_value) AS revenue
-            FROM analytika.events
+            FROM events
             WHERE website_id = {siteId: String}
               AND timestamp >= {from: String}
               AND timestamp <= {to: String}
@@ -537,15 +566,15 @@ const mcpHandler = new Elysia()
               utm_source,
               utm_medium,
               utm_campaign,
-              entry_page,
+              pathname AS entry_page,
               countIf(event_name = 'purchase') AS purchases,
               sum(event_value) AS total_revenue
-            FROM analytika.events
+            FROM events
             WHERE website_id = {siteId: String}
               AND timestamp >= {from: String}
               AND timestamp <= {to: String}
               AND event_value > 0
-            GROUP BY referrer, utm_source, utm_medium, utm_campaign, entry_page
+            GROUP BY referrer, utm_source, utm_medium, utm_campaign, pathname
             ORDER BY total_revenue DESC
             LIMIT 20
           `;
@@ -648,19 +677,20 @@ const mcpHandler = new Elysia()
           }
 
           const timeRange = args.timeRange || "30 Days";
-          const limit = Math.min(Number(args.limit || 10), 50);
+          const parsedLimit = parseInt(args.limit, 10);
+          const limit = Number.isFinite(parsedLimit) ? Math.min(parsedLimit, 50) : 10;
           const { from, to } = resolveTimeRangeDates(timeRange);
 
           const query = `
             SELECT
-              path,
+              pathname AS path,
               count() AS pageviews,
               uniqExact(visitor_id) AS visitors
-            FROM analytika.events
+            FROM events
             WHERE website_id = {siteId: String}
               AND timestamp >= {from: String}
               AND timestamp <= {to: String}
-            GROUP BY path
+            GROUP BY pathname
             ORDER BY pageviews DESC
             LIMIT ${limit}
           `;

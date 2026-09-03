@@ -16,6 +16,7 @@ import { alertsRoutes } from "@/routes/alerts";
 import { paymentsRoutes } from "@/routes/payments";
 import { billingRoutes } from "@/routes/billing";
 import { mcpRoutes } from "@/routes/mcp";
+import { oauthRoutes } from "@/routes/oauth";
 import { initClickHouseSchema, testClickHouseConnection } from "@/db/clickhouse";
 import { startLifecycleCron } from "@/services/lifecycle-cron";
 
@@ -25,7 +26,15 @@ const app = new Elysia()
     cors({
       origin: true,
       credentials: true,
-      allowedHeaders: ["Content-Type", "Authorization", "X-Website-ID"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Website-ID",
+        "MCP-Protocol-Version",
+        "Mcp-Session-Id",
+        "Last-Event-ID",
+      ],
+      exposeHeaders: ["WWW-Authenticate", "MCP-Session-Id"],
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     })
   )
@@ -137,6 +146,7 @@ const app = new Elysia()
   })
 
   // 7. Mount Sub-Routes
+  .use(oauthRoutes)
   .use(authRoutes)
   .use(websitesRoutes)
   .use(plansRoutes)

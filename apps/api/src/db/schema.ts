@@ -242,11 +242,80 @@ export const socialMentions = pgTable(
   })
 );
 
+// 12. OAuth Clients (DCR + cached CIMD documents for MCP)
+export const oauthClients = pgTable("oauth_clients", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  clientId: varchar("client_id", { length: 1024 }).notNull().unique(),
+  clientSecretHash: varchar("client_secret_hash", { length: 255 }),
+  clientName: varchar("client_name", { length: 255 }).notNull(),
+  clientUri: text("client_uri"),
+  logoUri: text("logo_uri"),
+  redirectUris: jsonb("redirect_uris").$type<string[]>().notNull(),
+  grantTypes: jsonb("grant_types").$type<string[]>().notNull(),
+  tokenEndpointAuthMethod: varchar("token_endpoint_auth_method", { length: 50 }).default("none").notNull(),
+  isCimd: boolean("is_cimd").default(false).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// 13. Pending MCP OAuth authorization requests (browser consent ticket)
+export const oauthAuthorizationRequests = pgTable("oauth_authorization_requests", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  clientId: varchar("client_id", { length: 1024 }).notNull(),
+  clientName: varchar("client_name", { length: 255 }).notNull(),
+  clientUri: text("client_uri"),
+  logoUri: text("logo_uri"),
+  redirectUri: text("redirect_uri").notNull(),
+  state: text("state"),
+  scope: text("scope"),
+  resource: text("resource"),
+  codeChallenge: varchar("code_challenge", { length: 255 }).notNull(),
+  codeChallengeMethod: varchar("code_challenge_method", { length: 20 }).notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// 14. One-time authorization codes
+export const oauthAuthorizationCodes = pgTable("oauth_authorization_codes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  codeHash: varchar("code_hash", { length: 255 }).notNull().unique(),
+  clientId: varchar("client_id", { length: 1024 }).notNull(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  redirectUri: text("redirect_uri").notNull(),
+  scope: text("scope"),
+  resource: text("resource"),
+  codeChallenge: varchar("code_challenge", { length: 255 }).notNull(),
+  codeChallengeMethod: varchar("code_challenge_method", { length: 20 }).notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// 15. MCP OAuth access + refresh tokens
+export const oauthAccessTokens = pgTable("oauth_access_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tokenHash: varchar("token_hash", { length: 255 }).notNull().unique(),
+  refreshTokenHash: varchar("refresh_token_hash", { length: 255 }).unique(),
+  clientId: varchar("client_id", { length: 1024 }).notNull(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  scope: text("scope"),
+  resource: text("resource"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  refreshExpiresAt: timestamp("refresh_expires_at", { withTimezone: true }),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Relational Definitions
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   sessions: many(sessions),
   websites: many(websites),
+  oauthAccessTokens: many(oauthAccessTokens),
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -284,4 +353,8 @@ export const milestonesRelations = relations(milestones, ({ one }) => ({
 
 export const socialMentionsRelations = relations(socialMentions, ({ one }) => ({
   website: one(websites, { fields: [socialMentions.websiteId], references: [websites.id] }),
+}));
+
+export const oauthAccessTokensRelations = relations(oauthAccessTokens, ({ one }) => ({
+  user: one(users, { fields: [oauthAccessTokens.userId], references: [users.id] }),
 }));

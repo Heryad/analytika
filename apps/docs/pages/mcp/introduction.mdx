@@ -1,36 +1,48 @@
 # Model Context Protocol (MCP)
 
-Analytika is the world's first web analytics platform to natively support the **Model Context Protocol (MCP)**. 
+Analytika is a remote **Model Context Protocol** server. Claude, ChatGPT, Cursor, and other MCP clients can read your live analytics after you sign in with OAuth.
 
-MCP is an open standard that enables AI assistants (like Claude Desktop, Cursor, and Windsurf) to securely read your real-time analytics data and perform tasks on your behalf.
+You do **not** paste a bearer token into Claude or ChatGPT. Those apps open Analytika, you click **Allow access**, and they receive a short-lived OAuth token automatically.
 
-## Getting Started
+## MCP server URL
 
-To give an AI assistant access to your Analytika workspace, you configure it as an MCP server using your project's API key.
+```
+https://api.analytika.me/mcp
+```
 
-### Configuration Example (Claude Desktop)
+## Claude
 
-Open your `claude_desktop_config.json` and add the Analytika server:
+1. Open **Settings → Connectors → Add custom connector**.
+2. Name: `Analytika`
+3. URL: `https://api.analytika.me/mcp`
+4. Leave authentication empty.
+5. Connect. Claude opens Analytika — sign in if needed, then click **Allow access**.
+
+## ChatGPT
+
+1. Enable **Developer Mode** under **Settings → Connectors**.
+2. Create a connector with URL `https://api.analytika.me/mcp`.
+3. Choose **OAuth** (not an API key).
+4. Sign in to Analytika and allow access.
+
+## Cursor / Claude Desktop
+
+Add this to `.cursor/mcp.json` or `claude_desktop_config.json`. Cursor will run the same OAuth browser flow:
 
 ```json
 {
   "mcpServers": {
     "analytika": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sse",
-        "--url",
-        "https://api.analytika.me/api/v1/mcp",
-        "--header",
-        "Authorization: Bearer YOUR_API_KEY"
-      ]
+      "url": "https://api.analytika.me/mcp"
     }
   }
 }
 ```
 
-Once configured, you can simply ask Claude: 
-*"How many people are on my website right now?"* 
-or 
+Local or scripted clients can still send `Authorization: Bearer ana_mcp_live_...` using the personal token from **Dashboard → Settings → MCP**.
+
+Once connected, ask:
+
+*"How many people are on my website right now?"*  
+or  
 *"Create a markdown table of my top 10 referrers this week."*

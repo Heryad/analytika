@@ -23,7 +23,12 @@ function CallbackContent() {
     if (token) {
       tokenStorage.set(token);
       refreshUser().then(() => {
-        router.push("/dashboard");
+        const returnTo = searchParams.get("return_to");
+        const dest =
+          returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")
+            ? returnTo
+            : "/dashboard";
+        router.push(dest);
       });
     } else {
       router.push("/auth/login");

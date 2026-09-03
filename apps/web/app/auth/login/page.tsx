@@ -15,6 +15,26 @@ function LoginForm() {
   const router = useRouter();
   const { login } = useAuth();
   const prefillDomain = searchParams.get("domain") || "";
+  const rawRedirect = searchParams.get("redirect") || "";
+  // Normalize the redirect path to prevent open-redirect via backslash paths
+  // e.g. /\evil.com is treated as //evil.com by some browsers
+  const safeRedirect = (() => {
+    if (!rawRedirect) return "";
+    try {
+      const normalized = new URL(rawRedirect, window?.location?.href || "https://analytika.me");
+      // Only allow same-origin redirects
+      if (typeof window !== "undefined" && normalized.origin !== window.location.origin) return "";
+      return normalized.pathname + normalized.search;
+    } catch {
+      return "";
+    }
+  })();
+
+  const afterLoginPath = () => {
+    if (safeRedirect) return safeRedirect;
+    if (prefillDomain) return `/dashboard?domain=${encodeURIComponent(prefillDomain)}`;
+    return "/dashboard";
+  };
 
   // Form State
   const [email, setEmail] = useState("");
@@ -152,11 +172,7 @@ function LoginForm() {
         const res = await authApi.verifyOtp(email.trim(), code);
         if (res.success && res.token && res.user) {
           login(res.token, res.user);
-          if (prefillDomain) {
-            router.push(`/dashboard?domain=${encodeURIComponent(prefillDomain)}`);
-          } else {
-            router.push("/dashboard");
-          }
+          router.push(afterLoginPath());
         } else {
           setErrorMessage(res.error || "Invalid or expired verification code.");
         }
@@ -165,11 +181,7 @@ function LoginForm() {
         const res = await authApi.registerConfirm(email.trim(), code, name.trim());
         if (res.success && res.token && res.user) {
           login(res.token, res.user);
-          if (prefillDomain) {
-            router.push(`/dashboard?domain=${encodeURIComponent(prefillDomain)}`);
-          } else {
-            router.push("/dashboard");
-          }
+          router.push(afterLoginPath());
         } else {
           setErrorMessage(res.error || "Invalid or expired confirmation code.");
         }
@@ -214,7 +226,9 @@ function LoginForm() {
   const handleGoogleLogin = () => {
     setIsLoading(true);
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-    window.location.href = `${apiBase}/api/v1/auth/oauth/google`;
+    const googleUrl = new URL(`${apiBase}/api/v1/auth/oauth/google`);
+    if (safeRedirect) googleUrl.searchParams.set("return_to", safeRedirect);
+    window.location.href = googleUrl.toString();
   };
 
   return (
