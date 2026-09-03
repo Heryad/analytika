@@ -41,12 +41,30 @@ analytika.me {
         header_up X-Forwarded-Proto {scheme}
     }
 
-    # Security Headers
+    # Security Headers (Common)
     header {
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
         X-Content-Type-Options "nosniff"
-        X-Frame-Options "SAMEORIGIN"
         Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Protect dashboard, auth, and main web app against clickjacking
+    @notEmbed {
+        not path /embed/* /badge/*
+    }
+    header @notEmbed {
+        X-Frame-Options "SAMEORIGIN"
+        Content-Security-Policy "frame-ancestors 'self'"
+    }
+
+    # Allow embed widgets and public badges to be loaded inside iframes anywhere
+    @isEmbed {
+        path /embed/* /badge/*
+    }
+    header @isEmbed {
+        -X-Frame-Options
+        Content-Security-Policy "frame-ancestors *"
+        Access-Control-Allow-Origin "*"
     }
 }
 
