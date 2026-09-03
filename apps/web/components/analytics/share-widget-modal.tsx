@@ -138,9 +138,9 @@ export function ShareWidgetModal({
   const widgetDimensions = useMemo(() => {
     switch (widgetType) {
       case "sparkline":
-        return { width: 330, height: 165 };
+        return { width: 320, height: 160 };
       case "live-pill":
-        return { width: 280, height: 48 };
+        return { width: 300, height: 52 };
     }
   }, [widgetType]);
 
@@ -191,17 +191,11 @@ export function ShareWidgetModal({
   // Generated Embed Code string for Clipboard
   const rawCodeToCopy = useMemo(() => {
     if (embedFormat === "iframe") {
-      return `<iframe\n  src="${embedUrl}"\n  width="${widgetDimensions.width}"\n  height="${widgetDimensions.height}"\n  frameborder="0"\n  scrolling="no"\n  loading="lazy"\n  style="border-radius: 18px; border: ${theme === "dark"
-          ? "1px solid rgba(255,255,255,0.08)"
-          : theme === "light"
-            ? "1px solid rgba(0,0,0,0.08)"
-            : "none"
-        };"\n></iframe>`;
+      return `<iframe\n  src="${embedUrl}"\n  width="${widgetDimensions.width}"\n  height="${widgetDimensions.height}"\n  frameborder="0"\n  scrolling="no"\n  loading="lazy"\n  allowtransparency="true"\n  style="border: none; background: transparent; overflow: hidden;"\n></iframe>`;
     }
 
     if (embedFormat === "react") {
-      return `import React from "react";\n\nexport function AnalytikaWidget() {\n  return (\n    <iframe\n      src="${embedUrl}"\n      width="${widgetDimensions.width}"\n      height="${widgetDimensions.height}"\n      className="rounded-2xl border ${theme === "dark" ? "border-white/[0.08]" : "border-black/[0.08]"
-        }"\n      loading="lazy"\n    />\n  );\n}`;
+      return `import React from "react";\n\nexport function AnalytikaWidget() {\n  return (\n    <iframe\n      src="${embedUrl}"\n      width="${widgetDimensions.width}"\n      height="${widgetDimensions.height}"\n      frameBorder="0"\n      scrolling="no"\n      loading="lazy"\n      allowTransparency\n      style={{ border: "none", background: "transparent", overflow: "hidden" }}\n    />\n  );\n}`;
     }
 
     return `[![${siteDomain} Analytics](${badgeUrl})](${publicShareUrl})`;
@@ -564,8 +558,9 @@ export function ShareWidgetModal({
                         {"  "}<span className="text-amber-300">height</span>=<span className="text-emerald-300">&quot;{widgetDimensions.height}&quot;</span>{"\n"}
                         {"  "}<span className="text-amber-300">frameborder</span>=<span className="text-emerald-300">&quot;0&quot;</span>{"\n"}
                         {"  "}<span className="text-amber-300">scrolling</span>=<span className="text-emerald-300">&quot;no&quot;</span>{"\n"}
-                        {"  "}<span className="text-zinc-400">loading</span>=<span className="text-emerald-300">&quot;lazy&quot;</span>{"\n"}
-                        {"  "}<span className="text-amber-300">style</span>=<span className="text-emerald-300">&quot;border-radius: 18px; border: {theme === "dark" ? "1px solid rgba(255,255,255,0.08)" : theme === "light" ? "1px solid rgba(0,0,0,0.08)" : "none"};&quot;</span>{"\n"}
+                        {"  "}<span className="text-amber-300">allowtransparency</span>=<span className="text-emerald-300">&quot;true&quot;</span>{"\n"}
+                        {"  "}<span className="text-amber-300">loading</span>=<span className="text-emerald-300">&quot;lazy&quot;</span>{"\n"}
+                        {"  "}<span className="text-amber-300">style</span>=<span className="text-emerald-300">&quot;border: none; background: transparent;&quot;</span>{"\n"}
                         &gt;&lt;/<span className="text-rose-400">iframe</span>&gt;
                       </>
                     )}

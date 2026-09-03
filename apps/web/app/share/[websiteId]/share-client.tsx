@@ -670,19 +670,14 @@ export function PublicShareClient({
             <span className="text-xl font-bold tracking-tight text-white">Analytika</span>
           </Link>
 
-          {/* Public Badge */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#262626] border border-white/[0.08] text-xs shadow-sm">
-            <WebsiteFavicon
-              domain={siteMeta.domain}
-              className="w-3.5 h-3.5 rounded-xs object-contain"
-            />
-            <span className="font-bold text-white max-w-[140px] truncate">{siteMeta.name}</span>
-            <span className="text-zinc-600">|</span>
-            <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Public View
-            </span>
-          </div>
+          {/* Start Free CTA */}
+          <Link
+            href="/auth/login"
+            className="inline-flex items-center gap-2 bg-[#800E13] hover:bg-[#9e1218] text-white font-semibold text-sm px-5 h-10 rounded-lg shadow-sm border border-[#800E13] transition-all"
+          >
+            Start Free
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </header>
 

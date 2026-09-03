@@ -133,7 +133,7 @@ function WidgetView() {
   // TYPE 1: LIVE VISITOR PILL
   if (widgetType === "live-pill") {
     return (
-      <div className="w-fit h-fit p-1 bg-transparent select-none">
+      <div className="w-fit h-fit bg-transparent select-none">
         <a
           href={landingUrl}
           target="_blank"
@@ -176,7 +176,7 @@ function WidgetView() {
 
   // TYPE 2: SPARKLINE SNAPSHOT CARD (Exact match to ShareWidgetModal)
   return (
-    <div className="w-fit h-fit p-1 bg-transparent select-none font-sans">
+    <div className="w-fit h-fit bg-transparent select-none font-sans">
       <div
         className={`w-[300px] p-4 rounded-2xl transition-all shadow-lg flex flex-col justify-between ${
           theme === "dark"
