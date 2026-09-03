@@ -451,7 +451,7 @@ export async function ingestEvent(
   }
 
   // 5. Resolve Geolocation & User Agent
-  const geo = getGeoLocation(headers);
+  const geo = getGeoLocation(headers, clientIp);
   const userAgent = headers["user-agent"] || "";
   const uaInfo = parseUserAgent(userAgent);
 

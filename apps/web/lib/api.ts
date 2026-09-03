@@ -441,6 +441,7 @@ export interface PageItem {
 
 export interface CountryItem {
   code: string;
+  name?: string;
   visitors: number;
   pageviews: number;
 }

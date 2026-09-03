@@ -366,7 +366,7 @@ export default function WebsiteAnalyticsPage() {
   // Countries data
   const totalCountryVisitors = countries.reduce((sum, c) => sum + c.visitors, 0) || 1;
   const countryBarData = countries.map((c) => ({
-    name: c.code,
+    name: c.name || c.code,
     code: c.code,
     views: c.visitors,
     percentage: Math.round((c.visitors / totalCountryVisitors) * 100),

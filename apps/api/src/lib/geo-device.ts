@@ -1,4 +1,5 @@
 import { createHash } from "crypto";
+import geoip from "geoip-lite";
 import { env } from "@/config/env";
 
 export interface ParsedUserAgent {
@@ -42,15 +43,18 @@ export function parseUserAgent(ua: string = ""): ParsedUserAgent {
     device_type = "mobile";
   }
 
-  // 2. Operating System
+  // 2. Operating System (Check iOS before macOS because iOS user-agents include 'like Mac OS X')
   let os = "Unknown";
   if (/windows nt 10\.0/i.test(ua)) os = "Windows 10/11";
+  else if (/windows nt 6\.3/i.test(ua)) os = "Windows 8.1";
+  else if (/windows nt 6\.2/i.test(ua)) os = "Windows 8";
+  else if (/windows nt 6\.1/i.test(ua)) os = "Windows 7";
   else if (/windows/i.test(ua)) os = "Windows";
-  else if (/macintosh|mac os x/i.test(ua)) os = "macOS";
-  else if (/iphone|ipad|ipod/i.test(ua)) os = "iOS";
+  else if (/iphone|ipad|ipod|cpu (?:iphone )?os /i.test(ua)) os = "iOS";
   else if (/android/i.test(ua)) os = "Android";
-  else if (/linux/i.test(ua)) os = "Linux";
+  else if (/macintosh|mac os x/i.test(ua)) os = "macOS";
   else if (/cros/i.test(ua)) os = "Chrome OS";
+  else if (/linux/i.test(ua)) os = "Linux";
 
   // 3. Browser Name & Version
   let browser = "Other";
@@ -219,33 +223,59 @@ export function getVisitorAndSessionId(
   return { visitor_id, session_id };
 }
 
+function safeDecode(val: string): string {
+  try {
+    return decodeURIComponent(val);
+  } catch {
+    return val;
+  }
+}
+
 /**
- * Resolves Geolocation from Cloudflare / Edge Headers
+ * Resolves Geolocation from Cloudflare / Edge Headers or local MaxMind database
  */
-export function getGeoLocation(headers: Record<string, string | undefined>): GeoLocation {
-  const country =
+export function getGeoLocation(
+  headers: Record<string, string | undefined>,
+  ip?: string
+): GeoLocation {
+  let country =
     headers["cf-ipcountry"] ||
     headers["x-country"] ||
     headers["x-vercel-ip-country"] ||
     headers["geoip-country-code"] ||
-    "XX";
+    "";
 
-  const city =
+  let city =
     headers["cf-ipcity"] ||
     headers["x-city"] ||
     headers["x-vercel-ip-city"] ||
     "";
 
-  const region =
+  let region =
     headers["cf-region"] ||
     headers["x-region"] ||
     headers["x-vercel-ip-country-region"] ||
     "";
 
+  // If no reverse-proxy edge geo headers are available, use local MaxMind GeoIP database lookup
+  if ((!country || country === "XX") && ip && ip !== "127.0.0.1" && ip !== "::1") {
+    try {
+      const cleanIp = ip.replace(/^::ffff:/, "").trim();
+      const geo = geoip.lookup(cleanIp);
+      if (geo) {
+        country = geo.country || "XX";
+        city = geo.city || "";
+        region = geo.region || "";
+      }
+    } catch {
+      // ignore lookup failure
+    }
+  }
+
   return {
-    country_code: country.toUpperCase().slice(0, 2),
-    city: decodeURIComponent(city),
-    region: decodeURIComponent(region),
+    country_code: (country || "XX").toUpperCase().slice(0, 2),
+    city: safeDecode(city),
+    region: safeDecode(region),
   };
 }
 

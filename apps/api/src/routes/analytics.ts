@@ -592,13 +592,27 @@ export const analyticsRoutes = new Elysia({ prefix: "/api/v1/analytics" })
         const cities: any[] = await cityRes.json();
         const languages: any[] = await langRes.json();
 
+        const regionNames =
+          typeof Intl !== "undefined" && Intl.DisplayNames
+            ? new Intl.DisplayNames(["en"], { type: "region" })
+            : null;
+
         return {
           success: true,
-          countries: countries.map((c) => ({
-            code: c.country_code,
-            visitors: Number(c.visitors || 0),
-            pageviews: Number(c.pageviews || 0),
-          })),
+          countries: countries.map((c) => {
+            let countryName = c.country_code;
+            try {
+              if (regionNames && c.country_code) {
+                countryName = regionNames.of(c.country_code) || c.country_code;
+              }
+            } catch {}
+            return {
+              code: c.country_code,
+              name: countryName,
+              visitors: Number(c.visitors || 0),
+              pageviews: Number(c.pageviews || 0),
+            };
+          }),
           regions: regions.map((r) => ({
             name: r.region_name,
             country: r.country_code,

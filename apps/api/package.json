@@ -17,12 +17,14 @@
     "@elysiajs/cors": "^1.2.0",
     "@elysiajs/jwt": "^1.2.0",
     "@elysiajs/swagger": "^1.2.0",
+    "@types/geoip-lite": "^1.4.4",
+    "dotenv": "^16.4.7",
     "drizzle-orm": "^0.38.4",
     "elysia": "^1.2.10",
+    "geoip-lite": "^2.0.3",
     "nanoid": "^5.0.9",
     "postgres": "^3.4.5",
-    "resend": "^4.1.2",
-    "dotenv": "^16.4.7"
+    "resend": "^4.1.2"
   },
   "devDependencies": {
     "@types/bun": "^1.2.0",
