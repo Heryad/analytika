@@ -136,7 +136,7 @@ export default async function RootLayout({
         <Script
           defer
           data-website-id="site_2r2mg12ofYAHWSdC"
-          src="https://analytika.me/a.js"
+          src="https://api.analytika.me/a.js"
         />
       </body>
     </html>
