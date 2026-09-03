@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { analyticsApi } from "@/lib/api";
 import { WebsiteFavicon } from "@/components/website-favicon";
 
 function WidgetView() {
@@ -55,17 +56,13 @@ function WidgetView() {
       .catch(() => {});
   }, [siteParam]);
 
-  // Fetch live metrics (unauthenticated — works for isPublic=true websites)
+  // Fetch live metrics
   useEffect(() => {
     if (!siteParam) return;
 
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://api.analytika.me";
-
-    const publicFetch = (endpoint: string) =>
-      fetch(`${apiBase}${endpoint}`, { credentials: "omit" }).then((r) => r.json());
-
     if (widgetType === "live-pill") {
-      publicFetch(`/api/v1/analytics/${siteParam}/live`)
+      analyticsApi
+        .getLive(siteParam)
         .then((res) => {
           if (res.success && typeof res.onlineVisitors === "number") {
             setOnlineCount(res.onlineVisitors);
@@ -75,8 +72,9 @@ function WidgetView() {
       return;
     }
 
-    // Sparkline widget: fetch overview & timeseries without auth
-    publicFetch(`/api/v1/analytics/${siteParam}/overview?range=${timeRange}`)
+    // Sparkline widget: fetch overview & timeseries
+    analyticsApi
+      .getOverview(siteParam, timeRange)
       .then((res) => {
         if (res.success && res.metrics) {
           if (metric === "visitors") {
@@ -90,10 +88,11 @@ function WidgetView() {
       })
       .catch(() => {});
 
-    publicFetch(`/api/v1/analytics/${siteParam}/timeseries?range=${timeRange}`)
+    analyticsApi
+      .getTimeseries(siteParam, timeRange)
       .then((res) => {
         if (res.success && Array.isArray(res.timeseries) && res.timeseries.length > 2) {
-          const vals = res.timeseries.map((pt: any) => {
+          const vals = res.timeseries.map((pt) => {
             if (metric === "visitors") return pt.visitors;
             if (metric === "pageviews") return pt.pageviews;
             return pt.revenue;
@@ -102,7 +101,7 @@ function WidgetView() {
           const min = Math.min(...vals, 0);
           const rangeVal = max - min || 1;
 
-          const points = vals.map((v: number, i: number) => {
+          const points = vals.map((v, i) => {
             const x = (i / (vals.length - 1)) * 200;
             const y = 35 - ((v - min) / rangeVal) * 30;
             return { x, y };

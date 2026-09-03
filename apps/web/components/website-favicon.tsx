@@ -34,17 +34,20 @@ export function WebsiteFavicon({
   const [sourceIndex, setSourceIndex] = useState(0);
   const [hasFailedAll, setHasFailedAll] = useState(false);
 
-  // Candidate sources with fallback sequence:
-  // 1. Google S2 Favicons
-  // 2. Direct domain favicon.ico
-  // 3. Direct domain logo.png
-  // 4. Direct domain apple-touch-icon.png
+  // Candidate sources with fallback sequence.
+  // NOTE: Google S2 always returns HTTP 200 even for unknown domains (returns
+  // a generic globe icon), so it CANNOT be used as a primary source — onError
+  // would never fire and the chain would stop there.
+  // We first try direct domain paths that properly 404 on failure, then fall
+  // back to Google S2 as the last resort (it will always render something).
   const sources = clean
     ? [
-        `https://www.google.com/s2/favicons?domain=${clean}&sz=${size >= 64 ? 128 : 64}`,
         `https://${clean}/favicon.ico`,
+        `https://${clean}/favicon.png`,
         `https://${clean}/logo.png`,
         `https://${clean}/apple-touch-icon.png`,
+        // Google S2 as last resort — always returns an image
+        `https://www.google.com/s2/favicons?domain=${clean}&sz=${size >= 64 ? 128 : 64}`,
       ]
     : [];
 
