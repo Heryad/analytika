@@ -20,16 +20,10 @@ import { initClickHouseSchema, testClickHouseConnection } from "@/db/clickhouse"
 import { startLifecycleCron } from "@/services/lifecycle-cron";
 
 const app = new Elysia()
-  // 1. CORS Middleware
+  // 1. CORS Middleware (Public event ingestion from any domain + dashboard sessions)
   .use(
     cors({
-      origin: [
-        env.FRONTEND_URL,
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "https://analytika.me",
-        "https://docs.analytika.me",
-      ],
+      origin: true,
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization", "X-Website-ID"],
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
