@@ -101,7 +101,7 @@ export default function WebsiteAnalyticsPage() {
   const [site, setSite] = useState<Website | null>(null);
 
   // State
-  const [timeRange, setTimeRange] = useState<TimeRangeType>("30 Days");
+  const [timeRange, setTimeRange] = useState<TimeRangeType>("Today");
   const [activeMetric, setActiveMetric] = useState<MetricType>("visitors");
   const [activeFilter, setActiveFilter] = useState("All Traffic");
   const [isLoading, setIsLoading] = useState(true);

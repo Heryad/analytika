@@ -26,6 +26,7 @@ import { ChannelPieChart } from "@/components/analytics/channel-pie-chart";
 import { CustomBarList } from "@/components/analytics/custom-bar-list";
 import { FunnelVisualizer } from "@/components/analytics/funnel-visualizer";
 import { MilestonesVisualizer } from "@/components/analytics/milestones-visualizer";
+import { Footer } from "@/components/footer";
 import { WebsiteFavicon } from "@/components/website-favicon";
 import {
   Select,
@@ -164,67 +165,76 @@ function SharePageCTA({ domain }: { domain: string }) {
   }, [value]);
 
   return (
-    <div className="w-full rounded-2xl bg-gradient-to-br from-[#1A0608] via-[#1F1F1F] to-[#1A1A1A] border border-[#800E13]/30 p-8 sm:p-12 flex flex-col items-center text-center space-y-6 shadow-xl overflow-hidden relative">
+    <div className="w-full rounded-2xl overflow-hidden relative flex flex-col items-center text-center px-6 py-16 sm:py-20 bg-[#1A1A1A]">
 
-      {/* Subtle glow blob behind */}
-      <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-72 h-72 bg-[#800E13]/10 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Eyebrow */}
-      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#800E13]/15 border border-[#800E13]/30 text-xs font-mono text-rose-300">
-        <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
-        You're viewing {domain}'s analytics — powered by Analytika
-      </div>
-
-      {/* Headline */}
-      <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight max-w-2xl">
-        Get this dashboard for your site.{" "}
-        <span className="text-[#E11D48]">Free.</span>
-      </h2>
-
-      {/* Sub-copy */}
-      <p className="text-sm sm:text-base text-zinc-400 max-w-lg leading-relaxed">
-        Cookieless, privacy-first analytics with real-time revenue attribution, conversion funnels, and an AI-native MCP server. No cookie banners. No bloat.
-      </p>
-
-      {/* Domain input — same as hero */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const target = cleanHost || extract(value) || value;
-          window.location.href = `/auth/login?domain=${encodeURIComponent(target)}`;
+      {/* Auth-page dot grid with radial mask */}
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(#800E13_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-30"
+        style={{
+          maskImage: "radial-gradient(ellipse at center, black 30%, transparent 80%)",
+          WebkitMaskImage: "radial-gradient(ellipse at center, black 30%, transparent 80%)",
         }}
-        className="w-full max-w-md relative flex items-center rounded-lg bg-[#262626] p-1.5 border border-white/[0.1] shadow-sm focus-within:border-[#800E13] transition-colors"
-      >
-        {/* Sliding favicon */}
-        <div className={`flex items-center justify-center transition-all duration-300 ease-out overflow-hidden ${faviconLoaded ? "w-7 h-7 opacity-100 ml-1.5" : "w-0 h-7 opacity-0 ml-0"}`}>
-          {cleanHost && (
-            <WebsiteFavicon
-              domain={cleanHost}
-              className="h-5 w-5 rounded object-contain shrink-0"
-              onLoadedChange={setFaviconLoaded}
-              hideOnFail
-            />
-          )}
-        </div>
-        <input
-          type="text"
-          placeholder="yoursite.com"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="w-full bg-transparent px-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none"
-        />
-        <button
-          type="submit"
-          className="inline-flex items-center gap-1.5 bg-[#800E13] hover:bg-[#9e1218] text-white font-semibold text-sm px-5 h-10 rounded-md shrink-0 border border-[#800E13] transition-all"
+        aria-hidden="true"
+      />
+
+      {/* Auth-page ambient crimson glow */}
+      <div
+        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#800E13]/12 blur-[120px] rounded-full"
+        aria-hidden="true"
+      />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center space-y-6 max-w-lg w-full">
+
+        {/* Headline */}
+        <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+          Track your site.<br />
+          <span className="text-[#E11D48]">Free for 14 days.</span>
+        </h2>
+
+        {/* Sub-copy */}
+        <p className="text-sm sm:text-base text-zinc-400 max-w-sm leading-relaxed">
+          Cookieless analytics with revenue attribution, conversion funnels, and an AI-native MCP server. No cookie banners. No credit card.
+        </p>
+
+        {/* Domain input */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const target = cleanHost || extract(value) || value;
+            window.location.href = `/auth/login?domain=${encodeURIComponent(target)}`;
+          }}
+          className="w-full flex items-center rounded-lg bg-[#262626] p-1.5 border border-white/[0.1] shadow-sm focus-within:border-[#800E13] transition-colors"
         >
-          Start Free
-          <ArrowRight className="h-4 w-4" />
-        </button>
-      </form>
+          <div className={`flex items-center justify-center transition-all duration-300 ease-out overflow-hidden ${faviconLoaded ? "w-7 h-7 opacity-100 ml-1.5" : "w-0 h-7 opacity-0 ml-0"}`}>
+            {cleanHost && (
+              <WebsiteFavicon
+                domain={cleanHost}
+                className="h-5 w-5 rounded object-contain shrink-0"
+                onLoadedChange={setFaviconLoaded}
+                hideOnFail
+              />
+            )}
+          </div>
+          <input
+            type="text"
+            placeholder="yoursite.com"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className="w-full bg-transparent px-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="inline-flex items-center gap-1.5 bg-[#800E13] hover:bg-[#9e1218] text-white font-semibold text-sm px-5 h-10 rounded-md shrink-0 border border-[#800E13] transition-all"
+          >
+            Start Free
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </form>
 
-      {/* Microcopy */}
-      <p className="text-xs text-zinc-500">14-day free trial · No credit card required · Set up in 2 minutes</p>
+        <p className="text-xs text-zinc-600">No credit card required · Set up in under 2 minutes</p>
 
+      </div>
     </div>
   );
 }
@@ -742,7 +752,7 @@ export function PublicShareClient({
 
   // Main Public Analytics Dashboard
   return (
-    <div className="min-h-screen bg-[#1F1F1F] text-zinc-100 font-sans pb-20">
+    <div className="min-h-screen bg-[#1F1F1F] text-zinc-100 font-sans">
       {/* 1. Sticky Public Header Navigation */}
       <header className="sticky top-0 z-40 w-full bg-[#1F1F1F]/90 backdrop-blur-md border-b border-white/[0.06]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -1167,6 +1177,8 @@ export function PublicShareClient({
         <SharePageCTA domain={siteMeta.domain} />
 
       </main>
+
+      <Footer />
     </div>
   );
 }
