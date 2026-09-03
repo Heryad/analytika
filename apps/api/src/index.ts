@@ -28,6 +28,7 @@ const app = new Elysia()
         "http://localhost:3000",
         "http://localhost:3001",
         "https://analytika.me",
+        "https://docs.analytika.me",
       ],
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization", "X-Website-ID"],
