@@ -2,6 +2,11 @@ export const env = {
   NODE_ENV: process.env.NODE_ENV || "development",
   PORT: Number(process.env.PORT || 4000),
   FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3001",
+  API_URL:
+    process.env.API_URL ||
+    (process.env.NODE_ENV === "production"
+      ? "https://api.analytika.me"
+      : `http://localhost:${process.env.PORT || 4000}`),
 
   // PostgreSQL Database
   DATABASE_URL:

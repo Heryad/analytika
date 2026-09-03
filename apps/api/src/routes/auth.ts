@@ -543,7 +543,7 @@ export const authRoutes = new Elysia({ prefix: "/api/v1/auth" })
    * 6. Google OAuth - Redirect to Consent Screen
    */
   .get("/oauth/google", ({ redirect }) => {
-    const redirectUri = `http://localhost:${env.PORT}/api/v1/auth/oauth/google/callback`;
+    const redirectUri = `${env.API_URL}/api/v1/auth/oauth/google/callback`;
     const googleAuthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     googleAuthUrl.searchParams.set("client_id", env.GOOGLE_CLIENT_ID);
     googleAuthUrl.searchParams.set("redirect_uri", redirectUri);
@@ -567,7 +567,7 @@ export const authRoutes = new Elysia({ prefix: "/api/v1/auth" })
       }
 
       try {
-        const redirectUri = `http://localhost:${env.PORT}/api/v1/auth/oauth/google/callback`;
+        const redirectUri = `${env.API_URL}/api/v1/auth/oauth/google/callback`;
 
         // 1. Exchange code for tokens
         const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
