@@ -142,6 +142,95 @@ function formatTimeseries(
   });
 }
 
+// ─── Share Page CTA ────────────────────────────────────────────────────────────
+
+function SharePageCTA({ domain }: { domain: string }) {
+  const [value, setValue] = React.useState("");
+  const [cleanHost, setCleanHost] = React.useState("");
+  const [faviconLoaded, setFaviconLoaded] = React.useState(false);
+
+  const extract = (input: string) => {
+    let s = input.trim().toLowerCase();
+    s = s.replace(/^(https?:\/\/)?(www\.)?/, "");
+    return s.split("/")[0].split("?")[0].split("#")[0];
+  };
+
+  React.useEffect(() => {
+    const host = extract(value);
+    const valid = host.includes(".") && (host.split(".").pop()?.length ?? 0) >= 2 && !host.endsWith(".");
+    if (!valid) { setCleanHost(""); setFaviconLoaded(false); return; }
+    const t = setTimeout(() => setCleanHost(host), 250);
+    return () => clearTimeout(t);
+  }, [value]);
+
+  return (
+    <div className="w-full rounded-2xl bg-gradient-to-br from-[#1A0608] via-[#1F1F1F] to-[#1A1A1A] border border-[#800E13]/30 p-8 sm:p-12 flex flex-col items-center text-center space-y-6 shadow-xl overflow-hidden relative">
+
+      {/* Subtle glow blob behind */}
+      <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-72 h-72 bg-[#800E13]/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Eyebrow */}
+      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#800E13]/15 border border-[#800E13]/30 text-xs font-mono text-rose-300">
+        <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+        You're viewing {domain}'s analytics — powered by Analytika
+      </div>
+
+      {/* Headline */}
+      <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight max-w-2xl">
+        Get this dashboard for your site.{" "}
+        <span className="text-[#E11D48]">Free.</span>
+      </h2>
+
+      {/* Sub-copy */}
+      <p className="text-sm sm:text-base text-zinc-400 max-w-lg leading-relaxed">
+        Cookieless, privacy-first analytics with real-time revenue attribution, conversion funnels, and an AI-native MCP server. No cookie banners. No bloat.
+      </p>
+
+      {/* Domain input — same as hero */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const target = cleanHost || extract(value) || value;
+          window.location.href = `/auth/login?domain=${encodeURIComponent(target)}`;
+        }}
+        className="w-full max-w-md relative flex items-center rounded-lg bg-[#262626] p-1.5 border border-white/[0.1] shadow-sm focus-within:border-[#800E13] transition-colors"
+      >
+        {/* Sliding favicon */}
+        <div className={`flex items-center justify-center transition-all duration-300 ease-out overflow-hidden ${faviconLoaded ? "w-7 h-7 opacity-100 ml-1.5" : "w-0 h-7 opacity-0 ml-0"}`}>
+          {cleanHost && (
+            <WebsiteFavicon
+              domain={cleanHost}
+              className="h-5 w-5 rounded object-contain shrink-0"
+              onLoadedChange={setFaviconLoaded}
+              hideOnFail
+            />
+          )}
+        </div>
+        <input
+          type="text"
+          placeholder="yoursite.com"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="w-full bg-transparent px-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none"
+        />
+        <button
+          type="submit"
+          className="inline-flex items-center gap-1.5 bg-[#800E13] hover:bg-[#9e1218] text-white font-semibold text-sm px-5 h-10 rounded-md shrink-0 border border-[#800E13] transition-all"
+        >
+          Start Free
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </form>
+
+      {/* Microcopy */}
+      <p className="text-xs text-zinc-500">14-day free trial · No credit card required · Set up in 2 minutes</p>
+
+    </div>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+
 export function PublicShareClient({
   siteMeta,
   initialAnalytics,
@@ -1073,6 +1162,10 @@ export function PublicShareClient({
             <MilestonesVisualizer websiteId={websiteId} timeRange={apiRangeKey} readOnly={true} />
           )}
         </div>
+
+        {/* 6. Bottom CTA — Start Free */}
+        <SharePageCTA domain={siteMeta.domain} />
+
       </main>
     </div>
   );
