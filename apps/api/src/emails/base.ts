@@ -1,5 +1,5 @@
 /**
- * Base Dark-Theme Layout for all Analytika Transactional Emails
+ * Base Clean Light-Theme Layout for all Analytika Transactional Emails
  */
 
 interface BaseEmailLayoutProps {
@@ -23,37 +23,43 @@ export function renderBaseEmailLayout({
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
   ${previewText ? `<meta name="description" content="${previewText}">` : ""}
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
 </head>
-<body style="margin:0;padding:0;background-color:#09090b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#f4f4f5;-webkit-font-smoothing:antialiased;">
-  <!-- Preview Text Hack -->
+<body style="margin:0;padding:0;background-color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;-webkit-font-smoothing:antialiased;">
+  <!-- Preheader Text (Hidden in email view, visible in inbox preview) -->
   ${
     previewText
-      ? `<div style="display:none;font-size:1px;color:#09090b;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+      ? `<div style="display:none;font-size:1px;color:#f9fafb;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
           ${previewText}
         </div>`
       : ""
   }
 
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#09090b;padding:40px 16px;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f9fafb;padding:48px 16px;">
     <tr>
       <td align="center">
         <!-- Main Container Card -->
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:540px;background-color:#18181b;border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:40px 32px;box-shadow:0 24px 48px -12px rgba(0,0,0,0.7);">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:520px;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:36px 32px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05),0 2px 4px -2px rgba(0,0,0,0.05);">
           
           <!-- Top Header Brand Logo -->
           <tr>
             <td align="center" style="padding-bottom:28px;">
-              <a href="https://analytika.me" target="_blank" style="text-decoration:none;display:inline-flex;align-items:center;gap:10px;">
+              <a href="https://analytika.me" target="_blank" style="text-decoration:none;display:inline-block;">
                 <table border="0" cellspacing="0" cellpadding="0">
                   <tr>
                     <td style="vertical-align:middle;">
-                      <!-- Crimson Logo Badge -->
-                      <div style="width:36px;height:36px;line-height:36px;border-radius:10px;background-color:#800E13;color:#ffffff;font-weight:800;font-size:18px;text-align:center;border:1px solid rgba(255,255,255,0.15);box-shadow:0 4px 12px rgba(128,14,19,0.5);">
-                        A
-                      </div>
+                      <img src="${logoUrl}" alt="Analytika" width="34" height="34" style="display:block;width:34px;height:34px;border:0;outline:none;" />
                     </td>
                     <td style="vertical-align:middle;padding-left:10px;">
-                      <span style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+                      <span style="font-size:20px;font-weight:700;color:#111827;letter-spacing:-0.5px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
                         Analytika
                       </span>
                     </td>
@@ -73,18 +79,18 @@ export function renderBaseEmailLayout({
           <!-- Divider -->
           <tr>
             <td style="padding-top:32px;padding-bottom:24px;">
-              <div style="border-top:1px solid rgba(255,255,255,0.06);"></div>
+              <div style="border-top:1px solid #f3f4f6;"></div>
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
             <td align="center">
-              <p style="margin:0 0 8px 0;font-size:12px;color:#71717a;line-height:1.5;">
-                Privacy-First Analytics &bull; Real-time MRR Attribution &bull; MCP AI
+              <p style="margin:0 0 6px 0;font-size:12px;color:#9ca3af;line-height:1.5;">
+                Privacy-First Analytics &bull; Revenue Attribution &bull; Remote MCP AI
               </p>
-              <p style="margin:0;font-size:11px;color:#52525b;font-family:monospace;">
-                &copy; ${new Date().getFullYear()} Analytika &bull; <a href="https://analytika.me" style="color:#800E13;text-decoration:none;font-weight:600;">analytika.me</a>
+              <p style="margin:0;font-size:12px;color:#9ca3af;">
+                &copy; ${new Date().getFullYear()} Analytika Inc. &bull; <a href="https://analytika.me" style="color:#800E13;text-decoration:none;font-weight:600;">analytika.me</a>
               </p>
             </td>
           </tr>
