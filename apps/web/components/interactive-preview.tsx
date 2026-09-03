@@ -99,7 +99,7 @@ export function InteractivePreview() {
         </div>
 
         {/* Dashboard content */}
-        <div className="p-4 sm:p-5 space-y-4 bg-[#141414]">
+        <div className="p-4 sm:p-5 space-y-4 bg-[#141414] max-h-[70vh] md:max-h-[600px] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
 
           {/* ── Header toolbar ── */}
           <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
