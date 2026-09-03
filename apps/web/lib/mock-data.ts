@@ -1,3 +1,5 @@
+import { MilestoneItem } from "./api";
+
 /**
  * Mock analytics data for the landing page interactive demo.
  * Simulates a 30-day window for "google.com" with realistic distributions.
@@ -47,94 +49,223 @@ export const MOCK_OVERVIEW = {
 // --- Traffic Channels ---
 export const MOCK_CHANNELS = [
   { name: "Organic Search", views: 38240, percentage: 38, domain: "google.com" },
-  { name: "Direct",         views: 22180, percentage: 22, domain: null },
-  { name: "Social",         views: 18310, percentage: 18, domain: "twitter.com" },
-  { name: "Referral",       views: 12050, percentage: 12, domain: null },
-  { name: "Email",          views:  7080, percentage:  7, domain: null },
-  { name: "Paid",           views:  3120, percentage:  3, domain: null },
+  { name: "Direct", views: 22180, percentage: 22, domain: null },
+  { name: "Social", views: 18310, percentage: 18, domain: "twitter.com" },
+  { name: "Referral", views: 12050, percentage: 12, domain: null },
+  { name: "Email", views: 7080, percentage: 7, domain: null },
+  { name: "Paid", views: 3120, percentage: 3, domain: null },
 ];
 
 // --- Referrers ---
 export const MOCK_REFERRERS = [
-  { name: "twitter.com",        views: 9820,  percentage: 32, domain: "twitter.com" },
-  { name: "producthunt.com",    views: 6430,  percentage: 21, domain: "producthunt.com" },
+  { name: "twitter.com", views: 9820, percentage: 32, domain: "twitter.com" },
+  { name: "producthunt.com", views: 6430, percentage: 21, domain: "producthunt.com" },
   { name: "news.ycombinator.com", views: 5110, percentage: 17, domain: "news.ycombinator.com" },
-  { name: "reddit.com",         views: 4290,  percentage: 14, domain: "reddit.com" },
-  { name: "linkedin.com",       views: 3050,  percentage: 10, domain: "linkedin.com" },
-  { name: "github.com",         views: 1860,  percentage:  6, domain: "github.com" },
+  { name: "reddit.com", views: 4290, percentage: 14, domain: "reddit.com" },
+  { name: "linkedin.com", views: 3050, percentage: 10, domain: "linkedin.com" },
+  { name: "github.com", views: 1860, percentage: 6, domain: "github.com" },
 ];
 
 // --- UTM Campaigns ---
 export const MOCK_CAMPAIGNS = [
-  { name: "summer_launch_2026",  views: 7840, percentage: 41 },
-  { name: "ph_featured_day",     views: 5120, percentage: 27 },
-  { name: "newsletter_aug26",    views: 3680, percentage: 19 },
-  { name: "retargeting_q3",      views: 2410, percentage: 13 },
+  { name: "summer_launch_2026", views: 7840, percentage: 41 },
+  { name: "ph_featured_day", views: 5120, percentage: 27 },
+  { name: "newsletter_aug26", views: 3680, percentage: 19 },
+  { name: "retargeting_q3", views: 2410, percentage: 13 },
 ];
 
 // --- Top Pages ---
 export const MOCK_PAGES = [
-  { name: "/",                    views: 34120, percentage: 34 },
-  { name: "/pricing",             views: 18640, percentage: 19 },
-  { name: "/docs",                views: 12390, percentage: 12 },
+  { name: "/", views: 34120, percentage: 34 },
+  { name: "/pricing", views: 18640, percentage: 19 },
+  { name: "/docs", views: 12390, percentage: 12 },
   { name: "/blog/cookieless-analytics", views: 9810, percentage: 10 },
-  { name: "/dashboard",           views: 7240,  percentage:  7 },
-  { name: "/auth/login",          views: 6180,  percentage:  6 },
-  { name: "/blog",                views: 4930,  percentage:  5 },
-  { name: "/changelog",           views: 3210,  percentage:  3 },
+  { name: "/dashboard", views: 7240, percentage: 7 },
+  { name: "/auth/login", views: 6180, percentage: 6 },
+  { name: "/blog", views: 4930, percentage: 5 },
+  { name: "/changelog", views: 3210, percentage: 3 },
 ];
 
 // --- Countries ---
 export const MOCK_COUNTRIES = [
-  { name: "United States",    code: "us", views: 31200, percentage: 31 },
-  { name: "United Kingdom",   code: "gb", views: 14800, percentage: 15 },
-  { name: "Germany",          code: "de", views:  9400, percentage:  9 },
-  { name: "Canada",           code: "ca", views:  8200, percentage:  8 },
-  { name: "France",           code: "fr", views:  6800, percentage:  7 },
-  { name: "Netherlands",      code: "nl", views:  5100, percentage:  5 },
-  { name: "Australia",        code: "au", views:  4600, percentage:  5 },
-  { name: "India",            code: "in", views:  4200, percentage:  4 },
-  { name: "Brazil",           code: "br", views:  3100, percentage:  3 },
-  { name: "Japan",            code: "jp", views:  2900, percentage:  3 },
+  { name: "United States", code: "us", views: 31200, percentage: 31 },
+  { name: "United Kingdom", code: "gb", views: 14800, percentage: 15 },
+  { name: "Germany", code: "de", views: 9400, percentage: 9 },
+  { name: "Canada", code: "ca", views: 8200, percentage: 8 },
+  { name: "France", code: "fr", views: 6800, percentage: 7 },
+  { name: "Netherlands", code: "nl", views: 5100, percentage: 5 },
+  { name: "Australia", code: "au", views: 4600, percentage: 5 },
+  { name: "India", code: "in", views: 4200, percentage: 4 },
+  { name: "Brazil", code: "br", views: 3100, percentage: 3 },
+  { name: "Japan", code: "jp", views: 2900, percentage: 3 },
 ];
 
 // --- Browsers ---
 export const MOCK_BROWSERS = [
-  { name: "Chrome",  views: 48320, percentage: 48, domain: "chrome.com" },
-  { name: "Safari",  views: 24180, percentage: 24, domain: "apple.com" },
+  { name: "Chrome", views: 48320, percentage: 48, domain: "chrome.com" },
+  { name: "Safari", views: 24180, percentage: 24, domain: "apple.com" },
   { name: "Firefox", views: 11090, percentage: 11, domain: "firefox.com" },
-  { name: "Edge",    views:  9040, percentage:  9, domain: "microsoft.com" },
-  { name: "Brave",   views:  5610, percentage:  6, domain: "brave.com" },
-  { name: "Arc",     views:  2760, percentage:  2, domain: "arc.net" },
+  { name: "Edge", views: 9040, percentage: 9, domain: "microsoft.com" },
+  { name: "Brave", views: 5610, percentage: 6, domain: "brave.com" },
+  { name: "Arc", views: 2760, percentage: 2, domain: "arc.net" },
 ];
 
 // --- Operating Systems ---
 export const MOCK_OS = [
-  { name: "macOS",      views: 38120, percentage: 38, domain: "apple.com" },
+  { name: "macOS", views: 38120, percentage: 38, domain: "apple.com" },
   { name: "Windows 10/11", views: 29840, percentage: 30, domain: "microsoft.com" },
-  { name: "iOS",        views: 16420, percentage: 16, domain: "apple.com" },
-  { name: "Android",    views: 10180, percentage: 10, domain: "android.com" },
-  { name: "Linux",      views:  5440, percentage:  5, domain: "ubuntu.com" },
+  { name: "iOS", views: 16420, percentage: 16, domain: "apple.com" },
+  { name: "Android", views: 10180, percentage: 10, domain: "android.com" },
+  { name: "Linux", views: 5440, percentage: 5, domain: "ubuntu.com" },
 ];
 
 // --- Device Types ---
 export const MOCK_DEVICES = [
   { name: "Desktop", views: 62140, percentage: 62, lucide: "Monitor" },
-  { name: "Mobile",  views: 28390, percentage: 28, lucide: "Smartphone" },
-  { name: "Tablet",  views:  9470, percentage: 10, lucide: "Tablet" },
+  { name: "Mobile", views: 28390, percentage: 28, lucide: "Smartphone" },
+  { name: "Tablet", views: 9470, percentage: 10, lucide: "Tablet" },
 ];
 
 // --- Custom Events ---
 export const MOCK_EVENTS = [
-  { name: "signup_completed",     views: 3840, percentage: 31, lucide: "Sparkles" },
+  { name: "signup_completed", views: 3840, percentage: 31, lucide: "Sparkles" },
   { name: "subscription_started", views: 2190, percentage: 18, lucide: "CreditCard" },
-  { name: "pricing_page_viewed",  views: 1870, percentage: 15, lucide: "Activity" },
-  { name: "demo_requested",       views: 1240, percentage: 10, lucide: "Zap" },
-  { name: "docs_opened",          views: 1080, percentage:  9, lucide: "FileText" },
-  { name: "purchase",             views:  847, percentage:  7, lucide: "CreditCard" },
-  { name: "newsletter_signup",    views:  630, percentage:  5, lucide: "Mail" },
-  { name: "cta_clicked",          views:  580, percentage:  5, lucide: "MousePointerClick" },
+  { name: "pricing_page_viewed", views: 1870, percentage: 15, lucide: "Activity" },
+  { name: "demo_requested", views: 1240, percentage: 10, lucide: "Zap" },
+  { name: "docs_opened", views: 1080, percentage: 9, lucide: "FileText" },
+  { name: "purchase", views: 847, percentage: 7, lucide: "CreditCard" },
+  { name: "newsletter_signup", views: 630, percentage: 5, lucide: "Mail" },
+  { name: "cta_clicked", views: 580, percentage: 5, lucide: "MousePointerClick" },
 ];
 
 // --- Live online visitors (static for demo) ---
 export const MOCK_ONLINE = 47;
+
+// --- Funnels ---
+export const MOCK_FUNNELS = [
+  {
+    id: "f_mock1",
+    name: "SaaS Onboarding Flow",
+    steps: [
+      {
+        name: "Landing Page",
+        users: 18420,
+        percentage: 100,
+        stepValue: "$0.00/visitor",
+        sources: [
+          { name: "google.com", pct: "42%" },
+          { name: "twitter.com", pct: "28%" },
+          { name: "Direct / None", pct: "15%" },
+        ],
+        countries: [
+          { name: "United States", code: "us", pct: "35%" },
+          { name: "United Kingdom", code: "gb", pct: "18%" },
+          { name: "Germany", code: "de", pct: "12%" },
+        ],
+      },
+      {
+        name: "Pricing Page",
+        users: 7280,
+        percentage: 40,
+        stepValue: "$0.00/visitor",
+        sources: [
+          { name: "google.com", pct: "45%" },
+          { name: "twitter.com", pct: "25%" },
+        ],
+        countries: [
+          { name: "United States", code: "us", pct: "38%" },
+        ],
+      },
+      {
+        name: "Sign Up Triggered",
+        users: 3150,
+        percentage: 17,
+        stepValue: "$0.00/visitor",
+        sources: [],
+        countries: [],
+      },
+      {
+        name: "Checkout Complete",
+        users: 847,
+        percentage: 5,
+        stepValue: "$49.00/visitor",
+        sources: [
+          { name: "google.com", pct: "50%" },
+        ],
+        countries: [
+          { name: "United States", code: "us", pct: "42%" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "f_mock2",
+    name: "Newsletter Conversion",
+    steps: [
+      {
+        name: "Blog Post",
+        users: 12450,
+        percentage: 100,
+        stepValue: "$0.00/visitor",
+      },
+      {
+        name: "Subscribed",
+        users: 1840,
+        percentage: 15,
+        stepValue: "$5.00/visitor",
+      },
+    ],
+  },
+];
+
+// --- Milestones ---
+export const MOCK_MILESTONES: MilestoneItem[] = [
+  {
+    id: "m_mock1",
+    name: "Pro Plan Upgrades",
+    type: "revenue",
+    trigger: "purchase_pro",
+    completions: 847,
+    targetCount: 1000,
+    revenue: 41503,
+    conversionRate: 2.2,
+    trend: 12,
+    topSource: { name: "Organic Search", rate: 45 },
+  },
+  {
+    id: "m_mock2",
+    name: "Demo Call Bookings",
+    type: "event",
+    trigger: "book_demo",
+    completions: 420,
+    targetCount: 500,
+    revenue: 0,
+    conversionRate: 1.1,
+    trend: 5,
+    topSource: { name: "twitter.com", rate: 32 },
+  },
+  {
+    id: "m_mock3",
+    name: "Newsletter Subscribers",
+    type: "event",
+    trigger: "newsletter_signup",
+    completions: 2150,
+    targetCount: 3000,
+    revenue: 10750,
+    conversionRate: 5.6,
+    trend: 18,
+    topSource: { name: "producthunt.com", rate: 28 },
+  },
+  {
+    id: "m_mock4",
+    name: "Checkout Success",
+    type: "pageview",
+    trigger: "/checkout/success",
+    completions: 1280,
+    targetCount: 2000,
+    revenue: 0,
+    conversionRate: 3.4,
+    trend: -2,
+    topSource: { name: "Organic Search", rate: 52 },
+  },
+];

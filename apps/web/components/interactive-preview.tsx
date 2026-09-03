@@ -22,7 +22,12 @@ import {
   MOCK_DEVICES,
   MOCK_EVENTS,
   MOCK_ONLINE,
+  MOCK_FUNNELS,
+  MOCK_MILESTONES,
 } from "@/lib/mock-data";
+
+import { FunnelVisualizer } from "@/components/analytics/funnel-visualizer";
+import { MilestonesVisualizer } from "@/components/analytics/milestones-visualizer";
 
 type MetricType = "visitors" | "revenue" | "conversionRate" | "bounceRate" | "sessionTime";
 
@@ -65,6 +70,7 @@ export function InteractivePreview() {
   const [activeMetric, setActiveMetric] = useState<MetricType>("visitors");
   const [acqTab, setAcqTab] = useState<"channels" | "referrers" | "campaigns" | "pages">("channels");
   const [techTab, setTechTab] = useState<"browsers" | "os" | "devices">("browsers");
+  const [funnelTab, setFunnelTab] = useState<"funnels" | "milestones">("funnels");
 
   return (
     <section
@@ -280,6 +286,43 @@ export function InteractivePreview() {
                 />
               </div>
             </div>
+          </div>
+
+          {/* ── Row 4: Funnels & Milestones ── */}
+          <div className="w-full bg-[#262626] border border-white/[0.08] rounded-2xl p-4 sm:p-5 flex flex-col min-h-[480px]">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-2">
+              <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => setFunnelTab("funnels")}
+                  className={`text-[13px] font-medium transition-all px-3.5 py-1.5 rounded-md cursor-pointer ${
+                    funnelTab === "funnels"
+                      ? "bg-[#262626] text-white shadow-sm border border-white/[0.08]"
+                      : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  Conversion Funnels
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFunnelTab("milestones")}
+                  className={`text-[13px] font-medium transition-all px-3.5 py-1.5 rounded-md cursor-pointer ${
+                    funnelTab === "milestones"
+                      ? "bg-[#262626] text-white shadow-sm border border-white/[0.08]"
+                      : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  Target Milestones
+                </button>
+              </div>
+            </div>
+
+            {funnelTab === "funnels" && (
+              <FunnelVisualizer funnels={MOCK_FUNNELS} timeRange="30d" readOnly={true} />
+            )}
+            {funnelTab === "milestones" && (
+              <MilestonesVisualizer initialItems={MOCK_MILESTONES} timeRange="30d" readOnly={true} />
+            )}
           </div>
 
         </div>

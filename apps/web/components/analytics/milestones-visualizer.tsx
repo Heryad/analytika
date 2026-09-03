@@ -14,15 +14,17 @@ interface MilestonesVisualizerProps {
   websiteId?: string;
   timeRange?: string;
   readOnly?: boolean;
+  initialItems?: MilestoneItem[];
 }
 
 export function MilestonesVisualizer({
   websiteId,
   timeRange = "30d",
   readOnly = false,
+  initialItems = [],
 }: MilestonesVisualizerProps) {
-  const [items, setItems] = useState<MilestoneItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [items, setItems] = useState<MilestoneItem[]>(initialItems);
+  const [isLoading, setIsLoading] = useState(Boolean(websiteId && initialItems.length === 0));
   const [activeFilter, setActiveFilter] = useState<"all" | "revenue" | "event" | "pageview">("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

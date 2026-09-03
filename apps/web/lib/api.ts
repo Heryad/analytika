@@ -401,7 +401,7 @@ export const plansApi = {
     return apiFetch<{
       plans: Record<"solo" | "growth", PlanFeatureConfig>;
       tiers: PricingTier[];
-    }>("/api/v1/plans");
+    }>("/api/v1/plans", { cache: "no-store" });
   },
 };
 
