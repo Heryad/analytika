@@ -144,86 +144,65 @@ export const billingRoutes = new Elysia({ prefix: "/api/v1/billing" })
           return { success: false, error: "User not found" };
         }
 
-        // 1. If Polar Access Token is configured, create live Polar Checkout
-        if (env.POLAR_ACCESS_TOKEN && env.POLAR_ACCESS_TOKEN.length > 5) {
-          try {
-            const polarRes = await fetch("https://api.polar.sh/v1/checkouts/custom/", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${env.POLAR_ACCESS_TOKEN}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                customer_email: currentUser.email,
-                customer_name: currentUser.name || undefined,
-                success_url: `${env.FRONTEND_URL}/dashboard/settings?tab=billing&checkout=success&plan=${validPlan}&interval=${validInterval}&events=${selectedTier.events}`,
-                metadata: {
-                  userId: user.id,
-                  plan: validPlan,
-                  billingInterval: validInterval,
-                  eventQuota: selectedTier.events,
-                },
-              }),
-            });
-
-            if (polarRes.ok) {
-              const polarData = await polarRes.json();
-              if (polarData.url) {
-                return {
-                  success: true,
-                  checkoutUrl: polarData.url,
-                };
-              }
-            } else {
-              logger.warn("Polar checkout API returned non-200, falling back:", await polarRes.text());
-            }
-          } catch (polarErr) {
-            logger.warn("Polar API request failed, falling back to instant activation:", polarErr);
-          }
-        }
-
-        // 2. Seamless Dev / Sandbox Activation Mode (For seamless instant local testing)
-        const planConfig = PLANS[validPlan];
-        const periodEnd = new Date();
-        if (validInterval === "year") {
-          periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+        // 1. Resolve Product ID based on user selection
+        let productId = "";
+        if (validPlan === "solo") {
+          productId = validInterval === "year" 
+            ? selectedTier.polarProductIdSoloAnnual || ""
+            : selectedTier.polarProductIdSoloMonthly || "";
         } else {
-          periodEnd.setMonth(periodEnd.getMonth() + 1);
+          productId = validInterval === "year" 
+            ? selectedTier.polarProductIdGrowthAnnual || ""
+            : selectedTier.polarProductIdGrowthMonthly || "";
         }
 
-        await db
-          .update(users)
-          .set({
-            plan: validPlan,
-            billingInterval: validInterval,
-            eventQuota: selectedTier.events,
-            maxWebsites: planConfig.maxWebsites,
-            maxFunnels: planConfig.maxFunnels,
-            maxAlerts: planConfig.maxAlerts,
-            hasSocialRadar: planConfig.hasSocialRadar,
-            retentionDays: planConfig.retentionDays,
-            subscriptionStatus: "active",
-            currentPeriodEnd: periodEnd,
-            polarSubscriptionId: currentUser.polarSubscriptionId || `sub_sandbox_${Date.now()}`,
-            updatedAt: new Date(),
-          })
-          .where(eq(users.id, user.id));
+        if (!productId) {
+          set.status = 400;
+          return { success: false, error: "Product ID not configured for this tier." };
+        }
 
-        // Dispatch Subscription Confirmation Email
-        sendSubscriptionSuccessEmail({
-          email: currentUser.email,
-          name: currentUser.name || undefined,
-          planName: planConfig.name,
-          billingInterval: validInterval,
-          eventQuota: selectedTier.events,
-          currentPeriodEnd: periodEnd,
-        }).catch((emailErr) => logger.warn("Failed to dispatch subscription success email:", emailErr));
+        // 2. Create live Polar Checkout Session
+        if (!env.POLAR_ACCESS_TOKEN || env.POLAR_ACCESS_TOKEN.length < 5) {
+          set.status = 500;
+          return { success: false, error: "Polar API token is missing or invalid." };
+        }
 
-        return {
-          success: true,
-          mock: true,
-          checkoutUrl: `${env.FRONTEND_URL}/dashboard/settings?tab=billing&subscribed=${validPlan}`,
-        };
+        const polarRes = await fetch("https://api.polar.sh/v1/checkouts", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${env.POLAR_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            product_id: productId,
+            customer_email: currentUser.email,
+            customer_name: currentUser.name || undefined,
+            success_url: `${env.FRONTEND_URL}/dashboard/settings?tab=billing&checkout=success&plan=${validPlan}&interval=${validInterval}&events=${selectedTier.events}`,
+            metadata: {
+              userId: user.id,
+              plan: validPlan,
+              billingInterval: validInterval,
+              eventQuota: selectedTier.events,
+            },
+          }),
+        });
+
+        if (polarRes.ok) {
+          const polarData = await polarRes.json();
+          if (polarData.url) {
+            return {
+              success: true,
+              checkoutUrl: polarData.url,
+            };
+          }
+        } 
+        
+        // If we reach here, Polar returned an error
+        const errText = await polarRes.text();
+        logger.error("Polar checkout API returned non-200:", errText);
+        set.status = 500;
+        return { success: false, error: "Failed to initialize checkout session with Polar." };
+
       } catch (err: any) {
         logger.error("Failed to create checkout session:", err);
         set.status = 500;
