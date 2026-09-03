@@ -1,20 +1,54 @@
 # Analytika
 
-> Revenue-First, Cookieless Web Analytics with Live Social Mention Radar (𝕏 & Reddit) and Remote Model Context Protocol (MCP) Server.
+> Revenue-First, Cookieless Web Analytics with Live Social Mention Radar (𝕏 & Reddit) and AI-Native Model Context Protocol (MCP) Server.
 
 ## Overview
-Analytika is a modern, privacy-compliant web analytics platform designed for founders, indie hackers, and SaaS growth teams. Unlike traditional pageview trackers, Analytika correlates every visitor with direct revenue attribution, marketing campaigns, and live community discussions.
+Analytika is a modern, privacy-compliant web analytics platform for founders, indie hackers, and SaaS growth teams. Unlike traditional pageview trackers, Analytika correlates every visitor with direct revenue attribution, marketing campaigns, and live community discussions across X (Twitter) and Reddit.
 
 ## Key Capabilities
-- **Cookieless & Privacy-First**: 100% GDPR, CCPA, and PECR compliant with zero tracking cookies or personal data stored.
-- **Ultra-Fast Real-Time Telemetry**: Sub-50ms analytical queries across millions of events.
-- **Revenue Attribution**: Connect Stripe, Polar.sh, Lemon Squeezy, Paddle, or Dodo Payments to track which channels generate paying customers.
-- **Live Social Mention Radar**: Discovers domain mentions across 𝕏 (Twitter) and Reddit, attributing referral traffic directly to specific community posts.
-- **Remote Model Context Protocol (MCP)**: Native JSON-RPC 2.0 endpoint at `https://api.analytika.me/api/v1/mcp` allowing Claude.ai, ChatGPT, and Cursor to query live dashboard telemetry.
-- **Custom Proxy Domains**: Serve tracking scripts from `stats.yourdomain.com` with 1-click CNAME verification to bypass ad-blockers.
+- **Cookieless & Privacy-First**: 100% GDPR, CCPA, and PECR compliant. Zero tracking cookies, no personal data stored, no cookie consent banners required.
+- **Real-Time Telemetry**: Sub-50ms analytical queries across millions of events powered by ClickHouse OLAP engine.
+- **Revenue Attribution**: Connect Stripe, Polar.sh, Lemon Squeezy, Paddle, or Dodo Payments to track which channels, campaigns, and pages generate paying customers.
+- **Social Mention Radar**: Automatically discovers domain mentions across 𝕏 (Twitter) and Reddit, attributing referral traffic to specific community posts.
+- **AI-Native MCP Server**: Full OAuth 2.1 + PKCE Model Context Protocol server. Claude.ai, ChatGPT, Cursor, and any MCP-compatible AI client can connect and query live analytics data.
+- **Conversion Funnels**: ClickHouse windowFunnel aggregations for multi-step conversion analysis with drop-off rates and traffic source attribution per step.
+- **Custom Proxy Domains**: Serve tracking scripts from stats.yourdomain.com via CNAME to bypass ad-blockers.
+- **Public Shareable Dashboards**: Share analytics with stakeholders via password-protected public URLs.
 
-## Links & Documentation
+## MCP Server (AI Integration)
+Analytika exposes a production MCP server for AI assistants.
+
+- **MCP Endpoint**: `https://api.analytika.me/mcp`
+- **OAuth Discovery**: `https://api.analytika.me/.well-known/oauth-authorization-server`
+- **Authentication**: OAuth 2.1 + PKCE (browser consent flow) or legacy Bearer API key (`ana_mcp_live_...`)
+- **Dynamic Client Registration**: Supported (RFC 7591) — Claude and ChatGPT auto-register
+- **Protocol Version**: 2025-03-26
+
+### Available MCP Tools
+- `list_websites` — List all tracked websites for the authenticated user
+- `get_realtime_visitors` — Active visitors in the last 5 minutes
+- `get_overview_metrics` — Visitors, pageviews, revenue, bounce rate, session duration
+- `get_traffic_sources` — Top referrers, UTM campaigns, and channels
+- `get_revenue_attribution` — Which channels generate paying customers
+- `get_top_pages` — Most visited pages with unique visitor counts
+- `get_social_radar` — X and Reddit mentions with engagement stats
+
+## Pricing
+- **Solo Plan**: From $7/month — up to 3 websites, 1-year data retention, MCP server, revenue attribution
+- **Growth Plan**: From $15/month — up to 25 websites, 5-year retention, social radar, unlimited funnels & alerts
+- **Free Trial**: 14-day full trial, no credit card required
+
+## Links
 - **Website**: https://analytika.me
 - **Dashboard**: https://analytika.me/dashboard
-- **MCP Server Endpoint**: https://api.analytika.me/api/v1/mcp
-- **Authentication**: Bearer API Key (`ana_mcp_live_...`)
+- **Documentation**: https://docs.analytika.me
+- **Feedback**: https://feedback.analytika.me
+- **MCP Endpoint**: https://api.analytika.me/mcp
+- **OAuth Discovery**: https://api.analytika.me/.well-known/oauth-authorization-server
+- **Status**: https://analytika.me/api/v1/health
+
+## Comparisons
+- vs Google Analytics: https://analytika.me/vs/google-analytics
+- vs Plausible: https://analytika.me/vs/plausible
+- vs DataFast: https://analytika.me/vs/datafast
+- vs Fathom: https://analytika.me/vs/fathom

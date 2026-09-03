@@ -53,10 +53,10 @@ services:
       JWT_SECRET: ${FIDER_JWT_SECRET:?FIDER_JWT_SECRET is required}
       EMAIL_NOREPLY: ${FIDER_EMAIL_NOREPLY:-noreply@analytika.me}
       EMAIL_SMTP_HOST: ${FIDER_SMTP_HOST:-smtp.resend.com}
-      EMAIL_SMTP_PORT: ${FIDER_SMTP_PORT:-465}
+      EMAIL_SMTP_PORT: ${FIDER_SMTP_PORT:-2587}
       EMAIL_SMTP_USERNAME: ${FIDER_SMTP_USERNAME:-resend}
       EMAIL_SMTP_PASSWORD: ${FIDER_SMTP_PASSWORD:?FIDER_SMTP_PASSWORD is required}
-      EMAIL_SMTP_ENABLE_STARTTLS: "false"
+      EMAIL_SMTP_ENABLE_STARTTLS: "true"
       BASE_URL: ${FIDER_BASE_URL:-https://feedback.analytika.me}
     depends_on:
       postgres:

@@ -14,11 +14,11 @@ import { JsonLd } from "@/components/seo/structured-data";
 export const metadata: Metadata = {
   metadataBase: new URL("https://analytika.me"),
   title: {
-    default: "Analytika — Revenue-First Web Analytics & Social Mention Radar",
+    default: "Analytika — Privacy-First Web Analytics",
     template: "%s | Analytika",
   },
   description:
-    "Cookieless, privacy-friendly web analytics with real-time revenue attribution, live social mention radar (𝕏 & Reddit), and Remote MCP Server for AI assistants.",
+    "Cookieless web analytics with revenue attribution, social mention radar, and AI-native MCP server. No cookie banners.",
   applicationName: "Analytika",
   keywords: [
     "web analytics",
@@ -44,12 +44,12 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://analytika.me",
     siteName: "Analytika",
-    title: "Analytika — Revenue-First Web Analytics & Social Mention Radar",
+    title: "Analytika — Privacy-First Web Analytics",
     description:
-      "Discover which marketing channels, social mentions, and campaigns actually bring paying customers so you can scale what works.",
+      "Cookieless analytics with revenue attribution & social radar. No cookie banners.",
     images: [
       {
-        url: "/og.png",
+        url: "https://analytika.me/og.png",
         width: 1200,
         height: 630,
         alt: "Analytika Dashboard Preview",
@@ -58,11 +58,11 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Analytika — Revenue-First Web Analytics",
+    title: "Analytika — Privacy-First Web Analytics",
     description:
-      "Discover which marketing channels and social mentions bring paying customers.",
+      "Cookieless analytics with revenue attribution & social radar. No cookie banners.",
     creator: "@analytika_me",
-    images: ["/og.png"],
+    images: ["https://analytika.me/og.png"],
   },
   robots: {
     index: true,
