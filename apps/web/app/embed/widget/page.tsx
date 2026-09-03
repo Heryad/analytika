@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { analyticsApi } from "@/lib/api";
 import { WebsiteFavicon } from "@/components/website-favicon";
 
 function WidgetView() {
@@ -34,18 +33,39 @@ function WidgetView() {
     }
   }, [metric]);
 
-  // Fetch live metrics when id is available
+  // If siteParam is a website ID (not a domain), resolve the real domain first
   useEffect(() => {
     if (!siteParam) return;
 
-    // Clean site name if domain or id
+    // If it already looks like a domain (has a dot), use it directly
     if (siteParam.includes(".")) {
       setSiteDomain(siteParam);
+      return;
     }
 
+    // Otherwise fetch the public website metadata to resolve the real domain
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://api.analytika.me";
+    fetch(`${apiBase}/api/v1/websites/${siteParam}/public`, { credentials: "omit" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && data.website?.domain) {
+          setSiteDomain(data.website.domain);
+        }
+      })
+      .catch(() => {});
+  }, [siteParam]);
+
+  // Fetch live metrics (unauthenticated — works for isPublic=true websites)
+  useEffect(() => {
+    if (!siteParam) return;
+
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://api.analytika.me";
+
+    const publicFetch = (endpoint: string) =>
+      fetch(`${apiBase}${endpoint}`, { credentials: "omit" }).then((r) => r.json());
+
     if (widgetType === "live-pill") {
-      analyticsApi
-        .getLive(siteParam)
+      publicFetch(`/api/v1/analytics/${siteParam}/live`)
         .then((res) => {
           if (res.success && typeof res.onlineVisitors === "number") {
             setOnlineCount(res.onlineVisitors);
@@ -55,9 +75,8 @@ function WidgetView() {
       return;
     }
 
-    // Sparkline widget: fetch overview & timeseries
-    analyticsApi
-      .getOverview(siteParam, timeRange)
+    // Sparkline widget: fetch overview & timeseries without auth
+    publicFetch(`/api/v1/analytics/${siteParam}/overview?range=${timeRange}`)
       .then((res) => {
         if (res.success && res.metrics) {
           if (metric === "visitors") {
@@ -71,11 +90,10 @@ function WidgetView() {
       })
       .catch(() => {});
 
-    analyticsApi
-      .getTimeseries(siteParam, timeRange)
+    publicFetch(`/api/v1/analytics/${siteParam}/timeseries?range=${timeRange}`)
       .then((res) => {
         if (res.success && Array.isArray(res.timeseries) && res.timeseries.length > 2) {
-          const vals = res.timeseries.map((pt) => {
+          const vals = res.timeseries.map((pt: any) => {
             if (metric === "visitors") return pt.visitors;
             if (metric === "pageviews") return pt.pageviews;
             return pt.revenue;
@@ -84,7 +102,7 @@ function WidgetView() {
           const min = Math.min(...vals, 0);
           const rangeVal = max - min || 1;
 
-          const points = vals.map((v, i) => {
+          const points = vals.map((v: number, i: number) => {
             const x = (i / (vals.length - 1)) * 200;
             const y = 35 - ((v - min) / rangeVal) * 30;
             return { x, y };
