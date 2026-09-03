@@ -1,35 +1,76 @@
 # NPM SDK
 
-For advanced usage (like SPAs, custom React setups, or server-side node.js), you can install the official Analytika NPM package.
+For TypeScript projects, SPAs, or any setup where you want full type safety, install the official Analytika NPM package.
 
 ```bash
 npm install @analytika-me/tracker
 ```
 
-## Basic Usage
+## Initialize
 
-Initialize the tracker at the root of your application.
+Call `initAnalytics` once at the root of your application — before any `trackEvent` calls.
 
-```javascript
-import { initAnalytics, trackEvent } from '@analytika-me/tracker';
+```typescript
+import { initAnalytics } from '@analytika-me/tracker'
 
 initAnalytics({
   websiteId: 'YOUR-WEBSITE-ID',
-  hostUrl: 'https://analytika.me' // Optional: Used if you proxy the script
-});
+})
 ```
 
-## Tracking Custom Events
-
-Once initialized, you can use the SDK to trigger custom goals and events anywhere in your application with full TypeScript support.
+### All options
 
 ```typescript
-import { trackEvent } from '@analytika-me/tracker';
+initAnalytics({
+  websiteId: 'YOUR-WEBSITE-ID',  // Required
+  autoTrack: true,               // Auto-track pageviews + SPA navigation (default: true)
+  allowLocalhost: false,         // Send events on localhost (default: false)
+  respectDNT: true,              // Honour browser Do-Not-Track (default: true)
+  endpoint: 'https://your-proxy.yourdomain.com/api/v1/events', // Only needed for custom proxy domains
+})
+```
 
-function handleCheckout() {
-  trackEvent('Checkout Started', {
-    plan: 'Pro',
-    price: 49
-  });
-}
+> The `endpoint` option is only needed if you are routing events through a [custom proxy domain](/advanced/cookieless). You do not need it for standard setups.
+
+## Track Custom Events
+
+Event names are stored exactly as you pass them. Use `snake_case` consistently — `"signup_completed"` and `"Signup Completed"` are two different events in the dashboard.
+
+```typescript
+import { trackEvent } from '@analytika-me/tracker'
+
+// Simple event
+trackEvent('signup_completed')
+
+// Event with custom string properties
+trackEvent('plan_selected', {
+  plan: 'growth',
+  billing: 'annual',
+})
+```
+
+## Revenue Tracking
+
+Use the reserved `value` (number) and `currency` (string) keys to attribute revenue to a traffic source. These map to `event_value` (Float64) and `event_currency` in ClickHouse and will appear in your revenue dashboard.
+
+```typescript
+import { trackEvent } from '@analytika-me/tracker'
+
+trackEvent('purchase', {
+  value: 49,        // Numeric revenue amount — must be named `value`
+  currency: 'USD',  // ISO currency code — must be named `currency`
+  plan: 'solo',     // Any additional string props
+})
+```
+
+> Any key other than `value` and `currency` is stored as a string in `properties`. Passing `price: 49` will store `"49"` as a string, not as a revenue value.
+
+## Manual Pageview
+
+`autoTrack: true` handles pageviews and SPA navigation automatically. If you need to fire a manual pageview (e.g. after an async route change), use `trackPageView`:
+
+```typescript
+import { trackPageView } from '@analytika-me/tracker'
+
+trackPageView('/custom/path') // optional path override
 ```

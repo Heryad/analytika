@@ -127,7 +127,7 @@ export const funnelsRoutes = new Elysia({ prefix: "/api/v1/websites" })
                 SELECT
                   visitor_id,
                   windowFunnel(86400)(
-                    timestamp,
+                    toDateTime(timestamp),
                     ${stepConditions.join(",\n")}
                   ) AS reached_step
                 FROM analytika.events

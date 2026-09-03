@@ -1,10 +1,10 @@
 # Next.js Integration
 
-Adding Analytika to your Next.js application is extremely simple. We officially support both the **App Router** and **Pages Router**.
+Adding Analytika to your Next.js application is simple. We officially support both the **App Router** and **Pages Router**.
 
 ## App Router (`app/`)
 
-If you are using the modern App Router, we recommend injecting the script in your `app/layout.tsx` file using the `next/script` component.
+Inject the script in your `app/layout.tsx` using Next.js's `Script` component.
 
 ```tsx
 import Script from 'next/script'
@@ -13,11 +13,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        <Script 
-          defer 
-          src="https://analytika.me/a.js" 
-          data-website-id="YOUR-WEBSITE-ID" 
-          strategy="afterInteractive" 
+        <Script
+          defer
+          src="https://analytika.me/a.js"
+          data-website-id="YOUR-WEBSITE-ID"
+          strategy="afterInteractive"
         />
       </head>
       <body>
@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 ## Pages Router (`pages/`)
 
-If you are using the older Pages Router, add the script to your `pages/_document.tsx` file.
+Add the script to your `pages/_document.tsx`.
 
 ```tsx
 import { Html, Head, Main, NextScript } from 'next/document'
@@ -49,3 +49,29 @@ export default function Document() {
   )
 }
 ```
+
+## Tracking Custom Events
+
+Once the script is loaded, use `window.analytika()` to track custom events anywhere in your app.
+
+Event names must be consistent and use `snake_case` — `"signup_completed"` and `"Signup Completed"` are stored as two separate events.
+
+```tsx
+// Simple event
+window.analytika('signup_completed')
+
+// Event with custom properties
+window.analytika('plan_selected', {
+  plan: 'growth',
+  billing: 'annual',
+})
+
+// Revenue event (use `value` and `currency` for MRR attribution)
+window.analytika('purchase', {
+  value: 49,
+  currency: 'USD',
+  plan: 'solo',
+})
+```
+
+For a full TypeScript setup with the NPM SDK, see the [NPM SDK guide](/install/npm).

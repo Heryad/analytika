@@ -1,32 +1,73 @@
 # Track Custom Goals
 
-Goals (or Custom Events) allow you to track specific user actions on your website, like clicking a "Sign Up" button, submitting a form, or downloading a PDF.
+Goals (custom events) let you track specific user actions — clicking a sign-up button, submitting a form, completing a purchase, and so on.
+
+## Important: Event Name Format
+
+Event names are stored in ClickHouse **exactly as you pass them**. There is no normalisation. `"signup_completed"` and `"Signup Completed"` are two completely different events in your dashboard.
+
+**Use `snake_case` consistently across your codebase.**
 
 ## 1. Define a Goal
 
-In your Analytika dashboard, navigate to **Settings > Goals** and click **Create Goal**.
-Give your goal a name, for example: `Signup Completed`.
+In your Analytika dashboard, navigate to **Settings > Goals** and click **Create Goal**. Enter the exact event name you will fire from your code (e.g. `signup_completed`).
 
 ## 2. Trigger the Goal
 
-Use the `window.analytika()` browser global to trigger the goal when the user performs the action.
+Use `window.analytika()` to fire the event when the user performs the action.
 
 ```javascript
-// Example: Tracking a button click
-document.getElementById('signup-btn').addEventListener('click', () => {
-  window.analytika('Signup Completed');
-});
+// Simple event — no properties
+document.getElementById('signup-btn').addEventListener('click', function () {
+  window.analytika('signup_completed')
+})
 ```
 
-### Passing Metadata
+### Passing Custom Properties
 
-You can also pass custom metadata (properties) along with your goal to track things like the plan selected or the user's role.
+Pass a flat object of string properties to attach metadata to the event. All values are stored as strings.
 
 ```javascript
-window.analytika('Signup Completed', {
-  plan: 'Pro',
-  billing: 'Annual'
-});
+window.analytika('signup_completed', {
+  plan: 'growth',
+  billing: 'annual',
+})
 ```
 
-You can later filter your dashboard by these specific metadata properties!
+You can later filter your dashboard by these property values.
+
+### Revenue Events
+
+To record a revenue value alongside an event, use the reserved `value` (number) and `currency` (string) keys. These are stored as typed numeric fields in ClickHouse and power the MRR attribution dashboard.
+
+```javascript
+window.analytika('purchase', {
+  value: 49,        // Must be named `value` — numeric revenue amount
+  currency: 'USD',  // Must be named `currency` — ISO currency code
+  plan: 'solo',     // Any additional string props
+})
+```
+
+> Using any other key name (e.g. `price`, `amount`) will store the value as a plain string, not as a revenue figure.
+
+## 3. Declarative HTML Tracking (No JavaScript Required)
+
+You can track clicks on any element without writing JavaScript by adding `data-analytika-event` attributes directly in your HTML.
+
+```html
+<button
+  data-analytika-event="cta_clicked"
+  data-analytika-prop-location="hero"
+  data-analytika-value="0"
+>
+  Get Started
+</button>
+```
+
+Supported attributes:
+- `data-analytika-event` — the event name (required)
+- `data-analytika-prop-{key}` — any string property
+- `data-analytika-value` — numeric revenue value
+- `data-analytika-currency` — ISO currency code
+
+Short aliases (`data-ana-event`, `data-prop-{key}`, `data-value`, `data-currency`) also work.

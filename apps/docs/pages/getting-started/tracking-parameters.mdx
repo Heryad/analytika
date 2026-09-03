@@ -1,26 +1,39 @@
 # Use Tracking Parameters
 
-Get better analytics by explicitly tagging your inbound links using UTM parameters or custom referral tags.
+Get better analytics by tagging your inbound links with UTM parameters or simple referral tags.
 
 ## Standard UTM Parameters
 
-Analytika automatically tracks standard UTM parameters out of the box. No configuration is required.
+Analytika automatically captures standard UTM parameters from the page URL. No configuration required.
 
-- `utm_source` (e.g. `twitter`, `newsletter`)
-- `utm_medium` (e.g. `social`, `email`)
-- `utm_campaign` (e.g. `summer_sale_2026`)
-- `utm_term` (e.g. `analytics+software`)
-- `utm_content` (e.g. `header_link`)
+| Parameter | Example value |
+|---|---|
+| `utm_source` | `twitter`, `newsletter` |
+| `utm_medium` | `social`, `email`, `cpc` |
+| `utm_campaign` | `summer_sale_2026` |
+| `utm_term` | `analytics+software` |
+| `utm_content` | `header_link` |
 
 ### Example
 
-When a user visits `https://analytika.me/?utm_source=twitter&utm_medium=social&utm_campaign=launch`, Analytika automatically categorizes this visit under the "Launch" campaign from the "Twitter" source.
+When a visitor lands on:
 
-## Ref Parameters (Referrals)
+```
+https://yoursite.com/?utm_source=twitter&utm_medium=social&utm_campaign=launch
+```
 
-If you don't want to use verbose UTM tags, you can use a simple `ref` or `source` tag:
+Analytika records the visit under the `launch` campaign from the `twitter` source automatically.
 
-- `https://analytika.me/?ref=producthunt`
-- `https://analytika.me/?source=indiehackers`
+## Ref / Source Parameters (Lightweight Referrals)
 
-Analytika treats these exactly like a `utm_source`.
+If you don't want to use verbose UTM tags, you can use a simple `ref`, `source`, `referrer`, or `via` query parameter instead:
+
+```
+https://yoursite.com/?ref=producthunt
+https://yoursite.com/?source=indiehackers
+https://yoursite.com/?via=newsletter
+```
+
+The ingestion pipeline checks for these parameters when the HTTP `Referer` header is absent (e.g. direct links from emails or native apps). The value is used as the referrer source and classified into the appropriate traffic channel (Social, Referral, etc.).
+
+> `ref`, `source`, `referrer`, and `via` are all equivalent. Use whichever fits your workflow.

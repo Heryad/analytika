@@ -1,23 +1,31 @@
 # GDPR & Cookieless Tracking
 
-Analytika is engineered from the ground up to be compliant with strict global privacy laws, including the **GDPR (Europe)**, **CCPA (California)**, and **PECR (UK)**.
+Analytika is engineered from the ground up to comply with strict global privacy laws including **GDPR (Europe)**, **CCPA (California)**, and **PECR (UK)**.
 
 ## How it works
 
-Traditional analytics platforms (like Google Analytics) use cookies or local storage to drop a persistent identifier on the user's browser. This requires you to show an annoying cookie consent banner.
+Traditional analytics platforms (like Google Analytics) use cookies or local storage to drop a persistent identifier on the visitor's browser. This requires you to show a cookie consent banner.
 
-Analytika **does not** use cookies, local storage, or session storage. 
+Analytika **does not** use cookies, local storage, or session storage.
 
-### Ephemeral Hashes
+### Ephemeral Daily Hashes
 
-Instead of persistent identifiers, Analytika generates an ephemeral daily hash based on the visitor's incoming IP address and User-Agent string. 
+Instead of persistent identifiers, Analytika generates an ephemeral hash on the server side for each incoming event. The hash is derived from:
 
-```javascript
-const dailyHash = sha256(IP + UserAgent + DailySalt);
+- A server-side secret salt
+- The website ID
+- The visitor's IP address
+- The visitor's User-Agent string
+- The current date (UTC, day precision)
+
+```
+visitor_id = sha256(SALT + websiteId + YYYY-MM-DD + IP + UserAgent)[0:16]
 ```
 
-Because the `DailySalt` rotates at midnight UTC, it is mathematically impossible to link a user's activity across different days, and it is impossible to reverse-engineer the hash to find their IP address.
+Because the date component rotates at midnight UTC, it is impossible to link a visitor's activity across different days. The hash is also one-way — there is no way to reverse it back to an IP address.
+
+Sessions use the same approach but rotate hourly instead of daily, giving you accurate session counts without ever storing a cookie.
 
 ### Conclusion
 
-Because no personal data is stored and no persistent identifiers are placed on the user's device, **you do not need a cookie banner** when using Analytika.
+Because no personal data is stored and no persistent identifiers are placed on the visitor's device, **you do not need a cookie banner** when using Analytika.

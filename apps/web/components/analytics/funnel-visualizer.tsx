@@ -391,13 +391,6 @@ export function FunnelVisualizer({
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-white">{activeFunnel.name}</span>
             <span className="text-xs text-zinc-500">({activeFunnel.steps.length} steps)</span>
-            <button
-              onClick={() => setDeleteTarget(activeFunnel)}
-              title="Delete Funnel"
-              className="p-1 rounded-md text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer ml-1"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
           </div>
           {(() => {
             const firstStepUsers = activeFunnel.steps[0]?.users || 0;

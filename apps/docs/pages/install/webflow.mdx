@@ -1,11 +1,11 @@
 # Webflow Integration
 
-Adding Analytika to your Webflow site only requires you to paste your tracking snippet into your site settings.
+Adding Analytika to your Webflow site only requires pasting your tracking snippet into your site settings.
 
 ## Instructions
 
 1. Log into your Webflow account and open your project.
-2. Open the **Project Settings** (click the "W" icon in the top left).
+2. Open **Project Settings** (click the "W" icon in the top left).
 3. Navigate to the **Custom Code** tab.
 4. Under the **Head Code** section, paste your Analytika script:
    ```html
@@ -15,4 +15,18 @@ Adding Analytika to your Webflow site only requires you to paste your tracking s
 
 ## Verification
 
-Visit your live Webflow site. The active visitors counter on your Analytika dashboard should immediately increment.
+Visit your live Webflow site in an incognito window. The active visitors counter on your Analytika dashboard should immediately increment.
+
+## Tracking Custom Events
+
+To track button clicks or form submissions, add a custom code embed on the page and call `window.analytika()` after the action occurs.
+
+```html
+<script>
+  document.getElementById('cta-button').addEventListener('click', function () {
+    window.analytika('cta_clicked', { location: 'hero' })
+  })
+</script>
+```
+
+Event names are stored exactly as passed — use `snake_case` to keep your dashboard clean.
