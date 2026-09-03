@@ -118,7 +118,8 @@ export default function WebsiteAnalyticsPage() {
 
   // Real Analytics Data State
   const [overview, setOverview] = useState<OverviewMetrics | null>(null);
-  const [realTimeseries, setRealTimeseries] = useState<any[] | null>(null);
+  // Store raw (unformatted) timeseries + interval so we can reformat when site.timezone loads
+  const [rawTimeseries, setRawTimeseries] = useState<{ pts: any[]; interval: string; overviewMetrics: any } | null>(null);
   const [channels, setChannels] = useState<SourceItem[]>([]);
   const [referrers, setReferrers] = useState<SourceItem[]>([]);
   const [campaigns, setCampaigns] = useState<SourceItem[]>([]);
@@ -206,33 +207,14 @@ export default function WebsiteAnalyticsPage() {
       }
 
       if (timeseriesRes.success && timeseriesRes.timeseries && timeseriesRes.timeseries.length > 0) {
-        const formatted = timeseriesRes.timeseries.map((pt) => {
-          let label = pt.date;
-          try {
-            const d = new Date(pt.date);
-            if (timeseriesRes.interval === "hour") {
-              label = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-            } else if (timeseriesRes.interval === "day") {
-              label = d.toLocaleDateString([], { month: "short", day: "numeric" });
-            } else {
-              label = d.toLocaleDateString([], { month: "short", year: "2-digit" });
-            }
-          } catch {}
-
-          return {
-            date: pt.date,
-            label,
-            visitors: pt.visitors,
-            pageviews: pt.pageviews,
-            revenue: pt.revenue,
-            conversionRate: pt.visitors > 0 ? Math.min(100, ((overviewRes.metrics?.purchases || 0) / pt.visitors) * 100) : 0,
-            bounceRate: overviewRes.metrics?.bounceRate || 0,
-            sessionTime: overviewRes.metrics?.avgSessionDurationSeconds || 0,
-          };
+        // Store raw data — formatting (labels/timezone) happens in useMemo below
+        setRawTimeseries({
+          pts: timeseriesRes.timeseries,
+          interval: timeseriesRes.interval || "day",
+          overviewMetrics: overviewRes.metrics || null,
         });
-        setRealTimeseries(formatted);
       } else {
-        setRealTimeseries([]);
+        setRawTimeseries({ pts: [], interval: "day", overviewMetrics: overviewRes.metrics || null });
       }
 
       if (sourcesRes.success) {
@@ -300,8 +282,42 @@ export default function WebsiteAnalyticsPage() {
   const siteCurrency = site?.currency || "USD";
   const currencySymbol = getCurrencySymbol(siteCurrency);
 
-  // Timeseries & Aggregates strictly from real data
-  const timeseries = realTimeseries || [];
+  // Format timeseries using the website's configured timezone (from API).
+  // Runs whenever rawTimeseries OR site.timezone changes so timezone is always correct.
+  const timeseries = useMemo(() => {
+    if (!rawTimeseries || rawTimeseries.pts.length === 0) return [];
+    const { pts, interval, overviewMetrics } = rawTimeseries;
+    const tz = site?.timezone || undefined; // e.g. "Asia/Dubai"
+    return pts.map((pt) => {
+      let label = pt.date;
+      try {
+        // ClickHouse returns "YYYY-MM-DD HH:MM:SS" (space, UTC). Replace space→T and append Z
+        // to ensure it is always parsed as UTC before converting to site timezone.
+        const d = new Date(pt.date.replace(" ", "T") + "Z");
+        const opts: Intl.DateTimeFormatOptions = tz ? { timeZone: tz } : {};
+        if (interval === "hour") {
+          label = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", ...opts });
+        } else if (interval === "day") {
+          label = d.toLocaleDateString([], { month: "short", day: "numeric", ...opts });
+        } else {
+          label = d.toLocaleDateString([], { month: "short", year: "2-digit", ...opts });
+        }
+      } catch {}
+      return {
+        date: pt.date,
+        label,
+        visitors: pt.visitors,
+        pageviews: pt.pageviews,
+        revenue: pt.revenue,
+        conversionRate:
+          pt.visitors > 0
+            ? Math.min(100, ((overviewMetrics?.purchases || 0) / pt.visitors) * 100)
+            : 0,
+        bounceRate: overviewMetrics?.bounceRate || 0,
+        sessionTime: overviewMetrics?.avgSessionDurationSeconds || 0,
+      };
+    });
+  }, [rawTimeseries, site?.timezone]);
 
   const totals = useMemo(() => {
     if (overview) {

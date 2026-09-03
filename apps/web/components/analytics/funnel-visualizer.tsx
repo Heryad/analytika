@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Users, ArrowRight, TrendingDown, Plus, MoreHorizontal, Edit, Trash2, Loader2 } from "lucide-react";
+import { Users, ArrowRight, TrendingDown, Plus, MoreHorizontal, Trash2, Loader2 } from "lucide-react";
 import { AddFunnelModal } from "./add-funnel-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -327,13 +327,6 @@ export function FunnelVisualizer({
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-36 bg-[#1F1F1F] border-white/[0.08] text-zinc-300">
-                      <DropdownMenuItem
-                        onClick={(e) => e.stopPropagation()}
-                        className="hover:bg-white/[0.04] hover:text-white cursor-pointer focus:bg-white/[0.04] focus:text-white"
-                      >
-                        <Edit className="w-3.5 h-3.5 mr-2" />
-                        Edit Funnel
-                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();

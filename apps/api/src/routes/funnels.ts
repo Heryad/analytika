@@ -88,13 +88,26 @@ export const funnelsRoutes = new Elysia({ prefix: "/api/v1/websites" })
             };
           }
 
-          // Build individual boolean conditions for each step
+          // Build individual boolean conditions for each step.
+          // IMPORTANT: page steps must include event_name = 'pageview' so they don't
+          // overlap with custom event rows that happen to share the same pathname.
+          // Without this, windowFunnel can't distinguish step 1 (pageview) from step 2
+          // (custom event) when both rows have the same pathname value.
           const stepConditions = rawSteps.map((s) => {
             if (s.type === "page" || s.type === "pageview") {
-              const cleanPath = (s.path || s.value || "/").replace(/'/g, "\\'");
-              return `pathname = '${cleanPath}'`;
+              const rawPath = (s.path || s.value || "").replace(/'/g, "\\'");
+              if (rawPath && rawPath !== "/") {
+                // Match specific page path — require it's a real pageview row
+                return `(event_name = 'pageview' AND pathname = '${rawPath}')`;
+              } else if (rawPath === "/") {
+                // Root path — require pageview on the root page exactly
+                return `(event_name = 'pageview' AND pathname = '/')`;
+              } else {
+                // No path configured — match any pageview
+                return `event_name = 'pageview'`;
+              }
             } else {
-              const cleanEvent = (s.eventId || s.value || s.name).replace(/'/g, "\\'");
+              const cleanEvent = (s.eventId || s.value || s.name || "").replace(/'/g, "\\'");
               return `event_name = '${cleanEvent}'`;
             }
           });
@@ -180,18 +193,20 @@ export const funnelsRoutes = new Elysia({ prefix: "/api/v1/websites" })
                   }));
 
                   // Query Top Countries for this step
+                  // NOTE: schema has country_code only — no `country` column.
+                  // Resolve human-readable names via Intl.DisplayNames (same as analytics.ts).
                   const ctryRes = await clickhouse.query({
                     query: `
                       SELECT 
-                        country,
-                        lower(country_code) AS code,
+                        country_code,
                         count() AS c
                       FROM analytika.events
                       WHERE website_id = {siteId: String}
                         AND ${stepCondition}
                         AND timestamp >= {from: String}
                         AND timestamp <= {to: String}
-                      GROUP BY country, country_code
+                        AND country_code != '' AND country_code != 'XX'
+                      GROUP BY country_code
                       ORDER BY c DESC
                       LIMIT 3
                     `,
@@ -199,12 +214,25 @@ export const funnelsRoutes = new Elysia({ prefix: "/api/v1/websites" })
                     format: "JSONEachRow",
                   });
                   const ctryRows: any[] = await ctryRes.json();
+                  const regionNames =
+                    typeof Intl !== "undefined" && Intl.DisplayNames
+                      ? new Intl.DisplayNames(["en"], { type: "region" })
+                      : null;
                   const totalCtry = ctryRows.reduce((sum, r) => sum + Number(r.c || 0), 0) || 1;
-                  countries = ctryRows.map((r) => ({
-                    name: r.country || "Unknown",
-                    code: r.code || "un",
-                    pct: `${Math.round((Number(r.c || 0) / totalCtry) * 100)}%`,
-                  }));
+                  countries = ctryRows.map((r) => {
+                    const code = (r.country_code || "").toLowerCase();
+                    let name = r.country_code || "Unknown";
+                    try {
+                      if (regionNames && r.country_code) {
+                        name = regionNames.of(r.country_code) || r.country_code;
+                      }
+                    } catch {}
+                    return {
+                      name,
+                      code,
+                      pct: `${Math.round((Number(r.c || 0) / totalCtry) * 100)}%`,
+                    };
+                  });
 
                   // Query Step Value (monetary)
                   const revRes = await clickhouse.query({

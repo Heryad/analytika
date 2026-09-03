@@ -101,6 +101,47 @@ interface PublicShareClientProps {
   initialAnalytics?: InitialAnalyticsData | null;
 }
 
+/**
+ * Formats raw API timeseries to match the shape AnalyticsChart expects:
+ * - adds `label` (human-readable date) in the site's configured timezone
+ * - adds `conversionRate`, `bounceRate`, `sessionTime` from overview
+ *
+ * ClickHouse returns dates as "YYYY-MM-DD HH:MM:SS" (space-separated, UTC).
+ * We parse them as UTC and format in the site timezone.
+ */
+function formatTimeseries(
+  raw: any[],
+  interval: string = "day",
+  overviewMetrics?: any,
+  siteTimezone?: string
+): any[] {
+  return raw.map((pt) => {
+    let label = pt.date;
+    try {
+      // Ensure UTC parsing: replace space with T and append Z
+      const d = new Date(pt.date.replace(" ", "T") + "Z");
+      const opts: Intl.DateTimeFormatOptions = siteTimezone ? { timeZone: siteTimezone } : {};
+      if (interval === "hour") {
+        label = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", ...opts });
+      } else if (interval === "day") {
+        label = d.toLocaleDateString([], { month: "short", day: "numeric", ...opts });
+      } else {
+        label = d.toLocaleDateString([], { month: "short", year: "2-digit", ...opts });
+      }
+    } catch {}
+    return {
+      ...pt,
+      label,
+      conversionRate:
+        pt.visitors > 0
+          ? Math.min(100, ((overviewMetrics?.purchases || 0) / pt.visitors) * 100)
+          : 0,
+      bounceRate: overviewMetrics?.bounceRate || 0,
+      sessionTime: overviewMetrics?.avgSessionDurationSeconds || 0,
+    };
+  });
+}
+
 export function PublicShareClient({
   siteMeta,
   initialAnalytics,
@@ -136,7 +177,9 @@ export function PublicShareClient({
   // Analytics Data State (Hydrated from SSR initial props with 0 loading flash)
   const [onlineCount, setOnlineCount] = useState<number>(initialAnalytics?.onlineCount || 0);
   const [overview, setOverview] = useState<OverviewMetrics | null>(initialAnalytics?.overview || null);
-  const [timeseries, setTimeseries] = useState<any[]>(initialAnalytics?.timeseries || []);
+  const [timeseries, setTimeseries] = useState<any[]>(
+    formatTimeseries(initialAnalytics?.timeseries || [], "day", initialAnalytics?.overview, siteMeta.timezone)
+  );
   const [channels, setChannels] = useState<SourceItem[]>(initialAnalytics?.sources?.channels || []);
   const [referrers, setReferrers] = useState<SourceItem[]>(initialAnalytics?.sources?.referrers || []);
   const [campaigns, setCampaigns] = useState<SourceItem[]>(initialAnalytics?.sources?.campaigns || []);
@@ -247,7 +290,16 @@ export function PublicShareClient({
       ]);
 
       if (overviewRes.success && overviewRes.metrics) setOverview(overviewRes.metrics);
-      if (timeRes.success && Array.isArray(timeRes.timeseries)) setTimeseries(timeRes.timeseries);
+      if (timeRes.success && Array.isArray(timeRes.timeseries)) {
+        setTimeseries(
+          formatTimeseries(
+            timeRes.timeseries,
+            timeRes.interval || "day",
+            overviewRes.metrics,
+            siteMeta.timezone
+          )
+        );
+      }
       if (srcRes.success) {
         setChannels(srcRes.channels || []);
         setReferrers(srcRes.referrers || []);
