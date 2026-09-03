@@ -39,6 +39,29 @@ services:
         soft: 262144
         hard: 262144
 
+  # 3. Fider — Open Source Feedback Board
+  # Uses the same postgres instance but its own isolated 'fider' database
+  fider:
+    image: getfider/fider:stable
+    container_name: analytika-fider
+    restart: always
+    ports:
+      # Bound to loopback only — exposed via Caddy reverse proxy
+      - "127.0.0.1:3010:3000"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/fider?sslmode=disable
+      JWT_SECRET: ${FIDER_JWT_SECRET:?FIDER_JWT_SECRET is required}
+      EMAIL_NOREPLY: ${FIDER_EMAIL_NOREPLY:-noreply@analytika.me}
+      EMAIL_SMTP_HOST: ${FIDER_SMTP_HOST:-smtp.resend.com}
+      EMAIL_SMTP_PORT: ${FIDER_SMTP_PORT:-465}
+      EMAIL_SMTP_USERNAME: ${FIDER_SMTP_USERNAME:-resend}
+      EMAIL_SMTP_PASSWORD: ${FIDER_SMTP_PASSWORD:?FIDER_SMTP_PASSWORD is required}
+      EMAIL_SMTP_ENABLE_STARTTLS: "false"
+      BASE_URL: ${FIDER_BASE_URL:-https://feedback.analytika.me}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_prod_data:
   clickhouse_prod_data:
