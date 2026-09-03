@@ -161,10 +161,10 @@ function NewWebsiteContent() {
 </script>`;
 
   const rawNpm = `// 1. Install tracker package
-npm install @analytika/tracker
+npm install @analytika-me/tracker
 
 // 2. Initialize in your Root Layout or App
-import { initAnalytics } from "@analytika/tracker";
+import { initAnalytics } from "@analytika-me/tracker";
 
 initAnalytics({ websiteId: "${siteId || "site_live_analytics"}" });`;
 
@@ -491,15 +491,12 @@ initAnalytics({ websiteId: "${siteId || "site_live_analytics"}" });`;
                     <div className="flex-1 text-zinc-200 min-w-0 whitespace-pre">
                       <div className="text-zinc-500 italic">// 1. Install tracker package</div>
                       <div className="text-zinc-300">
-                        <span className="text-rose-400">npm</span> install @analytika/tracker
+                        <span className="text-rose-400">npm</span> install @analytika-me/tracker
                       </div>
-                      <div className="h-2"></div>
-                      <div className="text-zinc-500 italic">// 2. Initialize in your App or Layout</div>
+                      <div className="h-2 sm:h-3"></div>
+                      <div className="text-zinc-500 italic">// 2. Initialize in your Root Layout or App</div>
                       <div>
-                        <span className="text-purple-400">import</span> &#123;{" "}
-                        <span className="text-rose-300">initAnalytics</span> &#125;{" "}
-                        <span className="text-purple-400">from</span>{" "}
-                        <span className="text-emerald-400">&quot;@analytika/tracker&quot;</span>;
+                        <span className="text-purple-400">import</span> &#123; <span className="text-rose-300">initAnalytics</span> &#125; <span className="text-purple-400">from</span> <span className="text-emerald-400">&quot;@analytika-me/tracker&quot;</span>;
                       </div>
                       <div className="h-1"></div>
                       <div>

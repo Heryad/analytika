@@ -1276,10 +1276,10 @@ export function WebsiteSettingsClient({
                 <div className="flex items-center justify-between bg-[#141414] border border-white/[0.08] rounded-xl px-3.5 py-2.5 font-mono text-xs text-zinc-300">
                   <span>
                     <span className="text-zinc-500">$</span>{" "}
-                    {pkgManager === "npm" && "npm install @analytika/tracker"}
-                    {pkgManager === "pnpm" && "pnpm add @analytika/tracker"}
-                    {pkgManager === "bun" && "bun add @analytika/tracker"}
-                    {pkgManager === "yarn" && "yarn add @analytika/tracker"}
+                    {pkgManager === "npm" && "npm install @analytika-me/tracker"}
+                    {pkgManager === "pnpm" && "pnpm add @analytika-me/tracker"}
+                    {pkgManager === "bun" && "bun add @analytika-me/tracker"}
+                    {pkgManager === "yarn" && "yarn add @analytika-me/tracker"}
                   </span>
                   <Button
                     size="sm"
@@ -1287,12 +1287,12 @@ export function WebsiteSettingsClient({
                     onClick={() =>
                       copyToClipboard(
                         pkgManager === "npm"
-                          ? "npm install @analytika/tracker"
+                          ? "npm install @analytika-me/tracker"
                           : pkgManager === "pnpm"
-                            ? "pnpm add @analytika/tracker"
+                            ? "pnpm add @analytika-me/tracker"
                             : pkgManager === "bun"
-                              ? "bun add @analytika/tracker"
-                              : "yarn add @analytika/tracker",
+                              ? "bun add @analytika-me/tracker"
+                              : "yarn add @analytika-me/tracker",
                         "snippet"
                       )
                     }
@@ -1329,8 +1329,8 @@ export function WebsiteSettingsClient({
                         : snippetTab === "next"
                           ? `import Script from "next/script";\n\nexport default function RootLayout({ children }: { children: React.ReactNode }) {\n  return (\n    <html lang="en">\n      <head>\n        <Script\n          defer\n          src="${trackerHost}/a.js"\n          data-website-id="${websiteId}"\n          strategy="afterInteractive"\n        />\n      </head>\n      <body>{children}</body>\n    </html>\n  );\n}`
                           : snippetTab === "npm"
-                            ? `import { initAnalytics, trackEvent } from "@analytika/tracker";\n\n// 1. Initialize once in your app\ninitAnalytics({\n  websiteId: "${websiteId}",\n});\n\n// 2. Track custom events\ntrackEvent("Sign Up Clicked", { plan: "pro" });`
-                            : `import { useEffect } from "react";\nimport { initAnalytics } from "@analytika/tracker";\n\nexport default function App() {\n  useEffect(() => {\n    initAnalytics({ websiteId: "${websiteId}" });\n  }, []);\n\n  return <div>My App</div>;\n}`;
+                            ? `import { initAnalytics, trackEvent } from "@analytika-me/tracker";\n\n// 1. Initialize once in your app\ninitAnalytics({\n  websiteId: "${websiteId}",\n});\n\n// 2. Track custom events\ntrackEvent("Sign Up Clicked", { plan: "pro" });`
+                            : `import { useEffect } from "react";\nimport { initAnalytics } from "@analytika-me/tracker";\n\nexport default function App() {\n  useEffect(() => {\n    initAnalytics({ websiteId: "${websiteId}" });\n  }, []);\n\n  return <div>My App</div>;\n}`;
                     copyToClipboard(codeToCopy, "snippet");
                   }}
                   className="h-7 text-xs text-zinc-300 hover:text-white hover:bg-white/[0.08] px-2.5 cursor-pointer"
@@ -1387,7 +1387,7 @@ export function WebsiteSettingsClient({
 
                 {snippetTab === "npm" && (
                   <>
-                    <span className="text-rose-400">import</span> {"{ initAnalytics, trackEvent }"} <span className="text-rose-400">from</span> <span className="text-emerald-300">&quot;@analytika/tracker&quot;</span>;{"\n\n"}
+                    <span className="text-rose-400">import</span> {"{ initAnalytics, trackEvent }"} <span className="text-rose-400">from</span> <span className="text-emerald-300">&quot;@analytika-me/tracker&quot;</span>;{"\n\n"}
                     <span className="text-zinc-500">// 1. Initialize once in your app</span>{"\n"}
                     <span className="text-amber-300">initAnalytics</span>({"{\n"}
                     {"  "}websiteId: <span className="text-emerald-300">&quot;{websiteId}&quot;</span>,{"\n"}
@@ -1400,7 +1400,7 @@ export function WebsiteSettingsClient({
                 {snippetTab === "react" && (
                   <>
                     <span className="text-rose-400">import</span> {"{ useEffect }"} <span className="text-rose-400">from</span> <span className="text-emerald-300">&quot;react&quot;</span>;{"\n"}
-                    <span className="text-rose-400">import</span> {"{ initAnalytics }"} <span className="text-rose-400">from</span> <span className="text-emerald-300">&quot;@analytika/tracker&quot;</span>;{"\n\n"}
+                    <span className="text-rose-400">import</span> {"{ initAnalytics }"} <span className="text-rose-400">from</span> <span className="text-emerald-300">&quot;@analytika-me/tracker&quot;</span>;{"\n\n"}
                     <span className="text-rose-400">export default function</span> <span className="text-amber-300">App</span>() {"{\n"}
                     {"  "}<span className="text-amber-300">useEffect</span>(() =&gt; {"{\n"}
                     {"    "}<span className="text-amber-300">initAnalytics</span>({"{"} websiteId: <span className="text-emerald-300">&quot;{websiteId}&quot;</span> {"}"});{"\n"}

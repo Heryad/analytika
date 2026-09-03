@@ -3,7 +3,7 @@
 For advanced usage (like SPAs, custom React setups, or server-side node.js), you can install the official Analytika NPM package.
 
 ```bash
-npm install @analytika/tracker
+npm install @analytika-me/tracker
 ```
 
 ## Basic Usage
@@ -11,7 +11,7 @@ npm install @analytika/tracker
 Initialize the tracker at the root of your application.
 
 ```javascript
-import { initAnalytics, trackEvent } from '@analytika/tracker';
+import { initAnalytics, trackEvent } from '@analytika-me/tracker';
 
 initAnalytics({
   websiteId: 'YOUR-WEBSITE-ID',
@@ -24,7 +24,7 @@ initAnalytics({
 Once initialized, you can use the SDK to trigger custom goals and events anywhere in your application with full TypeScript support.
 
 ```typescript
-import { trackEvent } from '@analytika/tracker';
+import { trackEvent } from '@analytika-me/tracker';
 
 function handleCheckout() {
   trackEvent('Checkout Started', {

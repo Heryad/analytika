@@ -1,4 +1,4 @@
-# @analytika/tracker 🚀
+# @analytika-me/tracker 🚀
 
 High-performance, cookieless, privacy-friendly web analytics & revenue attribution SDK for modern web applications.
 
@@ -7,11 +7,11 @@ High-performance, cookieless, privacy-friendly web analytics & revenue attributi
 ## Installation
 
 ```bash
-npm install @analytika/tracker
+npm install @analytika-me/tracker
 # or
-bun add @analytika/tracker
+bun add @analytika-me/tracker
 # or
-pnpm add @analytika/tracker
+pnpm add @analytika-me/tracker
 ```
 
 ---
@@ -21,7 +21,7 @@ pnpm add @analytika/tracker
 Initialize the analytics tracker in your root component or client-side layout:
 
 ```typescript
-import { initAnalytics, trackEvent, trackPageView } from "@analytika/tracker";
+import { initAnalytics, trackEvent, trackPageView } from "@analytika-me/tracker";
 
 // Initialize once
 initAnalytics({

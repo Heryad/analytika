@@ -2,7 +2,7 @@
 
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@analytika/tracker"],
+  transpilePackages: ["@analytika-me/tracker"],
   devIndicators: false,
 };
 

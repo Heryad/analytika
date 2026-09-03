@@ -58,10 +58,10 @@ export function HowItWorks() {
 </script>`;
 
   const rawNpm = `// 1. Install client package
-npm install @analytika/tracker
+npm install @analytika-me/tracker
 
 // 2. Initialize in your App or Layout
-import { initAnalytics, trackEvent } from "@analytika/tracker";
+import { initAnalytics, trackEvent } from "@analytika-me/tracker";
 
 initAnalytics({ websiteId: "YOUR-WEBSITE-ID" });
 
@@ -344,12 +344,12 @@ trackEvent("plan_purchased", { event_value: 49.00 });`;
                 <div className="flex-1 text-zinc-200 min-w-0 whitespace-pre">
                   <div className="text-zinc-500 italic">// 1. Install client package</div>
                   <div className="text-zinc-300">
-                    <span className="text-rose-400">npm</span> install @analytika/tracker
+                    <span className="text-rose-400">npm</span> install @analytika-me/tracker
                   </div>
                   <div className="h-2 sm:h-3"></div>
                   <div className="text-zinc-500 italic">// 2. Initialize in your App or Layout</div>
                   <div>
-                    <span className="text-purple-400">import</span> &#123; <span className="text-rose-300">initAnalytics</span>, <span className="text-rose-300">trackEvent</span> &#125; <span className="text-purple-400">from</span> <span className="text-emerald-400">&quot;@analytika/tracker&quot;</span>;
+                    <span className="text-purple-400">import</span> &#123; <span className="text-rose-300">initAnalytics</span>, <span className="text-rose-300">trackEvent</span> &#125; <span className="text-purple-400">from</span> <span className="text-emerald-400">&quot;@analytika-me/tracker&quot;</span>;
                   </div>
                   <div className="h-2 sm:h-3"></div>
                   <div>

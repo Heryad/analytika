@@ -42,7 +42,7 @@ export function Features() {
       highlights: [
         "HTML data-goal auto-capture",
         "SPA route transition tracking",
-        "Type-safe @analytika/tracker",
+        "Type-safe @analytika-me/tracker",
       ],
     },
     {

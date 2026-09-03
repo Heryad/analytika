@@ -1,5 +1,5 @@
 {
-  "name": "@analytika/tracker",
+  "name": "@analytika-me/tracker",
   "version": "1.0.0",
   "description": "High-performance, cookieless, privacy-friendly web analytics & revenue attribution tracker",
   "main": "./dist/index.js",

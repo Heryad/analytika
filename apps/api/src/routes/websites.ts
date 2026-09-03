@@ -250,7 +250,7 @@ export const websitesRoutes = new Elysia({ prefix: "/api/v1/websites" })
 
         // Generated Snippet
         const scriptSnippet = `<script defer src="https://analytika.me/a.js" data-website-id="${siteId}"></script>`;
-        const npmSnippet = `import { initAnalytics } from "@analytika/tracker";\n\ninitAnalytics({ websiteId: "${siteId}" });`;
+        const npmSnippet = `import { initAnalytics } from "@analytika-me/tracker";\n\ninitAnalytics({ websiteId: "${siteId}" });`;
 
         return {
           success: true,
@@ -309,7 +309,7 @@ export const websitesRoutes = new Elysia({ prefix: "/api/v1/websites" })
         website,
         snippets: {
           script: scriptSnippet,
-          npm: `import { initAnalytics } from "@analytika/tracker";\n\ninitAnalytics({ websiteId: "${website.id}" });`,
+          npm: `import { initAnalytics } from "@analytika-me/tracker";\n\ninitAnalytics({ websiteId: "${website.id}" });`,
         },
       };
     } catch (error: any) {
