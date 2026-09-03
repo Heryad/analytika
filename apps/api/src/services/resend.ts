@@ -18,7 +18,7 @@ import {
 } from "@/emails";
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
-const FROM_EMAIL = env.RESEND_FROM_EMAIL || "Analytika <auth@analytika.me>";
+const FROM_EMAIL = env.RESEND_FROM_EMAIL || "Analytika <noreply@analytika.me>";
 
 interface BaseEmailResult {
   success: boolean;

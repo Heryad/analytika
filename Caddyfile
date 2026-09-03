@@ -1,0 +1,77 @@
+# ==========================================================
+# Analytika Production Caddyfile (Automatic SSL & Security)
+# ==========================================================
+
+# Global options
+{
+    admin off
+    email noreply@analytika.me
+}
+
+# 1. API Engine (api.analytika.me -> port 4000)
+api.analytika.me {
+    encode zstd gzip
+
+    # Proxy all traffic to Elysia Bun backend
+    reverse_proxy 127.0.0.1:4000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # Security Headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}
+
+# 2. Main Web & Dashboard (analytika.me -> port 3000)
+analytika.me {
+    encode zstd gzip
+
+    # Proxy to Next.js Web App
+    reverse_proxy 127.0.0.1:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # Security Headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}
+
+# Redirect www to apex
+www.analytika.me {
+    redir https://analytika.me{uri} permanent
+}
+
+# 3. Documentation Portal (docs.analytika.me -> port 3002)
+docs.analytika.me {
+    encode zstd gzip
+
+    # Proxy to Nextra Docs App
+    reverse_proxy 127.0.0.1:3002 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # Security Headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}

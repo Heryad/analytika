@@ -1,0 +1,44 @@
+services:
+  # 1. PostgreSQL (Transactional DB for Users, Auth, Websites, Subscriptions)
+  postgres:
+    image: postgres:16-alpine
+    container_name: analytika-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-analytika}
+    ports:
+      # STRICT SECURITY: Bound ONLY to 127.0.0.1 (Loopback). Zero public internet exposure!
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-analytika}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. ClickHouse (High-Speed OLAP Database for Events, Maps, Funnels & MRR)
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: analytika-clickhouse
+    restart: always
+    environment:
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-analytika}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?CLICKHOUSE_PASSWORD is required}
+    ports:
+      # STRICT SECURITY: Bound ONLY to 127.0.0.1 (Loopback). Zero public internet exposure!
+      - "127.0.0.1:8123:8123" # HTTP API
+      - "127.0.0.1:9000:9000" # Native TCP client
+    volumes:
+      - clickhouse_prod_data:/var/lib/clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+volumes:
+  postgres_prod_data:
+  clickhouse_prod_data:

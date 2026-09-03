@@ -21,7 +21,7 @@ export const env = {
 
   // Resend Transactional Email Service
   RESEND_API_KEY: process.env.RESEND_API_KEY || "",
-  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || "Analytika <auth@analytika.me>",
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || "Analytika <noreply@analytika.me>",
 
   // Polar.sh Integration
   POLAR_ACCESS_TOKEN: process.env.POLAR_ACCESS_TOKEN || "",
