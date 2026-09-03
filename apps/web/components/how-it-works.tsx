@@ -13,6 +13,7 @@ import {
   FileCode2,
   ArrowRight
 } from "lucide-react";
+import { WebsiteFavicon } from "@/components/website-favicon";
 
 export function HowItWorks() {
   const [copiedScript, setCopiedScript] = useState(false);
@@ -21,7 +22,6 @@ export function HowItWorks() {
   // Domain input state for bottom CTA
   const [domain, setDomain] = useState("");
   const [cleanHost, setCleanHost] = useState("");
-  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
   const [faviconLoaded, setFaviconLoaded] = useState(false);
 
   const extractHostname = (input: string): string => {
@@ -37,16 +37,13 @@ export function HowItWorks() {
 
     if (!isValidDomain) {
       setCleanHost("");
-      setFaviconUrl(null);
       setFaviconLoaded(false);
       return;
     }
 
     const timer = setTimeout(() => {
       setCleanHost(host);
-      setFaviconLoaded(false);
-      setFaviconUrl(`https://www.google.com/s2/favicons?domain=${host}&sz=64`);
-    }, 300);
+    }, 250);
 
     return () => clearTimeout(timer);
   }, [domain]);
@@ -386,13 +383,12 @@ trackEvent("plan_purchased", { event_value: 49.00 });`;
                     : "w-0 h-7 opacity-0 -translate-x-3 ml-0 mr-0"
                 }`}
               >
-                {faviconUrl && (
-                  <img
-                    src={faviconUrl}
-                    alt={`${cleanHost} icon`}
-                    onLoad={() => setFaviconLoaded(true)}
-                    onError={() => setFaviconLoaded(false)}
-                    className="h-5 w-5 rounded object-contain shadow-xs"
+                {cleanHost && (
+                  <WebsiteFavicon
+                    domain={cleanHost}
+                    className="h-5 w-5 rounded object-contain shadow-xs shrink-0"
+                    onLoadedChange={setFaviconLoaded}
+                    hideOnFail
                   />
                 )}
               </div>

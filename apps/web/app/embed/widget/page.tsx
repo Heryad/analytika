@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { analyticsApi } from "@/lib/api";
+import { WebsiteFavicon } from "@/components/website-favicon";
 
 function WidgetView() {
   const searchParams = useSearchParams();
@@ -142,10 +143,9 @@ function WidgetView() {
           </div>
           <span className={theme === "light" ? "text-zinc-300" : "text-zinc-600"}>|</span>
           <div className="flex items-center gap-1.5">
-            <img
-              src={`https://www.google.com/s2/favicons?domain=${siteDomain}&sz=32`}
-              alt=""
-              className="w-3.5 h-3.5 rounded-xs"
+            <WebsiteFavicon
+              domain={siteDomain}
+              className="w-3.5 h-3.5 rounded-xs object-contain"
             />
             <span className={`font-mono text-[11px] font-medium truncate max-w-[120px] ${theme === "light" ? "text-zinc-800" : "text-zinc-300"}`}>
               {siteDomain}
@@ -179,10 +179,9 @@ function WidgetView() {
           {/* Top Row: Domain Identity */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <img
-                src={`https://www.google.com/s2/favicons?domain=${siteDomain}&sz=64`}
-                alt=""
-                className="w-4 h-4 rounded-xs"
+              <WebsiteFavicon
+                domain={siteDomain}
+                className="w-4 h-4 rounded-xs object-contain"
               />
               <span className="font-bold text-xs truncate max-w-[200px]">{siteDomain}</span>
             </div>

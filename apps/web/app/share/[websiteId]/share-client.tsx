@@ -26,6 +26,7 @@ import { ChannelPieChart } from "@/components/analytics/channel-pie-chart";
 import { CustomBarList } from "@/components/analytics/custom-bar-list";
 import { FunnelVisualizer } from "@/components/analytics/funnel-visualizer";
 import { MilestonesVisualizer } from "@/components/analytics/milestones-visualizer";
+import { WebsiteFavicon } from "@/components/website-favicon";
 import {
   Select,
   SelectContent,
@@ -540,13 +541,9 @@ export function PublicShareClient({
       <main className="min-h-screen bg-[#1F1F1F] text-zinc-100 flex flex-col items-center justify-center p-4 select-none font-sans">
         <div className="w-full max-w-md rounded-2xl bg-[#262626] border border-white/[0.08] p-6 space-y-5 shadow-2xl">
           <div className="flex items-center gap-3 pb-3 border-b border-white/[0.06]">
-            <img
-              src={`https://www.google.com/s2/favicons?domain=${siteMeta.domain}&sz=64`}
-              alt=""
+            <WebsiteFavicon
+              domain={siteMeta.domain}
               className="w-6 h-6 rounded-md object-contain bg-[#1F1F1F]"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = "none";
-              }}
             />
             <div>
               <h2 className="text-sm font-bold text-white leading-tight">{siteMeta.name}</h2>
@@ -623,13 +620,9 @@ export function PublicShareClient({
 
           {/* Public Badge */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#262626] border border-white/[0.08] text-xs shadow-sm">
-            <img
-              src={`https://www.google.com/s2/favicons?domain=${siteMeta.domain}&sz=32`}
-              alt=""
+            <WebsiteFavicon
+              domain={siteMeta.domain}
               className="w-3.5 h-3.5 rounded-xs object-contain"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = "none";
-              }}
             />
             <span className="font-bold text-white max-w-[140px] truncate">{siteMeta.name}</span>
             <span className="text-zinc-600">|</span>
@@ -647,13 +640,9 @@ export function PublicShareClient({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
           {/* Left: Domain Identity */}
           <div className="flex items-center gap-3">
-            <img
-              src={`https://www.google.com/s2/favicons?domain=${siteMeta.domain}&sz=64`}
-              alt={siteMeta.domain}
+            <WebsiteFavicon
+              domain={siteMeta.domain}
               className="w-7 h-7 object-contain rounded-lg shrink-0 bg-white/10 p-0.5"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = "none";
-              }}
             />
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-bold tracking-tight text-white leading-none">

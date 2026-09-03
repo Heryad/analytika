@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { websitesApi, Website, WebsiteSnippets, alertsApi, AlertItem, paymentsApi, PaymentIntegration } from "@/lib/api";
+import { WebsiteFavicon } from "@/components/website-favicon";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -1020,13 +1021,10 @@ export function WebsiteSettingsClient({
           <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 space-y-4">
             <div className="flex items-center gap-4 pb-4 border-b border-white/[0.06]">
               <div className="w-14 h-14 rounded-2xl bg-[#1F1F1F] border border-white/[0.08] flex items-center justify-center p-2 shrink-0 relative group shadow-inner">
-                <img
-                  src={`https://www.google.com/s2/favicons?domain=${initialDomain}&sz=128`}
-                  alt={initialDomain}
+                <WebsiteFavicon
+                  domain={initialDomain}
+                  size={128}
                   className="w-8 h-8 object-contain rounded-md"
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = "none";
-                  }}
                 />
               </div>
               <div className="min-w-0">

@@ -456,7 +456,40 @@ export async function ingestEvent(
   const uaInfo = parseUserAgent(userAgent);
 
   // 6. Resolve Referrer & Traffic Channel
-  const referrer = raw.referrer?.trim() || headers["referer"]?.trim() || "";
+  let referrer = raw.referrer?.trim() || "";
+
+  // If referrer is empty (e.g. user typed/pasted URL or opened from external apps), check URL query parameters (?ref=, ?source=, ?via=, ?referrer=)
+  if (!referrer && raw.search) {
+    try {
+      const searchParams = new URLSearchParams(
+        raw.search.startsWith("?") ? raw.search : `?${raw.search}`
+      );
+      const refQuery =
+        searchParams.get("ref") ||
+        searchParams.get("source") ||
+        searchParams.get("referrer") ||
+        searchParams.get("via");
+      if (refQuery) {
+        referrer = refQuery.startsWith("http") ? refQuery : `https://${refQuery}`;
+      }
+    } catch {}
+  }
+
+  // Fallback to HTTP Referer header if not internal navigation
+  if (!referrer && headers["referer"]) {
+    const reqReferer = headers["referer"].trim();
+    try {
+      const refUrl = new URL(reqReferer);
+      const siteHost = (raw.hostname || site.domain).toLowerCase();
+      if (
+        refUrl.hostname.toLowerCase() !== siteHost &&
+        !refUrl.hostname.toLowerCase().endsWith(`.${siteHost}`)
+      ) {
+        referrer = reqReferer;
+      }
+    } catch {}
+  }
+
   const refInfo = parseReferrer(referrer, raw.hostname || site.domain);
 
   // 7. Generate Privacy Rolling Visitor & Session ID

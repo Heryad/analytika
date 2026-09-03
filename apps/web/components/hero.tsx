@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Star, Globe } from "lucide-react";
+import { WebsiteFavicon } from "@/components/website-favicon";
 
 export function Hero() {
   const [domain, setDomain] = useState("");
   const [cleanHost, setCleanHost] = useState("");
-  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
   const [faviconLoaded, setFaviconLoaded] = useState(false);
 
   // Helper to extract clean hostname (e.g. "github.com" from "https://www.github.com/feed")
@@ -18,7 +18,7 @@ export function Hero() {
     return clean;
   };
 
-  // Debounced favicon discovery
+  // Debounced domain validation
   useEffect(() => {
     const host = extractHostname(domain);
     
@@ -27,17 +27,13 @@ export function Hero() {
 
     if (!isValidDomain) {
       setCleanHost("");
-      setFaviconUrl(null);
       setFaviconLoaded(false);
       return;
     }
 
     const timer = setTimeout(() => {
       setCleanHost(host);
-      setFaviconLoaded(false);
-      // High-resolution favicon provider with fallback
-      setFaviconUrl(`https://www.google.com/s2/favicons?domain=${host}&sz=64`);
-    }, 300);
+    }, 250);
 
     return () => clearTimeout(timer);
   }, [domain]);
@@ -84,13 +80,12 @@ export function Hero() {
                   : "w-0 h-7 opacity-0 -translate-x-3 ml-0 mr-0"
               }`}
             >
-              {faviconUrl && (
-                <img
-                  src={faviconUrl}
-                  alt={`${cleanHost} icon`}
-                  onLoad={() => setFaviconLoaded(true)}
-                  onError={() => setFaviconLoaded(false)}
-                  className="h-5 w-5 rounded object-contain shadow-xs"
+              {cleanHost && (
+                <WebsiteFavicon
+                  domain={cleanHost}
+                  className="h-5 w-5 rounded object-contain shadow-xs shrink-0"
+                  onLoadedChange={setFaviconLoaded}
+                  hideOnFail
                 />
               )}
             </div>

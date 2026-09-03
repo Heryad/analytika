@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { websitesApi, Website } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { getCurrencySymbol } from "@/lib/utils";
+import { WebsiteFavicon } from "@/components/website-favicon";
 
 // Smooth Number Counter Animation
 function AnimatedNumber({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) {
@@ -262,13 +263,9 @@ function WebsitesHub() {
                 {/* Top Row: Direct Favicon + Title + Arrow */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <img
-                      src={`https://www.google.com/s2/favicons?domain=${site.domain}&sz=64`}
-                      alt={site.domain}
+                    <WebsiteFavicon
+                      domain={site.domain}
                       className="w-6 h-6 object-contain shrink-0"
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = "none";
-                      }}
                     />
                     <div>
                       <h2 className="text-base font-bold text-white group-hover:text-rose-200 transition-colors leading-tight truncate max-w-[170px]">

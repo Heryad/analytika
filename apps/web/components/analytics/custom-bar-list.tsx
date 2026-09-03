@@ -6,6 +6,7 @@ import {
   Monitor, Smartphone, Tablet, MousePointerClick, CreditCard, 
   Download, Play, ShoppingCart, Zap, FileText, Sparkles, Activity, RotateCcw
 } from "lucide-react";
+import { WebsiteFavicon } from "@/components/website-favicon";
 
 interface BarListItem {
   name: string;
@@ -52,9 +53,9 @@ export function CustomBarList({ data, type }: CustomBarListProps) {
     if (type === "referrer" || (type === "tech" && item.domain)) {
       const fetchDomain = item.domain || item.name;
       return (
-        <img 
-          src={`https://www.google.com/s2/favicons?domain=${fetchDomain}&sz=128`} 
-          alt={item.name} 
+        <WebsiteFavicon
+          domain={fetchDomain}
+          size={128}
           className="w-5 h-5 object-contain shrink-0 rounded-sm"
         />
       );

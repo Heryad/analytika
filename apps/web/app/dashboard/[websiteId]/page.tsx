@@ -26,6 +26,7 @@ import { FunnelVisualizer } from "@/components/analytics/funnel-visualizer";
 import { MilestonesVisualizer } from "@/components/analytics/milestones-visualizer";
 import { ShareWidgetModal } from "@/components/analytics/share-widget-modal";
 import { SocialRadarCard } from "@/components/analytics/social-radar-card";
+import { WebsiteFavicon } from "@/components/website-favicon";
 import { useAuth } from "@/lib/auth-context";
 import {
   Select,
@@ -519,13 +520,9 @@ export default function WebsiteAnalyticsPage() {
           </Button>
           {siteDomain ? (
             <>
-              <img
-                src={`https://www.google.com/s2/favicons?domain=${siteDomain}&sz=64`}
-                alt={siteDomain}
+              <WebsiteFavicon
+                domain={siteDomain}
                 className="w-7 h-7 object-contain rounded-lg shrink-0 bg-white/10 p-0.5"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = "none";
-                }}
               />
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-bold tracking-tight text-white leading-none">

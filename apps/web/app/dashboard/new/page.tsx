@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { WorldMapBackground } from "@/components/world-map-bg";
 import { websitesApi } from "@/lib/api";
+import { WebsiteFavicon } from "@/components/website-favicon";
 
 // NPM Brand Icon
 function NpmIcon({ className = "h-3.5 w-3.5 shrink-0" }: { className?: string }) {
@@ -87,7 +88,6 @@ function NewWebsiteContent() {
   // Form State
   const [domain, setDomain] = useState(incomingDomain);
   const [cleanHost, setCleanHost] = useState("");
-  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
   const [faviconLoaded, setFaviconLoaded] = useState(false);
   const [timezone, setTimezone] = useState("UTC");
   const [siteId, setSiteId] = useState("");
@@ -107,25 +107,17 @@ function NewWebsiteContent() {
     } catch { }
   }, []);
 
-  // Handle Domain Change and Live Favicon Loading
+  // Handle Domain Change
   useEffect(() => {
     const raw = domain.trim();
     if (!raw) {
       setCleanHost("");
-      setFaviconUrl(null);
       setFaviconLoaded(false);
       return;
     }
 
     const host = extractHostname(raw);
     setCleanHost(host);
-
-    if (host && host.includes(".") && host.length >= 4) {
-      setFaviconUrl(`https://www.google.com/s2/favicons?domain=${host}&sz=64`);
-    } else {
-      setFaviconUrl(null);
-      setFaviconLoaded(false);
-    }
   }, [domain]);
 
   const handleStep1Submit = async (e: React.FormEvent) => {
@@ -261,13 +253,12 @@ initAnalytics({ websiteId: "${siteId || "site_live_analytics"}" });`;
                         : "w-0 h-7 opacity-0 -translate-x-3 ml-0 mr-0"
                     }`}
                   >
-                    {faviconUrl && (
-                      <img
-                        src={faviconUrl}
-                        alt={`${cleanHost} icon`}
-                        onLoad={() => setFaviconLoaded(true)}
-                        onError={() => setFaviconLoaded(false)}
+                    {cleanHost && (
+                      <WebsiteFavicon
+                        domain={cleanHost}
                         className="h-5 w-5 object-contain shrink-0"
+                        onLoadedChange={setFaviconLoaded}
+                        hideOnFail
                       />
                     )}
                   </div>
