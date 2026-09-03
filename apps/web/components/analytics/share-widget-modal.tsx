@@ -125,7 +125,14 @@ export function ShareWidgetModal({
       });
   }, [isOpen, websiteId, metric, timeRange]);
 
-  const publicShareUrl = `https://analytika.me/share/${websiteId}`;
+  const baseUrl = useMemo(() => {
+    if (typeof window !== "undefined" && window.location.origin) {
+      return window.location.origin;
+    }
+    return "https://analytika.me";
+  }, []);
+
+  const publicShareUrl = `${baseUrl}/share/${websiteId}`;
 
   // Dimensions based on widget type
   const widgetDimensions = useMemo(() => {
@@ -169,17 +176,17 @@ export function ShareWidgetModal({
 
   const embedUrl = useMemo(() => {
     const targetId = websiteId || siteDomain;
-    return `https://analytika.app/embed/widget?id=${targetId}&type=${widgetType}&theme=${theme}&color=${encodeURIComponent(
+    return `${baseUrl}/embed/widget?id=${targetId}&type=${widgetType}&theme=${theme}&color=${encodeURIComponent(
       chartColor
     )}&metric=${metric}&range=${timeRange}`;
-  }, [siteDomain, websiteId, widgetType, theme, chartColor, metric, timeRange]);
+  }, [baseUrl, siteDomain, websiteId, widgetType, theme, chartColor, metric, timeRange]);
 
   const badgeUrl = useMemo(() => {
     const targetId = websiteId || siteDomain;
-    return `https://analytika.app/badge/${targetId}/${metric}.svg?theme=${theme}&color=${encodeURIComponent(
+    return `${baseUrl}/badge/${targetId}/${metric}.svg?theme=${theme}&color=${encodeURIComponent(
       chartColor
     )}`;
-  }, [siteDomain, websiteId, metric, theme, chartColor]);
+  }, [baseUrl, siteDomain, websiteId, metric, theme, chartColor]);
 
   // Generated Embed Code string for Clipboard
   const rawCodeToCopy = useMemo(() => {
@@ -433,7 +440,7 @@ export function ShareWidgetModal({
                       <div className={`pt-2 border-t flex items-center justify-between ${theme === "light" ? "border-black/[0.08]" : "border-white/[0.08]"
                         }`}>
                         <a
-                          href="https://analytika.app"
+                          href={baseUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1.5 transition-opacity hover:opacity-80 cursor-pointer"

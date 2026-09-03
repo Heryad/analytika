@@ -17,7 +17,7 @@ export function InteractivePreview() {
             <span className="h-3 w-3 rounded-full bg-[#383838]" />
           </div>
           <div className="rounded-md bg-[#1F1F1F] px-4 py-1 text-xs text-zinc-400 font-mono border border-white/[0.04]">
-            app.analytika.dev/overview
+            analytika.me/dashboard
           </div>
           <div className="w-10" />
         </div>

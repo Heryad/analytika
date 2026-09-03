@@ -8,7 +8,7 @@ import { WebsiteFavicon } from "@/components/website-favicon";
 
 function WidgetView() {
   const searchParams = useSearchParams();
-  const siteParam = searchParams.get("id") || searchParams.get("site") || "analytika.dev";
+  const siteParam = searchParams.get("id") || searchParams.get("site") || "analytika.me";
   const widgetType = (searchParams.get("type") as "sparkline" | "live-pill") || "sparkline";
   const theme = (searchParams.get("theme") as "dark" | "light" | "transparent") || "dark";
   const chartColor = searchParams.get("color") || "#800E13";
@@ -110,7 +110,8 @@ function WidgetView() {
   const activePath = sparkPath || "M 0 35 L 200 35";
 
   const referrerDomain = siteDomain || siteParam || "unknown";
-  const landingUrl = `/?ref=${encodeURIComponent(referrerDomain)}&utm_source=embed_widget&utm_medium=referral&utm_campaign=${encodeURIComponent(referrerDomain)}`;
+  const baseUrl = typeof window !== "undefined" && window.location.origin ? window.location.origin : "https://analytika.me";
+  const landingUrl = `${baseUrl}/?ref=${encodeURIComponent(referrerDomain)}&utm_source=embed_widget&utm_medium=referral&utm_campaign=${encodeURIComponent(referrerDomain)}`;
 
   // TYPE 1: LIVE VISITOR PILL
   if (widgetType === "live-pill") {
