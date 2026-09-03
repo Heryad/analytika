@@ -133,6 +133,11 @@ export default async function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Script
+          defer
+          data-website-id="site_2r2mg12ofYAHWSdC"
+          src="https://analytika.me/a.js"
+        />
       </body>
     </html>
   );
