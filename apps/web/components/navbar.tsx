@@ -39,7 +39,7 @@ export function Navbar() {
           <Link href="#reviews" className="transition-colors hover:text-white">
             Reviews
           </Link>
-          <Link href="#pricing" className="transition-colors hover:text-white">
+          <Link href="#pricing" data-ana-event="pricing_viewed" className="transition-colors hover:text-white">
             Pricing
           </Link>
           <Link href="#faq" className="transition-colors hover:text-white">
@@ -53,7 +53,7 @@ export function Navbar() {
             className="bg-[#800E13] hover:bg-[#9e1218] text-white font-semibold text-sm px-5 h-10 shadow-sm border border-[#800E13] transition-all"
             asChild
           >
-            <Link href="/auth/login">
+            <Link href="/auth/login" data-ana-event="signup_clicked">
               Start Free
               <ArrowRight className="ml-1.5 h-4 w-4" />
             </Link>

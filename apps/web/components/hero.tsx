@@ -100,6 +100,7 @@ export function Hero() {
 
             <Button
               type="submit"
+              data-ana-event="signup_clicked"
               className="bg-[#800E13] hover:bg-[#9e1218] text-white font-medium text-sm px-5 h-10 shrink-0 border border-[#800E13] transition-all"
             >
               Start Free
