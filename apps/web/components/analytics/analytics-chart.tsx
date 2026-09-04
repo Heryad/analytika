@@ -33,7 +33,7 @@ export function AnalyticsChart({ data, activeMetric }: AnalyticsChartProps) {
       return (
         <div className="bg-[#1F1F1F] border border-white/[0.08] p-3 rounded-lg shadow-xl shadow-black/50 pointer-events-none z-50 relative min-w-[170px]">
           <div className="text-zinc-400 text-xs font-mono mb-2 pb-1 border-b border-white/[0.06]">{dataPoint.date}</div>
-          
+
           {activeMetric === "visitors" ? (
             <div className="space-y-1.5 font-mono text-xs">
               <div className="flex items-center justify-between gap-3">
@@ -55,11 +55,11 @@ export function AnalyticsChart({ data, activeMetric }: AnalyticsChartProps) {
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-[#E11D48] shadow-[0_0_8px_rgba(225,29,72,0.8)]" />
               <div className="text-white font-bold font-mono text-sm">
-                {activeMetric === "revenue" ? `$${dataPoint.revenue.toLocaleString()}` : 
-                 activeMetric === "conversionRate" ? `${dataPoint.conversionRate.toFixed(1)}%` : 
-                 activeMetric === "bounceRate" ? `${dataPoint.bounceRate.toFixed(1)}%` : 
-                 activeMetric === "sessionTime" ? `${Math.floor(dataPoint.sessionTime / 60)}m ${Math.floor(dataPoint.sessionTime % 60)}s` : 
-                 dataPoint[currentMetricKey].toLocaleString()}
+                {activeMetric === "revenue" ? `$${dataPoint.revenue.toLocaleString()}` :
+                  activeMetric === "conversionRate" ? `${dataPoint.conversionRate.toFixed(1)}%` :
+                    activeMetric === "bounceRate" ? `${dataPoint.bounceRate.toFixed(1)}%` :
+                      activeMetric === "sessionTime" ? `${Math.floor(dataPoint.sessionTime / 60)}m ${Math.floor(dataPoint.sessionTime % 60)}s` :
+                        dataPoint[currentMetricKey].toLocaleString()}
               </div>
             </div>
           )}
@@ -94,27 +94,28 @@ export function AnalyticsChart({ data, activeMetric }: AnalyticsChartProps) {
               <stop offset="100%" stopColor="#059669" stopOpacity={0.0} />
             </linearGradient>
           </defs>
-          
+
           <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.05)" />
-          
-          <XAxis 
-            dataKey="label" 
-            axisLine={false} 
-            tickLine={false} 
-            tick={{ fill: "#71717a", fontSize: 11, fontFamily: "monospace" }} 
+
+          <XAxis
+            dataKey="label"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#71717a", fontSize: 11, fontFamily: "monospace" }}
             minTickGap={20}
           />
-          
-          <YAxis 
-            axisLine={false} 
-            tickLine={false} 
+
+          <YAxis
+            axisLine={false}
+            tickLine={false}
             tick={{ fill: "#71717a", fontSize: 11, fontFamily: "monospace" }}
             tickFormatter={yAxisFormatter}
             width={60}
+            domain={[0, (dataMax: number) => Math.ceil(dataMax + 5)]}
           />
 
-          <Tooltip 
-            content={<CustomTooltip />} 
+          <Tooltip
+            content={<CustomTooltip />}
             cursor={{ stroke: "rgba(255,255,255,0.15)", strokeWidth: 1, strokeDasharray: "4 4" }}
             isAnimationActive={false}
           />

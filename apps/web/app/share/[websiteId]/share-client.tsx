@@ -582,7 +582,9 @@ export function PublicShareClient({
     }));
   }, [languages, totalLangVisitors]);
 
-  // Tech domains helper
+
+
+  // Tech domains helper to map raw OS/Browser names to actual domains for DuckDuckGo
   const getTechDomain = (name: string): string => {
     const n = name.toLowerCase();
     if (n.includes("chrome")) return "chrome.com";
@@ -596,7 +598,7 @@ export function PublicShareClient({
     if (n.includes("mac") || n.includes("ios")) return "apple.com";
     if (n.includes("android")) return "android.com";
     if (n.includes("linux")) return "ubuntu.com";
-    return "google.com";
+    return name;
   };
 
   // Browsers data formatting
@@ -1022,7 +1024,7 @@ export function PublicShareClient({
           {/* Card 1: Acquisition */}
           <div className="bg-[#262626] border border-white/[0.08] rounded-2xl p-5 flex flex-col h-[400px]">
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-2">
-              <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner">
+              <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {(["channels", "referrers", "campaigns", "pages"] as const).map((tab) => (
                   <button
                     key={tab}
@@ -1050,7 +1052,7 @@ export function PublicShareClient({
           {/* Card 2: Technology */}
           <div className="bg-[#262626] border border-white/[0.08] rounded-2xl p-5 flex flex-col h-[400px]">
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-2">
-              <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner">
+              <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {(["browsers", "os", "devices", "screens"] as const).map((tab) => (
                   <button
                     key={tab}
@@ -1081,7 +1083,7 @@ export function PublicShareClient({
           {/* Card 3: Location */}
           <div className="bg-[#262626] border border-white/[0.08] rounded-2xl p-5 flex flex-col h-[400px]">
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-2">
-              <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner">
+              <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {(["map", "countries", "regions", "cities", "languages"] as const).map((tab) => (
                   <button
                     key={tab}
@@ -1110,7 +1112,7 @@ export function PublicShareClient({
           {/* Card 4: Events */}
           <div className="bg-[#262626] border border-white/[0.08] rounded-2xl p-5 flex flex-col h-[400px]">
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-2">
-              <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner">
+              <div className="flex items-center gap-1 bg-[#1F1F1F] p-1 rounded-lg border border-white/[0.04] shadow-inner overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {(["all", "actions", "conversions"] as const).map((tab) => (
                   <button
                     key={tab}

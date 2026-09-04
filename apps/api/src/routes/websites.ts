@@ -81,17 +81,17 @@ export const websitesRoutes = new Elysia({ prefix: "/api/v1/websites" })
             };
           }
 
-          // 2. Fetch 14-Day Daily Sparkline
+          // 2. Fetch 24-Hour Hourly Sparkline
           const sparklineQuery = `
             SELECT
               website_id,
-              toString(toDate(timestamp)) AS day,
-              uniqExact(visitor_id) AS daily_visitors
+              toString(toStartOfHour(timestamp)) AS bucket,
+              uniqExact(visitor_id) AS hourly_visitors
             FROM analytika.events
             WHERE website_id IN ({siteIds: Array(String)})
-              AND timestamp >= now() - INTERVAL 14 DAY
-            GROUP BY website_id, day
-            ORDER BY day ASC
+              AND timestamp >= now() - INTERVAL 24 HOUR
+            GROUP BY website_id, bucket
+            ORDER BY bucket ASC
           `;
 
           const sparklineRes = await clickhouse.query({
@@ -102,23 +102,26 @@ export const websitesRoutes = new Elysia({ prefix: "/api/v1/websites" })
           const sparklineRows: any[] = await sparklineRes.json();
           for (const row of sparklineRows) {
             if (!dailyMap[row.website_id]) dailyMap[row.website_id] = {};
-            dailyMap[row.website_id][row.day] = Number(row.daily_visitors || 0);
+            dailyMap[row.website_id][row.bucket] = Number(row.hourly_visitors || 0);
           }
         } catch (chErr) {
           logger.warn("ClickHouse stats query error:", chErr);
         }
       }
 
-      // Generate exact last 14 days keys (YYYY-MM-DD)
-      const last14Days: string[] = [];
-      for (let i = 13; i >= 0; i--) {
-        const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-        last14Days.push(d.toISOString().slice(0, 10));
+      // Generate exact last 24 hours keys (YYYY-MM-DD HH:00:00)
+      const last24Hours: string[] = [];
+      const nowHour = new Date();
+      nowHour.setMinutes(0, 0, 0);
+      for (let i = 23; i >= 0; i--) {
+        const d = new Date(nowHour.getTime() - i * 60 * 60 * 1000);
+        const isoStr = d.toISOString().slice(0, 13).replace("T", " ") + ":00:00";
+        last24Hours.push(isoStr);
       }
 
       const enrichedWebsites = userWebsites.map((site) => {
         const stats = statsMap[site.id] || { monthlyVisitors: 0, monthlyRevenue: 0 };
-        const sparkline = last14Days.map((day) => dailyMap[site.id]?.[day] || 0);
+        const sparkline = last24Hours.map((bucket) => dailyMap[site.id]?.[bucket] || 0);
         return {
           ...site,
           monthlyVisitors: stats.monthlyVisitors,

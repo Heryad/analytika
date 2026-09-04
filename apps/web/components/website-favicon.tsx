@@ -16,65 +16,53 @@ interface WebsiteFaviconProps {
 export function cleanDomainName(raw: string): string {
   if (!raw) return "";
   let clean = raw.trim().toLowerCase();
+  // Strip protocol and www
   clean = clean.replace(/^(https?:\/\/)?(www\.)?/, "");
+  // Strip paths, query params, hashes
   clean = clean.split("/")[0].split("?")[0].split("#")[0];
+  
+  // If the string doesn't contain a TLD (no dot), assume .com
+  if (clean && !clean.includes(".")) {
+    clean += ".com";
+  }
+  
   return clean;
 }
 
 export function WebsiteFavicon({
   domain,
   className = "w-6 h-6 object-contain rounded-md",
-  size = 64,
+  size = 64, // Not used strictly with DuckDuckGo, but kept for signature compatibility
   alt,
   fallbackIcon,
   hideOnFail = false,
   onLoadedChange,
 }: WebsiteFaviconProps) {
   const clean = cleanDomainName(domain);
-  const [sourceIndex, setSourceIndex] = useState(0);
-  const [hasFailedAll, setHasFailedAll] = useState(false);
-
-  // Candidate sources with fallback sequence.
-  // NOTE: Google S2 always returns HTTP 200 even for unknown domains (returns
-  // a generic globe icon), so it CANNOT be used as a primary source — onError
-  // would never fire and the chain would stop there.
-  // We first try direct domain paths that properly 404 on failure, then fall
-  // back to Google S2 as the last resort (it will always render something).
-  const sources = clean
-    ? [
-        `https://${clean}/favicon.ico`,
-        `https://${clean}/favicon.png`,
-        `https://${clean}/logo.png`,
-        `https://${clean}/apple-touch-icon.png`,
-        // Google S2 as last resort — always returns an image
-        `https://www.google.com/s2/favicons?domain=${clean}&sz=${size >= 64 ? 128 : 64}`,
-      ]
-    : [];
 
   useEffect(() => {
-    setSourceIndex(0);
-    setHasFailedAll(false);
     if (!clean && onLoadedChange) onLoadedChange(false);
   }, [clean]);
 
-  if (!clean || hasFailedAll) {
+  if (!clean) {
     if (hideOnFail) return null;
     return (
       fallbackIcon || (
         <div
           className={`flex items-center justify-center bg-white/5 border border-white/10 text-zinc-300 font-bold uppercase text-[10px] select-none ${className}`}
         >
-          {clean ? clean[0] : <Globe className="w-3.5 h-3.5 text-zinc-400" />}
+          <Globe className="w-3.5 h-3.5 text-zinc-400" />
         </div>
       )
     );
   }
 
-  const currentSrc = sources[sourceIndex];
+  // DuckDuckGo Favicon Service: 
+  // Fast, handles redirects, and guarantees a 200 OK with a generic icon if missing.
+  const currentSrc = `https://icons.duckduckgo.com/ip3/${clean}.ico`;
 
   return (
     <img
-      key={`${clean}-${sourceIndex}`}
       src={currentSrc}
       alt={alt || `${clean} icon`}
       className={className}
@@ -82,13 +70,11 @@ export function WebsiteFavicon({
       onLoad={() => {
         if (onLoadedChange) onLoadedChange(true);
       }}
-      onError={() => {
-        if (sourceIndex < sources.length - 1) {
-          setSourceIndex((prev) => prev + 1);
-        } else {
-          setHasFailedAll(true);
-          if (onLoadedChange) onLoadedChange(false);
-        }
+      onError={(e) => {
+        // Since DuckDuckGo always returns a 200 OK fallback, an error here 
+        // implies a critical network block (e.g. adblocker on DuckDuckGo).
+        e.currentTarget.style.display = "none";
+        if (onLoadedChange) onLoadedChange(false);
       }}
     />
   );

@@ -47,6 +47,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { websitesApi, Website, WebsiteSnippets, alertsApi, AlertItem, paymentsApi, PaymentIntegration } from "@/lib/api";
 import { WebsiteFavicon } from "@/components/website-favicon";
+
+const COMMON_TIMEZONES = [
+  { value: "UTC", label: "UTC (Coordinated Universal Time)" },
+  { value: "America/New_York", label: "America/New_York (EST / EDT)" },
+  { value: "America/Chicago", label: "America/Chicago (CST / CDT)" },
+  { value: "America/Denver", label: "America/Denver (MST / MDT)" },
+  { value: "America/Los_Angeles", label: "America/Los_Angeles (PST / PDT)" },
+  { value: "America/Sao_Paulo", label: "America/Sao_Paulo (BRT)" },
+  { value: "Europe/London", label: "Europe/London (GMT / BST)" },
+  { value: "Europe/Paris", label: "Europe/Paris (CET / CEST)" },
+  { value: "Europe/Berlin", label: "Europe/Berlin (CET / CEST)" },
+  { value: "Asia/Dubai", label: "Asia/Dubai (GST +04:00)" },
+  { value: "Asia/Kolkata", label: "Asia/Kolkata (IST +05:30)" },
+  { value: "Asia/Singapore", label: "Asia/Singapore (SGT +08:00)" },
+  { value: "Asia/Tokyo", label: "Asia/Tokyo (JST +09:00)" },
+  { value: "Australia/Sydney", label: "Australia/Sydney (AEST / AEDT)" },
+];
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -999,12 +1016,12 @@ export function WebsiteSettingsClient({
               type="button"
               onClick={() => setActiveTab(tab.id as any)}
               className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${isActive
-                  ? tab.danger
-                    ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                    : "bg-[#262626] text-white border border-white/[0.08]"
-                  : tab.danger
-                    ? "text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-300"
-                    : "text-zinc-400 hover:text-white hover:bg-[#262626]/50"
+                ? tab.danger
+                  ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                  : "bg-[#262626] text-white border border-white/[0.08]"
+                : tab.danger
+                  ? "text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-300"
+                  : "text-zinc-400 hover:text-white hover:bg-[#262626]/50"
                 }`}
             >
               <Icon className={`h-3.5 w-3.5 ${tab.danger ? "text-rose-400" : "text-zinc-400"}`} />
@@ -1078,16 +1095,19 @@ export function WebsiteSettingsClient({
                   </label>
                   <Select value={timezone} onValueChange={setTimezone}>
                     <SelectTrigger className="bg-[#1F1F1F] border-white/[0.08] text-white text-xs h-10">
-                      <SelectValue placeholder="Select timezone" />
+                      <SelectValue placeholder="Select timezone">
+                        {COMMON_TIMEZONES.find((tz) => tz.value === timezone)?.label || timezone}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="UTC (GMT+00:00)">UTC (GMT+00:00)</SelectItem>
-                      <SelectItem value="America/New_York (EST)">America/New_York (EST)</SelectItem>
-                      <SelectItem value="America/Los_Angeles (PST)">America/Los_Angeles (PST)</SelectItem>
-                      <SelectItem value="Europe/London (GMT)">Europe/London (GMT)</SelectItem>
-                      <SelectItem value="Europe/Berlin (CET)">Europe/Berlin (CET)</SelectItem>
-                      <SelectItem value="Asia/Dubai (GST)">Asia/Dubai (GST)</SelectItem>
-                      <SelectItem value="Asia/Tokyo (JST)">Asia/Tokyo (JST)</SelectItem>
+                      {COMMON_TIMEZONES.map((tz) => (
+                        <SelectItem key={tz.value} value={tz.value}>
+                          {tz.label}
+                        </SelectItem>
+                      ))}
+                      {!COMMON_TIMEZONES.some((tz) => tz.value === timezone) && (
+                        <SelectItem value={timezone}>{timezone}</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1242,8 +1262,8 @@ export function WebsiteSettingsClient({
                   type="button"
                   onClick={() => setSnippetTab(f.id as any)}
                   className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-medium transition-all cursor-pointer text-center ${snippetTab === f.id
-                      ? "bg-[#262626] text-white shadow-sm border border-white/[0.08]"
-                      : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-[#262626] text-white shadow-sm border border-white/[0.08]"
+                    : "text-zinc-400 hover:text-zinc-200"
                     }`}
                 >
                   {f.label}
@@ -1532,46 +1552,67 @@ export function WebsiteSettingsClient({
                 onValueChange={(val) => setPaymentPlatform(val as PaymentPlatform)}
               >
                 <SelectTrigger className="bg-[#1F1F1F] border-white/[0.08] text-white text-xs h-10">
-                  <SelectValue placeholder="Select platform" />
+                  <SelectValue placeholder="Select platform">
+                    {paymentPlatform === "stripe" && (
+                      <div className="flex items-center gap-2.5 font-medium">
+                        <WebsiteFavicon domain="stripe.com" className="w-4 h-4 object-contain rounded-sm" />
+                        <span>Stripe Payments</span>
+                      </div>
+                    )}
+                    {paymentPlatform === "polar" && (
+                      <div className="flex items-center gap-2.5 font-medium">
+                        <WebsiteFavicon domain="polar.sh" className="w-4 h-4 object-contain rounded-sm" />
+                        <span>Polar</span>
+                      </div>
+                    )}
+                    {paymentPlatform === "dodo" && (
+                      <div className="flex items-center gap-2.5 font-medium">
+                        <WebsiteFavicon domain="dodopayments.com" className="w-4 h-4 object-contain rounded-sm" />
+                        <span>Dodo Payments</span>
+                      </div>
+                    )}
+                    {paymentPlatform === "paddle" && (
+                      <div className="flex items-center gap-2.5 font-medium">
+                        <WebsiteFavicon domain="paddle.com" className="w-4 h-4 object-contain rounded-sm" />
+                        <span>Paddle Billing</span>
+                      </div>
+                    )}
+                    {paymentPlatform === "lemonsqueezy" && (
+                      <div className="flex items-center gap-2.5 font-medium">
+                        <WebsiteFavicon domain="lemonsqueezy.com" className="w-4 h-4 object-contain rounded-sm" />
+                        <span>Lemon Squeezy</span>
+                      </div>
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="stripe">
-                    <div className="flex items-center gap-2 font-medium">
-                      <span className="px-1.5 py-0.5 rounded bg-[#635BFF]/20 text-[#9B95FF] text-[10px] font-bold font-mono">
-                        STRIPE
-                      </span>
+                    <div className="flex items-center gap-2.5 font-medium">
+                      <WebsiteFavicon domain="stripe.com" className="w-4 h-4 object-contain rounded-sm" />
                       <span>Stripe Payments</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="polar">
-                    <div className="flex items-center gap-2 font-medium">
-                      <span className="px-1.5 py-0.5 rounded bg-[#0062FF]/20 text-[#4D94FF] text-[10px] font-bold font-mono">
-                        POLAR
-                      </span>
-                      <span>Polar (polar.sh)</span>
+                    <div className="flex items-center gap-2.5 font-medium">
+                      <WebsiteFavicon domain="polar.sh" className="w-4 h-4 object-contain rounded-sm" />
+                      <span>Polar</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="dodo">
-                    <div className="flex items-center gap-2 font-medium">
-                      <span className="px-1.5 py-0.5 rounded bg-[#FF6B00]/20 text-[#FFA05C] text-[10px] font-bold font-mono">
-                        DODO
-                      </span>
+                    <div className="flex items-center gap-2.5 font-medium">
+                      <WebsiteFavicon domain="dodopayments.com" className="w-4 h-4 object-contain rounded-sm" />
                       <span>Dodo Payments</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="paddle">
-                    <div className="flex items-center gap-2 font-medium">
-                      <span className="px-1.5 py-0.5 rounded bg-[#00D09C]/20 text-[#5CFFD4] text-[10px] font-bold font-mono">
-                        PADDLE
-                      </span>
+                    <div className="flex items-center gap-2.5 font-medium">
+                      <WebsiteFavicon domain="paddle.com" className="w-4 h-4 object-contain rounded-sm" />
                       <span>Paddle Billing</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="lemonsqueezy">
-                    <div className="flex items-center gap-2 font-medium">
-                      <span className="px-1.5 py-0.5 rounded bg-[#FFC233]/20 text-[#FFE082] text-[10px] font-bold font-mono">
-                        LEMON
-                      </span>
+                    <div className="flex items-center gap-2.5 font-medium">
+                      <WebsiteFavicon domain="lemonsqueezy.com" className="w-4 h-4 object-contain rounded-sm" />
                       <span>Lemon Squeezy</span>
                     </div>
                   </SelectItem>
@@ -2037,8 +2078,8 @@ export function WebsiteSettingsClient({
                           type="button"
                           onClick={() => setModalIcon(ic.id)}
                           className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 text-xs ${isSelected
-                              ? "bg-[#800E13]/20 border-[#800E13] text-white"
-                              : "bg-[#141414] border-white/[0.06] text-zinc-400 hover:text-zinc-200"
+                            ? "bg-[#800E13]/20 border-[#800E13] text-white"
+                            : "bg-[#141414] border-white/[0.06] text-zinc-400 hover:text-zinc-200"
                             }`}
                           title={ic.label}
                         >
@@ -2146,8 +2187,8 @@ export function WebsiteSettingsClient({
                         type="button"
                         onClick={() => setModalPreviewTab("edit")}
                         className={`px-2.5 py-1 text-xs rounded-md transition-all cursor-pointer ${modalPreviewTab === "edit"
-                            ? "bg-[#262626] text-white shadow-sm font-medium"
-                            : "text-zinc-400 hover:text-zinc-200"
+                          ? "bg-[#262626] text-white shadow-sm font-medium"
+                          : "text-zinc-400 hover:text-zinc-200"
                           }`}
                       >
                         Template Body
@@ -2156,8 +2197,8 @@ export function WebsiteSettingsClient({
                         type="button"
                         onClick={() => setModalPreviewTab("preview")}
                         className={`px-2.5 py-1 text-xs rounded-md transition-all cursor-pointer flex items-center gap-1 ${modalPreviewTab === "preview"
-                            ? "bg-[#262626] text-white shadow-sm font-medium"
-                            : "text-zinc-400 hover:text-zinc-200"
+                          ? "bg-[#262626] text-white shadow-sm font-medium"
+                          : "text-zinc-400 hover:text-zinc-200"
                           }`}
                       >
                         <Mail className="w-3 h-3 text-rose-400" />
@@ -2448,119 +2489,131 @@ export function WebsiteSettingsClient({
       )}
 
       {/* RESET DATA CONFIRMATION MODAL */}
-      <Dialog open={isResetModalOpen} onOpenChange={setIsResetModalOpen}>
-        <DialogContent className="bg-[#1F1F1F] border-white/[0.08] text-white max-w-md shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-rose-400 flex items-center gap-2 text-base font-semibold">
-              <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
-              <span>Reset Analytics Data for {initialDomain}?</span>
-            </DialogTitle>
-            <DialogDescription className="text-zinc-400 text-xs mt-2 leading-relaxed">
-              This will permanently wipe all collected pageviews, funnels, milestones, and visitor history for <strong className="text-white">&quot;{initialDomain}&quot;</strong>. Website settings and tracking script keys will remain active.
-            </DialogDescription>
-          </DialogHeader>
-
-          {resetSuccessMessage ? (
-            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 font-medium my-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span>{resetSuccessMessage}</span>
+      {isResetModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[#1E1E1E] border border-white/[0.1] rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-white">Reset Analytics Data?</h3>
+                <p className="text-xs text-zinc-400">This action cannot be undone.</p>
+              </div>
             </div>
-          ) : (
-            <div className="space-y-3 mt-3">
+
+            <p className="text-xs text-zinc-300 bg-[#141414] p-3 rounded-lg border border-white/[0.06] font-mono leading-relaxed">
+              This will permanently wipe all collected pageviews, funnels, milestones, and visitor history for <strong className="text-white">&quot;{initialDomain}&quot;</strong>. Website settings and tracking script keys will remain active.
+            </p>
+
+            {resetSuccessMessage ? (
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 font-medium my-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{resetSuccessMessage}</span>
+              </div>
+            ) : (
+              <div className="space-y-3 mt-1">
+                <label className="text-xs text-zinc-300 block">
+                  Type <code className="text-rose-300 bg-rose-500/10 px-1.5 py-0.5 rounded font-mono font-bold">{initialDomain}</code> to confirm:
+                </label>
+                <Input
+                  placeholder={`Type "${initialDomain}"`}
+                  value={resetConfirmInput}
+                  onChange={(e) => setResetConfirmInput(e.target.value)}
+                  className="bg-[#141414] border-white/[0.08] text-white text-xs font-mono h-9 rounded-lg"
+                  autoFocus
+                />
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isResettingData}
+                onClick={() => setIsResetModalOpen(false)}
+                className="text-xs font-mono text-zinc-400 hover:text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                disabled={
+                  (resetConfirmInput.trim().toLowerCase() !== siteDomain.toLowerCase() &&
+                    resetConfirmInput.trim().toLowerCase() !== siteName.toLowerCase() &&
+                    resetConfirmInput.trim() !== "RESET") ||
+                  isResettingData ||
+                  Boolean(resetSuccessMessage)
+                }
+                onClick={handleResetAnalyticsData}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-mono text-xs cursor-pointer flex items-center gap-1.5"
+              >
+                {isResettingData && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>{isResettingData ? "Wiping Data..." : "Reset All Data"}</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE WEBSITE CONFIRMATION MODAL */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[#1E1E1E] border border-white/[0.1] rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-white">Delete Website?</h3>
+                <p className="text-xs text-zinc-400">This action cannot be reversed.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-zinc-300 bg-[#141414] p-3 rounded-lg border border-white/[0.06] font-mono leading-relaxed">
+              This will permanently remove <strong className="text-white">&quot;{initialDomain}&quot;</strong> along with all historical traffic, custom proxy domains, alerts, and payment attribution configurations.
+            </p>
+
+            <div className="space-y-3 mt-1">
               <label className="text-xs text-zinc-300 block">
                 Type <code className="text-rose-300 bg-rose-500/10 px-1.5 py-0.5 rounded font-mono font-bold">{initialDomain}</code> to confirm:
               </label>
               <Input
-                placeholder={`Type "${initialDomain}" to confirm`}
-                value={resetConfirmInput}
-                onChange={(e) => setResetConfirmInput(e.target.value)}
-                className="bg-[#141414] border-white/[0.08] text-white text-xs font-mono"
+                placeholder={`Type "${initialDomain}"`}
+                value={deleteConfirmInput}
+                onChange={(e) => setDeleteConfirmInput(e.target.value)}
+                className="bg-[#141414] border-white/[0.08] text-white text-xs font-mono h-9 rounded-lg"
                 autoFocus
               />
             </div>
-          )}
 
-          <div className="flex justify-end gap-2.5 mt-4">
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={isResettingData}
-              onClick={() => setIsResetModalOpen(false)}
-              className="text-zinc-400 hover:text-white text-xs cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              disabled={
-                (resetConfirmInput.trim().toLowerCase() !== siteDomain.toLowerCase() &&
-                  resetConfirmInput.trim().toLowerCase() !== siteName.toLowerCase() &&
-                  resetConfirmInput.trim() !== "RESET") ||
-                isResettingData ||
-                Boolean(resetSuccessMessage)
-              }
-              onClick={handleResetAnalyticsData}
-              className="bg-rose-600 hover:bg-rose-700 text-white text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
-            >
-              {isResettingData && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>{isResettingData ? "Wiping Data..." : "Yes, Reset All Data"}</span>
-            </Button>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isDeletingWebsite}
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="text-xs font-mono text-zinc-400 hover:text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                disabled={
+                  (deleteConfirmInput.trim().toLowerCase() !== siteDomain.toLowerCase() &&
+                    deleteConfirmInput.trim().toLowerCase() !== siteName.toLowerCase()) ||
+                  isDeletingWebsite
+                }
+                onClick={handleDeleteWebsite}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-mono text-xs cursor-pointer flex items-center gap-1.5"
+              >
+                {isDeletingWebsite && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>{isDeletingWebsite ? "Deleting..." : "Delete Website"}</span>
+              </Button>
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* DELETE WEBSITE CONFIRMATION MODAL */}
-      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="bg-[#1F1F1F] border-white/[0.08] text-white max-w-md shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-rose-400 flex items-center gap-2 text-base font-semibold">
-              <Trash2 className="w-5 h-5 text-rose-400 shrink-0" />
-              <span>Permanently Delete {initialDomain}?</span>
-            </DialogTitle>
-            <DialogDescription className="text-zinc-400 text-xs mt-2 leading-relaxed">
-              This will permanently remove <strong className="text-white">&quot;{initialDomain}&quot;</strong> along with all historical traffic, custom proxy domains, alerts, and payment attribution configurations. This action cannot be reversed.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3 mt-3">
-            <label className="text-xs text-zinc-300 block">
-              Type <code className="text-rose-300 bg-rose-500/10 px-1.5 py-0.5 rounded font-mono font-bold">{initialDomain}</code> to confirm:
-            </label>
-            <Input
-              placeholder={`Type "${initialDomain}" to confirm`}
-              value={deleteConfirmInput}
-              onChange={(e) => setDeleteConfirmInput(e.target.value)}
-              className="bg-[#141414] border-white/[0.08] text-white text-xs font-mono"
-              autoFocus
-            />
-          </div>
-
-          <div className="flex justify-end gap-2.5 mt-4">
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={isDeletingWebsite}
-              onClick={() => setIsDeleteModalOpen(false)}
-              className="text-zinc-400 hover:text-white text-xs cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              disabled={
-                (deleteConfirmInput.trim().toLowerCase() !== siteDomain.toLowerCase() &&
-                  deleteConfirmInput.trim().toLowerCase() !== siteName.toLowerCase()) ||
-                isDeletingWebsite
-              }
-              onClick={handleDeleteWebsite}
-              className="bg-rose-600 hover:bg-rose-700 text-white text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
-            >
-              {isDeletingWebsite && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>{isDeletingWebsite ? "Deleting Website..." : "I understand, delete this website"}</span>
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }

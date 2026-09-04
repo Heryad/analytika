@@ -282,11 +282,26 @@ export const analyticsRoutes = new Elysia({ prefix: "/api/v1/analytics" })
             ${timeFunc} AS bucket,
             uniqExact(visitor_id) AS visitors,
             count() AS pageviews,
-            sum(event_value) AS revenue
-          FROM analytika.events
-          WHERE website_id = {siteId: String}
-            AND timestamp >= {from: String}
-            AND timestamp <= {to: String}
+            sum(event_value) AS revenue,
+            uniqExactIf(visitor_id, first_seen >= bucket) AS newVisitors,
+            uniqExactIf(visitor_id, first_seen < bucket) AS returningVisitors
+          FROM (
+            SELECT 
+              e.visitor_id,
+              e.timestamp,
+              e.event_value,
+              f.first_seen
+            FROM analytika.events e
+            ANY LEFT JOIN (
+              SELECT visitor_id, min(timestamp) AS first_seen
+              FROM analytika.events
+              WHERE website_id = {siteId: String}
+              GROUP BY visitor_id
+            ) f ON e.visitor_id = f.visitor_id
+            WHERE e.website_id = {siteId: String}
+              AND e.timestamp >= {from: String}
+              AND e.timestamp <= {to: String}
+          )
           GROUP BY bucket
           ORDER BY bucket ASC
         `;
@@ -298,18 +313,20 @@ export const analyticsRoutes = new Elysia({ prefix: "/api/v1/analytics" })
         });
 
         const rows: any[] = await result.json();
-        const rowMap = new Map<string, { visitors: number; pageviews: number; revenue: number }>();
+        const rowMap = new Map<string, { visitors: number; pageviews: number; revenue: number; newVisitors: number; returningVisitors: number }>();
         for (const r of rows) {
           const rawBucket = String(r.bucket);
           rowMap.set(rawBucket, {
             visitors: Number(r.visitors || 0),
             pageviews: Number(r.pageviews || 0),
             revenue: Number(r.revenue || 0),
+            newVisitors: Number(r.newVisitors || 0),
+            returningVisitors: Number(r.returningVisitors || 0),
           });
         }
 
         // Generate full continuous bucket timeline between from and to
-        const buckets: { date: string; visitors: number; pageviews: number; revenue: number }[] = [];
+        const buckets: { date: string; visitors: number; pageviews: number; revenue: number; newVisitors: number; returningVisitors: number }[] = [];
         const startDate = new Date(from);
         const endDate = new Date(to);
 
@@ -325,6 +342,8 @@ export const analyticsRoutes = new Elysia({ prefix: "/api/v1/analytics" })
               visitors: matched?.visitors || 0,
               pageviews: matched?.pageviews || 0,
               revenue: matched?.revenue || 0,
+              newVisitors: matched?.newVisitors || 0,
+              returningVisitors: matched?.returningVisitors || 0,
             });
             curr.setHours(curr.getHours() + 1);
           }
@@ -340,6 +359,8 @@ export const analyticsRoutes = new Elysia({ prefix: "/api/v1/analytics" })
               visitors: matched?.visitors || 0,
               pageviews: matched?.pageviews || 0,
               revenue: matched?.revenue || 0,
+              newVisitors: matched?.newVisitors || 0,
+              returningVisitors: matched?.returningVisitors || 0,
             });
             curr.setDate(curr.getDate() + 1);
           }
@@ -356,6 +377,8 @@ export const analyticsRoutes = new Elysia({ prefix: "/api/v1/analytics" })
               visitors: matched?.visitors || 0,
               pageviews: matched?.pageviews || 0,
               revenue: matched?.revenue || 0,
+              newVisitors: matched?.newVisitors || 0,
+              returningVisitors: matched?.returningVisitors || 0,
             });
             curr.setMonth(curr.getMonth() + 1);
           }
@@ -716,11 +739,14 @@ export const analyticsRoutes = new Elysia({ prefix: "/api/v1/analytics" })
               countIf(first_seen >= {from: String}) AS new_visitors,
               countIf(first_seen < {from: String}) AS returning_visitors
             FROM (
-              SELECT visitor_id, min(timestamp) AS first_seen
+              SELECT 
+                visitor_id, 
+                min(timestamp) AS first_seen,
+                sum(if(timestamp >= {from: String} AND timestamp <= {to: String}, 1, 0)) AS visits_in_range
               FROM analytika.events
               WHERE website_id = {siteId: String}
               GROUP BY visitor_id
-              HAVING max(timestamp) >= {from: String} AND max(timestamp) <= {to: String}
+              HAVING visits_in_range > 0
             )
           `,
           query_params: { siteId, from, to },

@@ -3,24 +3,25 @@
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { 
+import {
   ArrowLeft,
-  User, 
-  Bot, 
-  CreditCard, 
-  Copy, 
-  Check, 
-  Eye, 
-  EyeOff, 
-  RotateCw, 
-  Trash2, 
-  LogOut, 
-  Moon, 
-  Sun, 
-  Monitor, 
+  User,
+  Bot,
+  CreditCard,
+  Copy,
+  Check,
+  Eye,
+  EyeOff,
+  RotateCw,
+  Trash2,
+  LogOut,
+  Moon,
+  Sun,
+  Monitor,
   Sparkles,
   AlertTriangle,
-  X
+  X,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,14 +34,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
-import { 
-  authApi, 
-  billingApi, 
+import {
+  authApi,
+  billingApi,
   plansApi,
-  UserProfile, 
-  BillingSubscription, 
-  PricingTier, 
-  PlanFeatureConfig 
+  UserProfile,
+  BillingSubscription,
+  PricingTier,
+  PlanFeatureConfig
 } from "@/lib/api";
 import { applyTheme } from "@/lib/theme";
 
@@ -52,14 +53,12 @@ function Switch({ checked, onCheckedChange }: { checked: boolean; onCheckedChang
       role="switch"
       aria-checked={checked}
       onClick={() => onCheckedChange(!checked)}
-      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-        checked ? "bg-[#800E13]" : "bg-white/[0.12]"
-      }`}
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${checked ? "bg-[#800E13]" : "bg-white/[0.12]"
+        }`}
     >
       <span
-        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
-          checked ? "translate-x-4" : "translate-x-0"
-        }`}
+        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${checked ? "translate-x-4" : "translate-x-0"
+          }`}
       />
     </button>
   );
@@ -102,11 +101,11 @@ interface SettingsClientProps {
   initialTiers?: PricingTier[];
 }
 
-export function SettingsClient({ 
-  initialUser, 
-  initialSubscription, 
-  initialPlans, 
-  initialTiers 
+export function SettingsClient({
+  initialUser,
+  initialSubscription,
+  initialPlans,
+  initialTiers
 }: SettingsClientProps) {
   const searchParams = useSearchParams();
   const urlTab = searchParams.get("tab");
@@ -137,15 +136,15 @@ export function SettingsClient({
     initialUser?.emailDigest !== undefined
       ? initialUser.emailDigest
       : authUser?.emailDigest !== undefined
-      ? authUser.emailDigest
-      : true
+        ? authUser.emailDigest
+        : true
   );
   const [productAnnouncements, setProductAnnouncements] = useState(
     initialUser?.productAnnouncements !== undefined
       ? initialUser.productAnnouncements
       : authUser?.productAnnouncements !== undefined
-      ? authUser.productAnnouncements
-      : true
+        ? authUser.productAnnouncements
+        : true
   );
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -229,13 +228,13 @@ export function SettingsClient({
     initialTiers && initialTiers.length > 0
       ? initialTiers
       : [
-          { events: 10_000, label: "10k", soloMonthly: 7, soloAnnual: 6, growthMonthly: 15, growthAnnual: 12 },
-          { events: 100_000, label: "100k", soloMonthly: 19, soloAnnual: 15, growthMonthly: 39, growthAnnual: 31 },
-          { events: 500_000, label: "500k", soloMonthly: 49, soloAnnual: 39, growthMonthly: 89, growthAnnual: 71 },
-          { events: 2_000_000, label: "2m", soloMonthly: 119, soloAnnual: 95, growthMonthly: 189, growthAnnual: 151 },
-          { events: 5_000_000, label: "5m", soloMonthly: 199, soloAnnual: 159, growthMonthly: 299, growthAnnual: 239 },
-          { events: 20_000_000, label: "20m", soloMonthly: 349, soloAnnual: 279, growthMonthly: 549, growthAnnual: 439 },
-        ]
+        { events: 10_000, label: "10k", soloMonthly: 7, soloAnnual: 6, growthMonthly: 15, growthAnnual: 12 },
+        { events: 100_000, label: "100k", soloMonthly: 19, soloAnnual: 15, growthMonthly: 39, growthAnnual: 31 },
+        { events: 500_000, label: "500k", soloMonthly: 49, soloAnnual: 39, growthMonthly: 89, growthAnnual: 71 },
+        { events: 2_000_000, label: "2m", soloMonthly: 119, soloAnnual: 95, growthMonthly: 189, growthAnnual: 151 },
+        { events: 5_000_000, label: "5m", soloMonthly: 199, soloAnnual: 159, growthMonthly: 299, growthAnnual: 239 },
+        { events: 20_000_000, label: "20m", soloMonthly: 349, soloAnnual: 279, growthMonthly: 549, growthAnnual: 439 },
+      ]
   );
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
@@ -256,10 +255,10 @@ export function SettingsClient({
           setBillingSub(res.subscription);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     if (subscribedParam) {
-      refreshUser().catch(() => {});
+      refreshUser().catch(() => { });
     }
 
     if (!plans || tiers.length === 0) {
@@ -271,7 +270,7 @@ export function SettingsClient({
             if (res.plans) setPlans(res.plans);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
 
     return () => {
@@ -427,7 +426,7 @@ export function SettingsClient({
 
   return (
     <div className="space-y-6">
-      
+
       {/* Settings Title with Back Button */}
       <div className="flex items-center gap-3">
         <Button
@@ -451,11 +450,10 @@ export function SettingsClient({
         <button
           type="button"
           onClick={() => setActiveTab("general")}
-          className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
-            activeTab === "general"
+          className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${activeTab === "general"
               ? "bg-[#262626] text-white border border-white/[0.08]"
               : "text-zinc-400 hover:text-white hover:bg-[#262626]/50"
-          }`}
+            }`}
         >
           <User className="h-3.5 w-3.5 text-zinc-400" />
           General
@@ -464,11 +462,10 @@ export function SettingsClient({
         <button
           type="button"
           onClick={() => setActiveTab("mcp")}
-          className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
-            activeTab === "mcp"
+          className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${activeTab === "mcp"
               ? "bg-[#262626] text-white border border-white/[0.08]"
               : "text-zinc-400 hover:text-white hover:bg-[#262626]/50"
-          }`}
+            }`}
         >
           <Bot className="h-3.5 w-3.5 text-zinc-400" />
           MCP
@@ -477,11 +474,10 @@ export function SettingsClient({
         <button
           type="button"
           onClick={() => setActiveTab("billing")}
-          className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
-            activeTab === "billing"
+          className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${activeTab === "billing"
               ? "bg-[#262626] text-white border border-white/[0.08]"
               : "text-zinc-400 hover:text-white hover:bg-[#262626]/50"
-          }`}
+            }`}
         >
           <CreditCard className="h-3.5 w-3.5 text-zinc-400" />
           Billing
@@ -491,7 +487,7 @@ export function SettingsClient({
       {/* TAB 1: GENERAL */}
       {activeTab === "general" && (
         <div className="max-w-2xl space-y-5">
-          
+
           {/* Profile Card */}
           <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 space-y-4">
             <div className="flex items-center gap-3.5 pb-2 border-b border-white/[0.04]">
@@ -556,9 +552,8 @@ export function SettingsClient({
               <button
                 type="button"
                 onClick={() => handleThemeChange("dark")}
-                className={`px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                  theme === "dark" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
-                }`}
+                className={`px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${theme === "dark" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
+                  }`}
               >
                 <Moon className="h-3 w-3" />
                 Dark
@@ -566,9 +561,8 @@ export function SettingsClient({
               <button
                 type="button"
                 onClick={() => handleThemeChange("system")}
-                className={`px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                  theme === "system" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
-                }`}
+                className={`px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${theme === "system" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
+                  }`}
               >
                 <Monitor className="h-3 w-3" />
                 System
@@ -576,9 +570,8 @@ export function SettingsClient({
               <button
                 type="button"
                 onClick={() => handleThemeChange("light")}
-                className={`px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                  theme === "light" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
-                }`}
+                className={`px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${theme === "light" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
+                  }`}
               >
                 <Sun className="h-3 w-3" />
                 Light
@@ -629,49 +622,56 @@ export function SettingsClient({
                 Sign Out
               </Button>
 
-              <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="border-rose-500/30 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 h-8 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Delete
-                  </Button>
-                </DialogTrigger>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDeleteOpen(true)}
+                className="border-rose-500/30 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 h-8 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
+              </Button>
 
-                <DialogContent className="bg-[#262626] border-white/[0.1] text-zinc-100 sm:max-w-md rounded-2xl">
-                  <DialogHeader>
-                    <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-rose-400" />
-                      Delete Account
-                    </DialogTitle>
-                    <DialogDescription className="text-zinc-400 text-xs mt-1">
-                      This will permanently delete your account and all tracked data. This cannot be undone.
-                    </DialogDescription>
-                  </DialogHeader>
+              {isDeleteOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                  <div className="bg-[#1E1E1E] border border-white/[0.1] rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
+                        <AlertTriangle className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-semibold text-white">Delete Account?</h3>
+                        <p className="text-xs text-zinc-400">This action cannot be undone.</p>
+                      </div>
+                    </div>
 
-                  <div className="flex justify-end gap-2 pt-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsDeleteOpen(false)}
-                      className="border-white/[0.08] hover:bg-[#2d2d2d] text-zinc-300 h-8 rounded-xl text-xs cursor-pointer"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      disabled={isDeleting}
-                      onClick={handleDeleteAccount}
-                      className="bg-rose-600 hover:bg-rose-700 text-white font-medium h-8 rounded-xl text-xs px-3 cursor-pointer disabled:opacity-50"
-                    >
-                      {isDeleting ? "Deleting..." : "Confirm"}
-                    </Button>
+                    <p className="text-xs text-zinc-300 bg-[#141414] p-3 rounded-lg border border-white/[0.06] font-mono leading-relaxed">
+                      This will permanently delete your account and all tracked data. This cannot be reversed.
+                    </p>
+
+                    <div className="flex items-center justify-end gap-3 pt-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        disabled={isDeleting}
+                        onClick={() => setIsDeleteOpen(false)}
+                        className="text-xs font-mono text-zinc-400 hover:text-white"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        disabled={isDeleting}
+                        onClick={handleDeleteAccount}
+                        className="bg-rose-600 hover:bg-rose-700 text-white font-mono text-xs cursor-pointer flex items-center gap-1.5"
+                      >
+                        {isDeleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        <span>{isDeleting ? "Deleting..." : "Delete Account"}</span>
+                      </Button>
+                    </div>
                   </div>
-                </DialogContent>
-              </Dialog>
+                </div>
+              )}
             </div>
           </div>
 
@@ -681,7 +681,7 @@ export function SettingsClient({
       {/* TAB 2: REMOTE MCP SERVER */}
       {activeTab === "mcp" && (
         <div className="max-w-2xl space-y-5">
-          
+
           {/* Server Connection Info */}
           <div className="rounded-2xl bg-[#262626] border border-white/[0.08] p-5 space-y-4">
             <div>
@@ -780,27 +780,24 @@ export function SettingsClient({
                 <button
                   type="button"
                   onClick={() => setMcpClientTab("claude")}
-                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${
-                    mcpClientTab === "claude" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
-                  }`}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${mcpClientTab === "claude" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
+                    }`}
                 >
                   Claude.ai
                 </button>
                 <button
                   type="button"
                   onClick={() => setMcpClientTab("openai")}
-                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${
-                    mcpClientTab === "openai" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
-                  }`}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${mcpClientTab === "openai" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
+                    }`}
                 >
                   OpenAI / ChatGPT
                 </button>
                 <button
                   type="button"
                   onClick={() => setMcpClientTab("cursor")}
-                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${
-                    mcpClientTab === "cursor" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
-                  }`}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${mcpClientTab === "cursor" ? "bg-[#262626] text-white" : "text-zinc-400 hover:text-white"
+                    }`}
                 >
                   Cursor / Desktop
                 </button>
@@ -987,14 +984,14 @@ export function SettingsClient({
 
           {/* Pricing Controls Slider */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
-            
+
             {/* Slider */}
             <div className="flex-1 w-full flex items-center gap-3">
               <span className="text-xs font-mono text-zinc-400 font-semibold shrink-0">
                 10K
               </span>
 
-              <div 
+              <div
                 ref={trackRef}
                 onPointerDown={(e) => {
                   setIsDragging(true);
@@ -1006,7 +1003,7 @@ export function SettingsClient({
                 }}
                 onPointerUp={(e) => {
                   setIsDragging(false);
-                  try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
+                  try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { }
                 }}
                 className="relative flex-1 flex items-center h-8 cursor-pointer touch-none"
               >
@@ -1041,18 +1038,16 @@ export function SettingsClient({
               <button
                 type="button"
                 onClick={() => setAnnual(false)}
-                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-                  !annual ? "bg-[#800E13] text-white shadow-xs" : "text-zinc-400 hover:text-white"
-                }`}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${!annual ? "bg-[#800E13] text-white shadow-xs" : "text-zinc-400 hover:text-white"
+                  }`}
               >
                 Monthly
               </button>
               <button
                 type="button"
                 onClick={() => setAnnual(true)}
-                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
-                  annual ? "bg-[#800E13] text-white shadow-xs" : "text-zinc-400 hover:text-white"
-                }`}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer ${annual ? "bg-[#800E13] text-white shadow-xs" : "text-zinc-400 hover:text-white"
+                  }`}
               >
                 Annual
                 <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1 py-0.2 rounded font-bold">
@@ -1065,7 +1060,7 @@ export function SettingsClient({
 
           {/* Plan Cards Grid (Solo vs Growth) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
-            
+
             {/* 1. Solo Plan Card (Only shown if user is not on Growth or unsubscribed) */}
             {activePlan !== "growth" && (
               <div className="flex flex-col justify-between rounded-xl bg-[#262626] border border-white/[0.08] p-5">
@@ -1121,12 +1116,12 @@ export function SettingsClient({
                     {isCurrentSoloTier
                       ? "Current Plan"
                       : isSoloUpgrade
-                      ? `Upgrade to ${currentTier.label.toUpperCase()} Events`
-                      : isSoloDowngrade
-                      ? "Included in Current Plan"
-                      : isSubscribed && activePlan === "solo"
-                      ? "Current Plan"
-                      : "Subscribe to Solo"}
+                        ? `Upgrade to ${currentTier.label.toUpperCase()} Events`
+                        : isSoloDowngrade
+                          ? "Included in Current Plan"
+                          : isSubscribed && activePlan === "solo"
+                            ? "Current Plan"
+                            : "Subscribe to Solo"}
                   </Button>
                 </div>
               </div>
@@ -1181,12 +1176,12 @@ export function SettingsClient({
                   {isCurrentGrowthTier
                     ? "Current Active Plan"
                     : isGrowthUpgrade
-                    ? `Upgrade to ${currentTier.label.toUpperCase()} Events`
-                    : isGrowthDowngrade
-                    ? "Included in Current Plan"
-                    : isSubscribed && activePlan === "solo"
-                    ? "Upgrade to Growth"
-                    : "Upgrade to Growth"}
+                      ? `Upgrade to ${currentTier.label.toUpperCase()} Events`
+                      : isGrowthDowngrade
+                        ? "Included in Current Plan"
+                        : isSubscribed && activePlan === "solo"
+                          ? "Upgrade to Growth"
+                          : "Upgrade to Growth"}
                 </Button>
               </div>
             </div>

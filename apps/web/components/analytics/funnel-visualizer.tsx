@@ -443,6 +443,8 @@ export function FunnelVisualizer({
             let fullFunnelPath = topPath;
             // right edge
             fullFunnelPath += ` L ${W} ${centerY + heights[N - 1]}`;
+            // bottom right edge flat tail
+            fullFunnelPath += ` L ${(N - 1) * (W / N)} ${centerY + heights[N - 1]}`;
 
             // bottom path backwards
             for (let i = N - 2; i >= 0; i--) {
@@ -478,17 +480,17 @@ export function FunnelVisualizer({
                   }}
                 >
                   <defs>
-                    {/* Soft, calming slate-cyan-blue gradient */}
+                    {/* Vibrant emerald green gradient */}
                     <linearGradient id="funnelFillGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#355C7D" stopOpacity="0.65" />
-                      <stop offset="60%" stopColor="#2A475E" stopOpacity="0.55" />
-                      <stop offset="100%" stopColor="#1E3243" stopOpacity="0.5" />
+                      <stop offset="0%" stopColor="#10B981" stopOpacity="0.65" />
+                      <stop offset="60%" stopColor="#059669" stopOpacity="0.55" />
+                      <stop offset="100%" stopColor="#047857" stopOpacity="0.5" />
                     </linearGradient>
 
                     <linearGradient id="funnelStrokeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#5D8AA8" stopOpacity="0.9" />
-                      <stop offset="60%" stopColor="#4A708B" stopOpacity="0.8" />
-                      <stop offset="100%" stopColor="#3B596F" stopOpacity="0.7" />
+                      <stop offset="0%" stopColor="#34D399" stopOpacity="0.9" />
+                      <stop offset="60%" stopColor="#10B981" stopOpacity="0.8" />
+                      <stop offset="100%" stopColor="#059669" stopOpacity="0.7" />
                     </linearGradient>
                   </defs>
 

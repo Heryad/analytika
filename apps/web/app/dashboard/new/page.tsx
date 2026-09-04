@@ -283,7 +283,9 @@ initAnalytics({ websiteId: "${siteId || "site_live_analytics"}" });`;
 
                 <Select value={timezone} onValueChange={setTimezone}>
                   <SelectTrigger className="h-11 bg-[#1F1F1F] border-white/[0.08] text-white rounded-xl text-xs px-3.5">
-                    <SelectValue placeholder="Select timezone" />
+                    <SelectValue placeholder="Select timezone">
+                      {COMMON_TIMEZONES.find((tz) => tz.value === timezone)?.label || timezone}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="bg-[#262626] border-white/[0.1] text-zinc-200">
                     {COMMON_TIMEZONES.map((tz) => (
